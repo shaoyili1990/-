@@ -19,14 +19,8 @@ ASSETS = {
     "SKILL.md": os.path.join(PROJECT_DIR, "SKILL.md"),
 }
 
-# 平台相关图标
+# 平台相关图标（可选：图标格式问题临时禁用）
 SYSTEM = platform.system()
-if SYSTEM == "Windows":
-    icon_path = os.path.join(INSTALLER_DIR, "hermes.ico")
-elif SYSTEM == "Darwin":
-    icon_path = os.path.join(INSTALLER_DIR, "hermes-app.icns")
-else:
-    icon_path = None  # Linux 用 SVG
 
 a = Analysis(
     ['hermes_universal/__main__.py'],
@@ -65,31 +59,22 @@ a = Analysis(
 
 pyz = PYZ(a.pure)
 
-# macOS: 构建 .app bundle (带图标)
+# 通用 EXE（不嵌入图标，避免跨平台图标格式问题）
+exe = EXE(
+    pyz, a.scripts, a.binaries, a.datas, [],
+    name='hermes-agent',
+    debug=False, bootloader_ignore_signals=False,
+    strip=False, upx=True, upx_exclude=[],
+    runtime_tmpdir=None, console=True,
+    disable_windowed_traceback=False, argv_emulation=False,
+    target_arch=None, codesign_identity=None, entitlements_file=None,
+    icon=None,
+)
+
+# macOS: 额外生成 .app bundle
 if SYSTEM == "Darwin":
-    exe = EXE(
-        pyz, a.scripts, a.binaries, a.datas, [],
-        name='hermes-agent',
-        debug=False, bootloader_ignore_signals=False,
-        strip=False, upx=True, upx_exclude=[],
-        runtime_tmpdir=None, console=True,
-        disable_windowed_traceback=False, argv_emulation=False,
-        target_arch=None, codesign_identity=None, entitlements_file=None,
-        icon=icon_path,
-    )
     app = BUNDLE(
         exe, a.binaries, a.datas, [],
         name='hermes-agent.app',
-        icon=icon_path, bundle_identifier='io.hermes.agent',
-    )
-else:
-    exe = EXE(
-        pyz, a.scripts, a.binaries, a.datas, [],
-        name='hermes-agent',
-        debug=False, bootloader_ignore_signals=False,
-        strip=False, upx=True, upx_exclude=[],
-        runtime_tmpdir=None, console=True,
-        disable_windowed_traceback=False, argv_emulation=False,
-        target_arch=None, codesign_identity=None, entitlements_file=None,
-        icon=icon_path,
+        icon=None, bundle_identifier='io.hermes.agent',
     )
