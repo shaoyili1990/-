@@ -18,6 +18,10 @@ env:
   APP_NAME: hermes-agent
   PYTHON_VERSION: '3.12'
 
+permissions:
+  contents: write
+  packages: write
+
 jobs:
   # ========== 1. 代码检查 ==========
   check:
