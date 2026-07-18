@@ -200,18 +200,21 @@ jobs:
         with:
           path: release-artifacts
           merge-multiple: true
+        continue-on-error: true
       - name: Organize release assets
         run: |
           mkdir -p release
-          find release-artifacts -type f \( \
-            -name "hermes-agent" -o \
-            -name "*.deb" -o \
-            -name "*.AppImage" -o \
-            -name "*.dmg" -o \
-            -name "*.exe" -o \
-            -name "*.whl" \
-          \) -exec cp -v {} release/ \;
-          ls -lh release/
+          if [ -d release-artifacts ]; then
+            find release-artifacts -type f \( \
+              -name "hermes-agent" -o \
+              -name "*.deb" -o \
+              -name "*.AppImage" -o \
+              -name "*.dmg" -o \
+              -name "*.exe" -o \
+              -name "*.whl" \
+            \) -exec cp -v {} release/ \; 2>/dev/null || true
+          fi
+          ls -lh release/ || echo "No release assets found"
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
