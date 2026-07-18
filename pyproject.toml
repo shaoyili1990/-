@@ -53,19 +53,3 @@ include = [
 [project.urls]
 Homepage = "https://github.com/hermes-agent/universal"
 Repository = "https://github.com/hermes-agent/universal"
-
-[tool.hatch.build.targets.wheel]
-packages = ["hermes_universal"]
-
-[tool.hatch.build.targets.sdist]
-include = [
-    "hermes_universal/**",
-    "agent-kit/**",
-    "installer/**",
-    "fingerprints/**",
-    "subchains/**",
-    "validations/**",
-    "config.yaml",
-    "SKILL.md",
-    "pyproject.toml",
-]
