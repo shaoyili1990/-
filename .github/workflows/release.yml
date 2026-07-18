@@ -29,8 +29,8 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: |
-          pip install -e ".[dev]"
-          # core + PyInstaller. Provider plugins (openai/anthropic/ollama) are optional at runtime
+          pip install -e .
+          pip install pytest 2>/dev/null || true
       - run: make check
 
   # ========== 2. 构建 pip 包（所有平台共用） ==========
