@@ -143,11 +143,19 @@ jobs:
         run: |
           ls *.spec
           pyinstaller --clean hermes-agent.spec
+          echo "✅ EXE: dist/hermes-agent.exe"
+      - name: Build NSIS installer
+        shell: pwsh
+        run: |
+          choco install nsis -y
+          & "C:\Program Files (x86)\NSIS\makensis.exe" installer\hermes-installer.nsi
+          echo "✅ NSIS Setup: dist/*Setup*.exe"
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: dist/hermes-agent.exe
-          if-no-files-found: error
+          path: |
+            dist/hermes-agent.exe
+            dist/*Setup*.exe
 
   # ========== 6. Docker 构建 ==========
   build-docker:
@@ -215,6 +223,7 @@ jobs:
               -name "*.AppImage" -o \
               -name "*.dmg" -o \
               -name "*.exe" -o \
+              -name "*Setup*" -o \
               -name "*.whl" \
             \) -exec cp -v {} release/ \; 2>/dev/null || true
           fi
