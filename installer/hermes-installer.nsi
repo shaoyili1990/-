@@ -1,5 +1,6 @@
 ; Hermes Agent Universal - Windows NSIS Installer
 ; 编译: makensis hermes-installer.nsi
+; 注意：File 路径相对于 .nsi 文件所在目录
 
 !define APP_NAME "Hermes Agent"
 !define APP_EXE "hermes-agent.exe"
@@ -9,14 +10,14 @@
 
 Unicode True
 Name "${APP_NAME} ${APP_VERSION}"
-OutFile "dist\${APP_NAME}-Setup-${APP_VERSION}.exe"
+OutFile "..\dist\${APP_NAME}-Setup-${APP_VERSION}.exe"
 InstallDir "$PROGRAMFILES64\${APP_NAME}"
 RequestExecutionLevel admin
 
 Section "Install"
   SetOutPath "$INSTDIR"
-  File "dist\${APP_EXE}"
-  File "installer\hermes.ico"
+  File "..\dist\${APP_EXE}"
+  File "..\installer\hermes.ico"
 
   CreateDirectory "$SMPROGRAMS\${APP_NAME}"
   CreateShortCut "$SMPROGRAMS\${APP_NAME}\${APP_NAME}.lnk" "$INSTDIR\${APP_EXE}" "" "$INSTDIR\hermes.ico"

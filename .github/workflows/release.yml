@@ -148,8 +148,11 @@ jobs:
         shell: pwsh
         run: |
           choco install nsis -y
-          & "C:\Program Files (x86)\NSIS\makensis.exe" installer\hermes-installer.nsi
+          cd installer
+          & "C:\Program Files (x86)\NSIS\makensis.exe" hermes-installer.nsi
+          cd ..
           echo "✅ NSIS Setup: dist/*Setup*.exe"
+          dir dist\*Setup*
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
