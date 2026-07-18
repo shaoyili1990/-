@@ -1,0 +1,225 @@
+"""
+配置系统 - 三层合并: YAML < 环境变量 < CLI参数
+支持任意AI厂商API Key配置和混搭模式
+"""
+
+import os
+import json
+from pathlib import Path
+from typing import Optional, Dict, Any, List
+
+# 默认配置
+DEFAULT_CONFIG = {
+    "monkey": {
+        "provider": "openai",
+        "model": "gpt-4o",
+        "api_key": "",
+        "base_url": "",
+        "temperature": 0.7,
+        "max_tokens": 4096,
+    },
+    "horse": {
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "api_key": "",
+        "base_url": "",
+        "temperature": 0.7,
+        "max_tokens": 8192,
+    },
+    "keeper": {
+        "db_path": "",
+        "auto_migrate": True,
+    },
+    "scribe": {
+        "db_path": "",
+        "auto_init": True,
+    },
+    "system": {
+        "subchains_dir": "",
+        "fingerprints_dir": "",
+        "store_dir": "",
+        "encoding": "utf-8",
+        "auto_encoding": True,
+    },
+    "providers": {
+        "openai": {
+            "base_url": "https://api.openai.com/v1",
+            "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
+        },
+        "anthropic": {
+            "base_url": "https://api.anthropic.com/v1",
+            "models": ["claude-sonnet-4-20250514", "claude-3-5-sonnet-latest"],
+        },
+        "deepseek": {
+            "base_url": "https://api.deepseek.com/v1",
+            "models": ["deepseek-chat", "deepseek-reasoner"],
+        },
+        "google": {
+            "base_url": "https://generativelanguage.googleapis.com/v1beta",
+            "models": ["gemini-1.5-pro", "gemini-1.5-flash"],
+        },
+        "ollama": {
+            "base_url": "http://localhost:11434",
+            "models": ["llama3", "qwen2", "mistral", "qwen2.5"],
+            "local": True,
+        },
+        "vllm": {
+            "base_url": "http://localhost:8000/v1",
+            "models": [],
+            "local": True,
+        },
+        "openrouter": {
+            "base_url": "https://openrouter.ai/api/v1",
+            "models": [],
+        },
+    }
+}
+
+
+class Config:
+    """三层配置系统"""
+
+    def __init__(self, config_path: Optional[str] = None, **overrides):
+        self._data = self._merge_configs(config_path, overrides)
+
+    def _merge_configs(self, config_path: Optional[str], overrides: Dict) -> Dict:
+        """合并默认配置 + YAML文件 + 环境变量 + CLI参数"""
+        config = self._deep_copy(DEFAULT_CONFIG)
+
+        # 1. 加载YAML文件
+        if config_path and os.path.exists(config_path):
+            yaml_config = self._load_yaml(config_path)
+            self._deep_merge(config, yaml_config)
+
+        # 2. 环境变量覆盖
+        self._apply_env(config)
+
+        # 3. CLI参数覆盖
+        self._deep_merge(config, overrides)
+
+        # 4. 自动填充路径
+        self._resolve_paths(config)
+
+        # 5. 自动检测编码
+        if config["system"]["auto_encoding"]:
+            config["system"]["encoding"] = self._detect_encoding()
+
+        return config
+
+    def _load_yaml(self, path: str) -> Dict:
+        """加载YAML配置，若pyyaml不可用则fallback到JSON"""
+        try:
+            import yaml
+            with open(path, "r", encoding="utf-8") as f:
+                return yaml.safe_load(f) or {}
+        except ImportError:
+            try:
+                import json
+                with open(path.replace(".yaml", ".json"), "r", encoding="utf-8") as f:
+                    return json.load(f)
+            except:
+                return {}
+
+    def _apply_env(self, config: Dict):
+        """环境变量覆盖"""
+        env_map = {
+            "HERMES_MONKEY_PROVIDER": ("monkey", "provider"),
+            "HERMES_MONKEY_MODEL": ("monkey", "model"),
+            "HERMES_MONKEY_KEY": ("monkey", "api_key"),
+            "HERMES_MONKEY_BASE_URL": ("monkey", "base_url"),
+            "HERMES_HORSE_PROVIDER": ("horse", "provider"),
+            "HERMES_HORSE_MODEL": ("horse", "model"),
+            "HERMES_HORSE_KEY": ("horse", "api_key"),
+            "HERMES_HORSE_BASE_URL": ("horse", "base_url"),
+            "HERMES_DB_PATH": ("keeper", "db_path"),
+            "HERMES_STORE_DIR": ("system", "store_dir"),
+            "HERMES_ENCODING": ("system", "encoding"),
+        }
+        # 通用API Key环境变量
+        provider_keys = {
+            "OPENAI_API_KEY": ("providers", "openai", "api_key"),
+            "ANTHROPIC_API_KEY": ("providers", "anthropic", "api_key"),
+            "DEEPSEEK_API_KEY": ("providers", "deepseek", "api_key"),
+            "GOOGLE_API_KEY": ("providers", "google", "api_key"),
+        }
+
+        for env_key, path in {**env_map, **provider_keys}.items():
+            val = os.environ.get(env_key)
+            if val:
+                self._set_nested(config, path, val)
+
+    def _resolve_paths(self, config: Dict):
+        """自动解析项目路径"""
+        base = Path(__file__).parent.parent  # hermes-agent-universal/
+        if not config["system"]["subchains_dir"]:
+            config["system"]["subchains_dir"] = str(base / "subchains")
+        if not config["system"]["fingerprints_dir"]:
+            config["system"]["fingerprints_dir"] = str(base / "fingerprints")
+        if not config["system"]["store_dir"]:
+            config["system"]["store_dir"] = str(base / "store")
+        if not config["keeper"]["db_path"]:
+            config["keeper"]["db_path"] = str(base / "store" / "rnd_engine.db")
+        if not config["scribe"]["db_path"]:
+            config["scribe"]["db_path"] = str(base / "store" / "hermes.db")
+
+    def _detect_encoding(self) -> str:
+        """自动检测终端编码"""
+        enc = os.environ.get("LC_ALL", "") or os.environ.get("LC_CTYPE", "") or os.environ.get("LANG", "")
+        if "GBK" in enc.upper() or "GB2312" in enc.upper() or "936" in enc:
+            return "gbk"
+        return "utf-8"
+
+    def get(self, *keys, default=None):
+        """安全获取嵌套配置值: config.get('monkey','provider')"""
+        val = self._data
+        for k in keys:
+            if isinstance(val, dict):
+                val = val.get(k)
+            else:
+                return default
+        return val if val is not None else default
+
+    def get_provider_config(self, role: str) -> Dict:
+        """获取指定角色(monkey/horse)的提供者配置"""
+        role_config = self._data.get(role, {})
+        provider_name = role_config.get("provider", "openai")
+        provider_defaults = self._data.get("providers", {}).get(provider_name, {})
+
+        return {
+            "name": provider_name,
+            "api_key": role_config.get("api_key") or provider_defaults.get("api_key", ""),
+            "base_url": role_config.get("base_url") or provider_defaults.get("base_url", ""),
+            "model": role_config.get("model", ""),
+            "temperature": role_config.get("temperature", 0.7),
+            "max_tokens": role_config.get("max_tokens", 4096),
+            "is_local": provider_defaults.get("local", False),
+        }
+
+    def to_dict(self) -> Dict:
+        return self._deep_copy(self._data)
+
+    @staticmethod
+    def _deep_copy(d):
+        import copy
+        return copy.deepcopy(d)
+
+    @staticmethod
+    def _deep_merge(base, override):
+        """递归合并字典"""
+        for key, val in override.items():
+            if key in base and isinstance(base[key], dict) and isinstance(val, dict):
+                Config._deep_merge(base[key], val)
+            elif val is not None and val != "":
+                base[key] = val
+
+    @staticmethod
+    def _set_nested(d, path, val):
+        """设置嵌套字典值"""
+        for key in path[:-1]:
+            d = d.setdefault(key, {})
+        d[path[-1]] = val
+
+
+def load_config(config_path: Optional[str] = None, **overrides) -> Config:
+    """加载配置的快捷方式"""
+    return Config(config_path, **overrides)

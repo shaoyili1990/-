@@ -1,0 +1,36 @@
+{
+  "name": "hermes-agent-universal",
+  "version": "0.1.0",
+  "platform": "hermes",
+
+  "agent": {
+    "skill_path": "SKILL.md",
+    "type": "multi-role",
+    "roles": ["monkey", "horse", "keeper", "scribe"],
+    "auto_route": true
+  },
+
+  "providers": {
+    "monkey": {
+      "provider": "openai",
+      "model": "gpt-4o",
+      "temperature": 0.7
+    },
+    "horse": {
+      "provider": "deepseek",
+      "model": "deepseek-chat",
+      "temperature": 0.7
+    }
+  },
+
+  "fingerprints": {
+    "path": "fingerprints/",
+    "generic": "jiapo_unified_fingerprint.json",
+    "auto_load": true
+  },
+
+  "memory": {
+    "type": "sqlite",
+    "path": "store/"
+  }
+}

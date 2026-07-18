@@ -1,0 +1,64 @@
+{
+  "name": "Hermes Agent Universal",
+  "version": "0.1.0",
+  "description": "通用可移植AI Agent系统 - 猴驭马四角色架构(灵猴/骏马/司库/书童)",
+  "author": "Hermes Agent Team",
+  "license": "MIT",
+  "protocol": "universal-prompt-v1",
+
+  "capabilities": {
+    "reasoning": {
+      "brains": ["逻辑链", "因果链", "思维链", "推导法"],
+      "depth_levels": ["snapshot", "standard", "deep"],
+      "chain_count": 136,
+      "tier_system": "T1(快照)/T2(标准)/T3(深度)/T4-T5(待命)"
+    },
+    "domain_fingerprints": {
+      "total": 10,
+      "domains": ["TECH", "ACADEMIC", "BUSINESS", "FINANCE", "POLICY",
+                   "PRODUCT", "AUTHOR", "CRITIQUE", "CHAOS", "WEATHER"],
+      "generic": "jiapo_unified"
+    },
+    "state_machine": {
+      "states": 9,
+      "review_levels": ["step", "unit", "phase", "whole"]
+    },
+    "memory": {
+      "cognitive_libraries": 10,
+      "storage": "SQLite多维表格"
+    }
+  },
+
+  "compatibility": {
+    "platforms": ["hermes", "openclaw", "claude", "chatgpt", "deepseek",
+                  "openai", "any-llm"],
+    "formats": ["SKILL.md", "system-prompt", "python-package"],
+    "modes": ["prompt-only", "cli", "docker", "desktop-ui"]
+  },
+
+  "components": {
+    "core_prompt": "SKILL.md",
+    "fingerprints": "fingerprints/",
+    "subchains": "subchains/",
+    "python_package": "hermes_universal/",
+    "config": "config.yaml",
+    "cli_entry": "hermes"
+  },
+
+  "requirements": {
+    "python": ">=3.11",
+    "prompt_only": "无需任何依赖 - 纯文本System Prompt",
+    "full_mode": "pip install hermes-agent-universal"
+  },
+
+  "architecture": {
+    "pattern": "猴驭马(Monkey-Horse)",
+    "roles": {
+      "monkey": "路由与审核官 - 领域匹配/深度判定/单双链决策",
+      "horse": "推理与执行者 - 4脑全参与/136子链调度/4步产出",
+      "keeper": "宪法与流程守护者 - 9状态状态机/版本控制",
+      "scribe": "认知与记忆管家 - 10认知库/伪注意力机制"
+    },
+    "philosophy": "解析解(非数值) - 所有决策使用可能性/倾向性/合理性"
+  }
+}

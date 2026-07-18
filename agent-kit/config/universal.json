@@ -1,0 +1,17 @@
+{
+  "name": "hermes-agent-universal",
+  "version": "0.1.0",
+  "platform": "universal",
+
+  "agent": {
+    "skill": "SKILL.md",
+    "mode": "system-prompt",
+    "description": "将SKILL.md内容作为System Prompt使用，AI自动扮演全部四角色"
+  },
+
+  "usage": {
+    "minimal": "直接复制SKILL.md内容到AI的System Prompt位置",
+    "with_tools": "配合CLI使用: pip install hermes-agent-universal && hermes chat",
+    "advanced": "混搭配置: 不同AI厂商用于Monkey和Horse角色"
+  }
+}

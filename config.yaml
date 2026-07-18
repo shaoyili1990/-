@@ -1,0 +1,51 @@
+# Hermes Agent Universal 配置文件
+# 支持混搭模式:
+#   - 双API Key (Monkey用OpenAI, Horse用Claude)
+#   - 单Key+本地 (Monkey用DeepSeek, Horse用Ollama)
+#   - 双本地 (全用Ollama)
+#   - 云混搭 (不同云厂商)
+
+monkey:
+  provider: openai           # openai / anthropic / deepseek / ollama / openrouter / vllm
+  model: gpt-4o
+  api_key: ""                # 可留空，用环境变量 OPENAI_API_KEY
+  base_url: ""               # 自定义端点（如企业代理）
+  temperature: 0.7
+  max_tokens: 4096
+
+horse:
+  provider: deepseek         # openai / anthropic / deepseek / ollama / openrouter / vllm
+  model: deepseek-chat
+  api_key: ""                # 可留空，用环境变量 DEEPSEEK_API_KEY
+  base_url: ""
+  temperature: 0.7
+  max_tokens: 8192
+
+keeper:
+  db_path: ""                # 默认为 store/rnd_engine.db
+  auto_migrate: true
+
+scribe:
+  db_path: ""                # 默认为 store/hermes.db
+  auto_init: true
+
+system:
+  subchains_dir: ""          # 默认为 ./subchains/
+  fingerprints_dir: ""       # 默认为 ./fingerprints/
+  store_dir: ""              # 默认为 ./store/
+  encoding: utf-8
+  auto_encoding: true        # 自动检测终端编码
+
+# 厂商默认配置
+providers:
+  openai:
+    base_url: https://api.openai.com/v1
+  anthropic:
+    base_url: https://api.anthropic.com/v1
+  deepseek:
+    base_url: https://api.deepseek.com/v1
+  ollama:
+    base_url: http://localhost:11434
+    local: true
+  openrouter:
+    base_url: https://openrouter.ai/api/v1

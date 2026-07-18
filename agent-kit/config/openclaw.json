@@ -1,0 +1,24 @@
+{
+  "name": "hermes-agent-universal",
+  "version": "0.1.0",
+  "platform": "openclaw",
+
+  "agent": {
+    "skill": {
+      "file": "SKILL.md",
+      "encoding": "utf-8",
+      "mode": "system-prompt"
+    },
+    "capabilities": ["domain_routing", "depth_adaptation", "chain_reasoning"]
+  },
+
+  "runtime": {
+    "python": ">=3.11",
+    "dependencies": ["httpx", "pyyaml"]
+  },
+
+  "memory": {
+    "type": "sqlite",
+    "auto_init": true
+  }
+}

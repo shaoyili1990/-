@@ -1,0 +1,762 @@
+[
+  {
+    "path": "agent-kit\\README.md",
+    "size": 1217
+  },
+  {
+    "path": "agent-kit\\config\\hermes.json",
+    "size": 658
+  },
+  {
+    "path": "agent-kit\\config\\openclaw.json",
+    "size": 438
+  },
+  {
+    "path": "agent-kit\\config\\universal.json",
+    "size": 509
+  },
+  {
+    "path": "agent-kit\\manifest.json",
+    "size": 2110
+  },
+  {
+    "path": "fingerprints\\_domain_tags_reference.json",
+    "size": 685
+  },
+  {
+    "path": "fingerprints\\domain_ACADEMIC.json",
+    "size": 26869
+  },
+  {
+    "path": "fingerprints\\domain_AUTHOR.json",
+    "size": 30297
+  },
+  {
+    "path": "fingerprints\\domain_BUSINESS.json",
+    "size": 27198
+  },
+  {
+    "path": "fingerprints\\domain_CHAOS.json",
+    "size": 28746
+  },
+  {
+    "path": "fingerprints\\domain_CRITIQUE.json",
+    "size": 28880
+  },
+  {
+    "path": "fingerprints\\domain_FINANCE.json",
+    "size": 26933
+  },
+  {
+    "path": "fingerprints\\domain_POLICY.json",
+    "size": 27002
+  },
+  {
+    "path": "fingerprints\\domain_PRODUCT.json",
+    "size": 27028
+  },
+  {
+    "path": "fingerprints\\domain_TECH.json",
+    "size": 26871
+  },
+  {
+    "path": "fingerprints\\jiapo_unified_fingerprint.json",
+    "size": 31393
+  },
+  {
+    "path": "hermes_universal\\__init__.py",
+    "size": 482
+  },
+  {
+    "path": "hermes_universal\\__main__.py",
+    "size": 224
+  },
+  {
+    "path": "hermes_universal\\agent.py",
+    "size": 7261
+  },
+  {
+    "path": "hermes_universal\\cli.py",
+    "size": 7664
+  },
+  {
+    "path": "hermes_universal\\config.py",
+    "size": 7812
+  },
+  {
+    "path": "hermes_universal\\core\\__init__.py",
+    "size": 358
+  },
+  {
+    "path": "hermes_universal\\core\\horse.py",
+    "size": 15775
+  },
+  {
+    "path": "hermes_universal\\core\\keeper.py",
+    "size": 4955
+  },
+  {
+    "path": "hermes_universal\\core\\monkey.py",
+    "size": 12448
+  },
+  {
+    "path": "hermes_universal\\core\\scribe.py",
+    "size": 8701
+  },
+  {
+    "path": "hermes_universal\\core\\verifier.py",
+    "size": 14227
+  },
+  {
+    "path": "hermes_universal\\desktop\\__init__.py",
+    "size": 48
+  },
+  {
+    "path": "hermes_universal\\desktop\\app.py",
+    "size": 6624
+  },
+  {
+    "path": "hermes_universal\\desktop\\templates\\index.html",
+    "size": 21196
+  },
+  {
+    "path": "hermes_universal\\engine\\__init__.py",
+    "size": 22466
+  },
+  {
+    "path": "hermes_universal\\engine\\state_machine.py",
+    "size": 5201
+  },
+  {
+    "path": "hermes_universal\\engine\\subchain.py",
+    "size": 8247
+  },
+  {
+    "path": "hermes_universal\\messages\\__init__.py",
+    "size": 125
+  },
+  {
+    "path": "hermes_universal\\messages\\content.py",
+    "size": 5108
+  },
+  {
+    "path": "hermes_universal\\providers\\__init__.py",
+    "size": 777
+  },
+  {
+    "path": "hermes_universal\\providers\\anthropic.py",
+    "size": 6656
+  },
+  {
+    "path": "hermes_universal\\providers\\base.py",
+    "size": 2497
+  },
+  {
+    "path": "hermes_universal\\providers\\local.py",
+    "size": 7963
+  },
+  {
+    "path": "hermes_universal\\providers\\openai.py",
+    "size": 5343
+  },
+  {
+    "path": "hermes_universal\\providers\\registry.py",
+    "size": 3130
+  },
+  {
+    "path": "hermes_universal\\utils\\__init__.py",
+    "size": 88
+  },
+  {
+    "path": "hermes_universal\\utils\\encoding.py",
+    "size": 1701
+  },
+  {
+    "path": "installer\\build.py",
+    "size": 8965
+  },
+  {
+    "path": "installer\\install.bat",
+    "size": 2094
+  },
+  {
+    "path": "installer\\install.sh",
+    "size": 3946
+  },
+  {
+    "path": "installer\\install_android.sh",
+    "size": 2446
+  },
+  {
+    "path": "store\\hermes.db",
+    "size": 942080
+  },
+  {
+    "path": "store\\rnd_engine.db",
+    "size": 155648
+  },
+  {
+    "path": "subchains\\01_一因一果因果链.md",
+    "size": 7129
+  },
+  {
+    "path": "subchains\\01_主次优先级思维链.md",
+    "size": 7315
+  },
+  {
+    "path": "subchains\\01_主次逻辑链.md",
+    "size": 8339
+  },
+  {
+    "path": "subchains\\01_二分判定推导法.md",
+    "size": 7168
+  },
+  {
+    "path": "subchains\\02_一因多果因果链.md",
+    "size": 7231
+  },
+  {
+    "path": "subchains\\02_互斥逻辑链.md",
+    "size": 7074
+  },
+  {
+    "path": "subchains\\02_传递推导法.md",
+    "size": 7024
+  },
+  {
+    "path": "subchains\\02_假设推演思维链.md",
+    "size": 7900
+  },
+  {
+    "path": "subchains\\03_主次权重因果链.md",
+    "size": 7904
+  },
+  {
+    "path": "subchains\\03_互补逻辑链.md",
+    "size": 7141
+  },
+  {
+    "path": "subchains\\03_假设验证推导法.md",
+    "size": 7225
+  },
+  {
+    "path": "subchains\\03_全局统筹思维链.md",
+    "size": 7231
+  },
+  {
+    "path": "subchains\\04_互为因果链.md",
+    "size": 7158
+  },
+  {
+    "path": "subchains\\04_传承逻辑链.md",
+    "size": 7102
+  },
+  {
+    "path": "subchains\\04_全息推导法.md",
+    "size": 7066
+  },
+  {
+    "path": "subchains\\04_关联联想思维链.md",
+    "size": 7216
+  },
+  {
+    "path": "subchains\\05_依存逻辑链.md",
+    "size": 7184
+  },
+  {
+    "path": "subchains\\05_分叉发散因果链.md",
+    "size": 8579
+  },
+  {
+    "path": "subchains\\05_博弈推导法.md",
+    "size": 7105
+  },
+  {
+    "path": "subchains\\05_发散思维链.md",
+    "size": 7816
+  },
+  {
+    "path": "subchains\\06_假设逻辑链.md",
+    "size": 7804
+  },
+  {
+    "path": "subchains\\06_协同加成因果链.md",
+    "size": 7255
+  },
+  {
+    "path": "subchains\\06_反证推导法.md",
+    "size": 7237
+  },
+  {
+    "path": "subchains\\06_周期循环思维链.md",
+    "size": 7319
+  },
+  {
+    "path": "subchains\\07_制衡逻辑链.md",
+    "size": 7702
+  },
+  {
+    "path": "subchains\\07_即时因果链.md",
+    "size": 7177
+  },
+  {
+    "path": "subchains\\07_回溯复盘思维链.md",
+    "size": 7584
+  },
+  {
+    "path": "subchains\\07_因果推导法.md",
+    "size": 7135
+  },
+  {
+    "path": "subchains\\08_反噬反转因果链.md",
+    "size": 7234
+  },
+  {
+    "path": "subchains\\08_取舍逻辑链.md",
+    "size": 7018
+  },
+  {
+    "path": "subchains\\08_壁垒突破思维链.md",
+    "size": 7228
+  },
+  {
+    "path": "subchains\\08_守恒推导法.md",
+    "size": 7132
+  },
+  {
+    "path": "subchains\\09_反馈因果链.md",
+    "size": 7202
+  },
+  {
+    "path": "subchains\\09_因果逻辑链.md",
+    "size": 7783
+  },
+  {
+    "path": "subchains\\09_局部深挖思维链.md",
+    "size": 7222
+  },
+  {
+    "path": "subchains\\09_层级拆解推导法.md",
+    "size": 7753
+  },
+  {
+    "path": "subchains\\10_因果链式思维链.md",
+    "size": 7168
+  },
+  {
+    "path": "subchains\\10_对比逻辑链.md",
+    "size": 7053
+  },
+  {
+    "path": "subchains\\10_层级递进思维链.md",
+    "size": 7756
+  },
+  {
+    "path": "subchains\\10_归纳推导法.md",
+    "size": 7012
+  },
+  {
+    "path": "subchains\\11_多因一果因果链.md",
+    "size": 7279
+  },
+  {
+    "path": "subchains\\11_嵌套逻辑链.md",
+    "size": 7072
+  },
+  {
+    "path": "subchains\\11_并行统筹思维链.md",
+    "size": 7912
+  },
+  {
+    "path": "subchains\\11_归谬推导法.md",
+    "size": 7285
+  },
+  {
+    "path": "subchains\\12_多因多果因果链.md",
+    "size": 7276
+  },
+  {
+    "path": "subchains\\12_并列逻辑链.md",
+    "size": 7840
+  },
+  {
+    "path": "subchains\\12_归纳思维链.md",
+    "size": 7057
+  },
+  {
+    "path": "subchains\\12_排除推导法.md",
+    "size": 7096
+  },
+  {
+    "path": "subchains\\13_多选随机因果链.md",
+    "size": 7906
+  },
+  {
+    "path": "subchains\\13_归属逻辑链.md",
+    "size": 7036
+  },
+  {
+    "path": "subchains\\13_推导方法论.md",
+    "size": 7078
+  },
+  {
+    "path": "subchains\\14_嵌套层级因果链.md",
+    "size": 7174
+  },
+  {
+    "path": "subchains\\14_归纳逻辑链.md",
+    "size": 6994
+  },
+  {
+    "path": "subchains\\14_拆分解构思维链.md",
+    "size": 7219
+  },
+  {
+    "path": "subchains\\14_时空推演法.md",
+    "size": 7807
+  },
+  {
+    "path": "subchains\\15_并行独立因果链.md",
+    "size": 7279
+  },
+  {
+    "path": "subchains\\15_循环逻辑链.md",
+    "size": 7112
+  },
+  {
+    "path": "subchains\\15_择优筛选思维链.md",
+    "size": 7216
+  },
+  {
+    "path": "subchains\\15_映射关联推导法.md",
+    "size": 7791
+  },
+  {
+    "path": "subchains\\16_必然因果链.md",
+    "size": 7135
+  },
+  {
+    "path": "subchains\\16_总分逻辑链.md",
+    "size": 7216
+  },
+  {
+    "path": "subchains\\16_换位视角思维链.md",
+    "size": 7270
+  },
+  {
+    "path": "subchains\\16_权重计算法.md",
+    "size": 7180
+  },
+  {
+    "path": "subchains\\17_拆分逻辑链.md",
+    "size": 7036
+  },
+  {
+    "path": "subchains\\17_拮抗制约因果链.md",
+    "size": 7816
+  },
+  {
+    "path": "subchains\\17_收敛思维链.md",
+    "size": 7828
+  },
+  {
+    "path": "subchains\\17_极值推导法.md",
+    "size": 7093
+  },
+  {
+    "path": "subchains\\18_放大递增因果链.md",
+    "size": 7858
+  },
+  {
+    "path": "subchains\\18_方位逻辑链.md",
+    "size": 7723
+  },
+  {
+    "path": "subchains\\18_时序排序思维链.md",
+    "size": 7282
+  },
+  {
+    "path": "subchains\\18_样本抽样推导法.md",
+    "size": 7096
+  },
+  {
+    "path": "subchains\\19_时序逻辑链.md",
+    "size": 7747
+  },
+  {
+    "path": "subchains\\19_显性直观因果链.md",
+    "size": 7195
+  },
+  {
+    "path": "subchains\\19_权衡取舍思维链.md",
+    "size": 7201
+  },
+  {
+    "path": "subchains\\19_概率统计推导法.md",
+    "size": 7273
+  },
+  {
+    "path": "subchains\\20_条件逻辑链.md",
+    "size": 7071
+  },
+  {
+    "path": "subchains\\20_条件限定因果链.md",
+    "size": 7201
+  },
+  {
+    "path": "subchains\\20_极限边界思维链.md",
+    "size": 7222
+  },
+  {
+    "path": "subchains\\20_模态推导法.md",
+    "size": 7141
+  },
+  {
+    "path": "subchains\\21_标准化流程思维链.md",
+    "size": 7249
+  },
+  {
+    "path": "subchains\\21_根源 - 表层因果链.md",
+    "size": 7210
+  },
+  {
+    "path": "subchains\\21_溯因推导法.md",
+    "size": 7371
+  },
+  {
+    "path": "subchains\\21_溯源逻辑链.md",
+    "size": 8010
+  },
+  {
+    "path": "subchains\\22_概率或然因果链.md",
+    "size": 7273
+  },
+  {
+    "path": "subchains\\22_溯源思维链.md",
+    "size": 7452
+  },
+  {
+    "path": "subchains\\22_演绎推导法.md",
+    "size": 7036
+  },
+  {
+    "path": "subchains\\22_演绎逻辑链.md",
+    "size": 7006
+  },
+  {
+    "path": "subchains\\23_汇聚收敛因果链.md",
+    "size": 7879
+  },
+  {
+    "path": "subchains\\23_演绎思维链.md",
+    "size": 7081
+  },
+  {
+    "path": "subchains\\23_相容互斥推导法.md",
+    "size": 7180
+  },
+  {
+    "path": "subchains\\23_穷尽逻辑链.md",
+    "size": 6982
+  },
+  {
+    "path": "subchains\\24_混合复合因果链.md",
+    "size": 7156
+  },
+  {
+    "path": "subchains\\24_目标导向型思维链.md",
+    "size": 7297
+  },
+  {
+    "path": "subchains\\24_矛盾推导法.md",
+    "size": 7828
+  },
+  {
+    "path": "subchains\\24_等价逻辑链.md",
+    "size": 7053
+  },
+  {
+    "path": "subchains\\25_滞后因果链.md",
+    "size": 7237
+  },
+  {
+    "path": "subchains\\25_穷举推导法.md",
+    "size": 7036
+  },
+  {
+    "path": "subchains\\25_类比迁移思维链.md",
+    "size": 9153
+  },
+  {
+    "path": "subchains\\25_类比逻辑链.md",
+    "size": 7041
+  },
+  {
+    "path": "subchains\\26_稳态恒定因果链.md",
+    "size": 7303
+  },
+  {
+    "path": "subchains\\26_等效替换推导法.md",
+    "size": 7782
+  },
+  {
+    "path": "subchains\\26_线性递进思维链.md",
+    "size": 7213
+  },
+  {
+    "path": "subchains\\26_聚合逻辑链.md",
+    "size": 7141
+  },
+  {
+    "path": "subchains\\27_突发触发因果链.md",
+    "size": 7273
+  },
+  {
+    "path": "subchains\\27_类比推导法.md",
+    "size": 7047
+  },
+  {
+    "path": "subchains\\27_组合拼装思维链.md",
+    "size": 8591
+  },
+  {
+    "path": "subchains\\27_衍生逻辑链.md",
+    "size": 7090
+  },
+  {
+    "path": "subchains\\28_累积因果链.md",
+    "size": 8504
+  },
+  {
+    "path": "subchains\\28_约束限定推导法.md",
+    "size": 7189
+  },
+  {
+    "path": "subchains\\28_网状互联思维链.md",
+    "size": 8444
+  },
+  {
+    "path": "subchains\\28_转折逻辑链.md",
+    "size": 7052
+  },
+  {
+    "path": "subchains\\29_网状交织因果链.md",
+    "size": 7327
+  },
+  {
+    "path": "subchains\\29_范式推导法.md",
+    "size": 7054
+  },
+  {
+    "path": "subchains\\29_试错修正思维链.md",
+    "size": 7227
+  },
+  {
+    "path": "subchains\\29_迁移逻辑链.md",
+    "size": 7102
+  },
+  {
+    "path": "subchains\\30_衰减递减因果链.md",
+    "size": 7870
+  },
+  {
+    "path": "subchains\\30_谱系推导法.md",
+    "size": 7168
+  },
+  {
+    "path": "subchains\\30_辨析对比思维链.md",
+    "size": 7188
+  },
+  {
+    "path": "subchains\\30_连锁逻辑链.md",
+    "size": 7078
+  },
+  {
+    "path": "subchains\\31_趋势推演法.md",
+    "size": 7129
+  },
+  {
+    "path": "subchains\\31_跳跃跨阶因果链.md",
+    "size": 7162
+  },
+  {
+    "path": "subchains\\31_逆向思维链.md",
+    "size": 7452
+  },
+  {
+    "path": "subchains\\31_递进逻辑链.md",
+    "size": 7744
+  },
+  {
+    "path": "subchains\\32_边界推导法.md",
+    "size": 7105
+  },
+  {
+    "path": "subchains\\32_链式因果链.md",
+    "size": 7052
+  },
+  {
+    "path": "subchains\\32_问题导向型思维链.md",
+    "size": 7321
+  },
+  {
+    "path": "subchains\\33_连锁推导法.md",
+    "size": 7048
+  },
+  {
+    "path": "subchains\\33_阻断抵消因果链.md",
+    "size": 7270
+  },
+  {
+    "path": "subchains\\33_限定逻辑链.md",
+    "size": 7075
+  },
+  {
+    "path": "subchains\\33_预判推演思维链.md",
+    "size": 7330
+  },
+  {
+    "path": "subchains\\34_迭代修正推导法.md",
+    "size": 7198
+  },
+  {
+    "path": "subchains\\34_隐性潜藏因果链.md",
+    "size": 7231
+  },
+  {
+    "path": "subchains\\34_风险预判思维链.md",
+    "size": 7282
+  },
+  {
+    "path": "subchains\\35_逆向推导法.md",
+    "size": 7998
+  },
+  {
+    "path": "subchains\\36_量化对比推导法.md",
+    "size": 7191
+  },
+  {
+    "path": "subchains\\37_阈值判断法.md",
+    "size": 7117
+  },
+  {
+    "path": "validations\\01_反证逻辑链.md",
+    "size": 6700
+  },
+  {
+    "path": "validations\\02_反AI逻辑链.md",
+    "size": 7451
+  },
+  {
+    "path": "validations\\03_反证思维链.md",
+    "size": 6344
+  },
+  {
+    "path": "validations\\04_逆AI思维链.md",
+    "size": 7024
+  },
+  {
+    "path": "validations\\验证模块任务清单.md",
+    "size": 1357
+  }
+]
