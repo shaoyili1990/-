@@ -1,154 +1,186 @@
+# ==============================================================================
+# Hermes Agent Universal - 全平台自动构建与发布
+# 触发: 推送 v* 标签 或 手动触发
+# 产出: Linux(二进制/DEB/AppImage) + macOS(DMG) + Windows(EXE) + Docker + PyPI
+# ==============================================================================
 name: Build & Release
 
 on:
   push:
-    tags:
-      - 'v*'          # 打 tag 自动构建发布
-  workflow_dispatch:   # 手动触发
+    tags: ['v*']
+  workflow_dispatch:
     inputs:
-      tag:
-        description: 'Release tag (e.g. v0.1.0)'
+      version:
+        description: 'Release version (e.g. 0.1.0)'
         required: false
 
-permissions:
-  contents: write
-  packages: write
+env:
+  APP_NAME: hermes-agent
+  PYTHON_VERSION: '3.12'
 
 jobs:
+  # ========== 1. 代码检查 ==========
   check:
+    name: Code Check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: 安装依赖
-        run: |
-          pip install build hatchling
-          pip install -e ".[all]"
-      - name: 完整性检查
-        run: make check
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: pip install -e ".[all,dev]"
+      - run: make check
 
-  build-linux:
+  # ========== 2. 构建 pip 包（所有平台共用） ==========
+  build-pip:
+    name: Build pip Package
     needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: 安装构建依赖
+          python-version: ${{ env.PYTHON_VERSION }}
+      - run: make pip-build
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pip-package
+          path: dist/*.whl
+          if-no-files-found: error
+
+  # ========== 3. Linux 构建 ==========
+  build-linux:
+    name: Linux Build
+    needs: check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install build deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y dpkg-dev
-          pip install pyinstaller build hatchling
+          sudo apt-get install -y appimagetool dpkg-dev
+          pip install pyinstaller
           pip install -e ".[all]"
-      - name: 构建 Linux 独立可执行文件
-        run: |
-          pyinstaller --clean hermes-agent.spec
-          echo "✅ Binary: dist/hermes-agent"
-      - name: 构建 DEB 包
-        run: |
-          make build-linux-deb
-      - name: 上传构建产物
-        uses: actions/upload-artifact@v4
+      - name: Binary + DEB
+        run: make build-linux-deb
+      - name: Build AppImage
+        run: make build-linux-appimage || true
+      - uses: actions/upload-artifact@v4
         with:
           name: linux-build
           path: |
             dist/hermes-agent
             dist/*.deb
-          if-no-files-found: warn
+            dist/*.AppImage
+          if-no-files-found: error
 
+  # ========== 4. macOS 构建 ==========
   build-macos:
+    name: macOS Build
     needs: check
     runs-on: macos-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: 安装构建依赖
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install build deps
         run: |
-          brew install create-dmg 2>/dev/null || true
-          pip install pyinstaller build hatchling
+          pip install pyinstaller
           pip install -e ".[all]"
-      - name: 构建 macOS .app
+      - name: Build .app + DMG
         run: |
           pyinstaller --clean hermes-agent.spec
-          echo "✅ macOS .app: dist/hermes-agent.app"
-      - name: 创建 DMG (create-dmg)
-        run: |
-          if which create-dmg &>/dev/null; then
-            create-dmg \
-              --volname "Hermes Agent" \
-              --window-pos 200 120 \
-              --window-size 600 400 \
-              --icon-size 100 \
-              --app-drop-link 400 200 \
-              dist/hermes-agent-$(python3 -c "import hermes_universal; print(hermes_universal.__version__)")-macos-x86_64.dmg \
-              dist/hermes-agent.app/ 2>/dev/null || true
-          fi
-          echo "✅ DMG available at dist/*.dmg"
-      - name: 上传构建产物
-        uses: actions/upload-artifact@v4
+          echo "✅ .app ready"
+          # 生成 DMG
+          hdiutil create -srcfolder dist/hermes-agent.app \
+            -volname "Hermes Agent ${{ github.ref_name }}" \
+            dist/hermes-agent-${{ github.ref_name }}-macos-x86_64.dmg
+          echo "✅ DMG ready"
+      - uses: actions/upload-artifact@v4
         with:
           name: macos-build
           path: |
             dist/hermes-agent.app/
             dist/*.dmg
-          if-no-files-found: warn
+          if-no-files-found: error
 
+  # ========== 5. Windows 构建 ==========
   build-windows:
+    name: Windows Build
     needs: check
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
-      - name: 安装构建依赖
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install build deps
         shell: pwsh
         run: |
-          pip install pyinstaller build hatchling
+          pip install pyinstaller
           pip install -e ".[all]"
-      - name: 构建 Windows exe
+      - name: Build exe
         shell: pwsh
-        run: |
-          pyinstaller --clean hermes-agent.spec
-          echo "✅ Windows exe: dist/hermes-agent.exe"
-      - name: 上传构建产物
-        uses: actions/upload-artifact@v4
+        run: pyinstaller --clean hermes-agent.spec
+      - uses: actions/upload-artifact@v4
         with:
           name: windows-build
-          path: |
-            dist/hermes-agent.exe
-          if-no-files-found: warn
+          path: dist/hermes-agent.exe
+          if-no-files-found: error
 
+  # ========== 6. Docker 构建 ==========
   build-docker:
+    name: Docker Image
     needs: check
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: 登录 DockerHub
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Login to DockerHub (optional)
         uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: 提取版本号
+        continue-on-error: true
+      - name: Extract version
         id: version
-        run: |
-          TAG=${GITHUB_REF#refs/tags/}
-          echo "version=${TAG#v}" >> $GITHUB_OUTPUT
-      - name: 构建并推送 Docker 镜像
+        run: echo "version=${GITHUB_REF_NAME#v}" >> $GITHUB_OUTPUT
+      - name: Build and push
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: true
+          push: ${{ secrets.DOCKER_USERNAME != '' }}
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/hermes-agent:latest
             ${{ secrets.DOCKER_USERNAME }}/hermes-agent:${{ steps.version.outputs.version }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
 
+  # ========== 7. 发布到 PyPI ==========
+  publish-pypi:
+    name: Publish to PyPI
+    needs: [build-pip]
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: pip-package
+          path: dist
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          password: ${{ secrets.PYPI_API_TOKEN }}
+        continue-on-error: true
+
+  # ========== 8. 创建 GitHub Release ==========
   create-release:
+    name: Create GitHub Release
     needs: [build-linux, build-macos, build-windows]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
@@ -156,43 +188,25 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          path: release-assets
-      - name: 整理发布资产
+          path: release-artifacts
+          merge-multiple: true
+      - name: Organize release assets
         run: |
           mkdir -p release
-          find release-assets -type f \( -name "hermes-agent" -o -name "*.deb" -o -name "*.dmg" -o -name "*.exe" -o -name "*.AppImage" \) -exec cp {} release/ \;
+          find release-artifacts -type f \( \
+            -name "hermes-agent" -o \
+            -name "*.deb" -o \
+            -name "*.AppImage" -o \
+            -name "*.dmg" -o \
+            -name "*.exe" -o \
+            -name "*.whl" \
+          \) -exec cp -v {} release/ \;
           ls -lh release/
-      - name: 创建 GitHub Release
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
-          body: |
-            ## Hermes Agent Universal ${{ github.ref_name }}
-
-            ### 下载
-            | 平台 | 文件 |
-            |------|------|
-            | Linux (通用) | `hermes-agent` 独立可执行文件 |
-            | Debian/Ubuntu | `*.deb` 安装包 |
-            | macOS | `*.dmg` 磁盘映像 |
-            | Windows | `hermes-agent.exe` 可执行文件 |
-
-            ### 快速开始
-            ```bash
-            # Linux
-            ./hermes-agent
-
-            # macOS
-            open hermes-agent-*.dmg
-
-            # Windows
-            hermes-agent.exe
-            ```
-
-            ### Docker
-            ```bash
-            docker pull ${{ secrets.DOCKER_USERNAME }}/hermes-agent:${{ github.ref_name }}
-            docker run -e OPENAI_API_KEY=$OPENAI_API_KEY -p 8080:8080 ${{ secrets.DOCKER_USERNAME }}/hermes-agent:${{ github.ref_name }}
-            ```
+          body_path: .github/RELEASE_TEMPLATE.md
+          fail_on_unmatched_files: false
           files: release/*
           generate_release_notes: true
