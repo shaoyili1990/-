@@ -216,10 +216,11 @@ jobs:
           fi
           ls -lh release/ || echo "No release assets found"
       - name: Create Release
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
         uses: softprops/action-gh-release@v2
         with:
           name: ${{ github.ref_name }}
           body_path: .github/RELEASE_TEMPLATE.md
           fail_on_unmatched_files: false
           files: release/*
-          generate_release_notes: true
