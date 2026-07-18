@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="console-application">
+  <id>io.hermes.agent</id>
+  <name>Hermes Agent Universal</name>
+  <summary>Universal Portable AI Agent System</summary>
+  <developer_name>Hermes Agent Team</developer_name>
+  <metadata_license>MIT</metadata_license>
+  <project_license>MIT</project_license>
+  <description>
+    <p>Hermes Agent Universal is a portable AI agent system based on the Monkey-Horse (猴驭马) four-role architecture.</p>
+    <p>Features:</p>
+    <ul>
+      <li>Four roles: Monkey (router), Horse (reasoner), Keeper (state machine), Scribe (memory)</li>
+      <li>136 reasoning chains across 4 brain categories</li>
+      <li>Multi-provider support: OpenAI, Anthropic, DeepSeek, Ollama, OpenRouter, vLLM</li>
+      <li>SQLite multi-dimensional table storage</li>
+      <li>Web UI desktop mode, CLI mode, and Docker mode</li>
+    </ul>
+  </description>
+  <categories>
+    <category>Utility</category>
+    <category>Development</category>
+  </categories>
+  <url type="homepage">https://github.com/hermes-agent/universal</url>
+  <releases>
+    <release version="0.1.0" date="2026-07-18"/>
+  </releases>
+  <provides>
+    <binary>hermes-agent</binary>
+  </provides>
+</component>

@@ -1,0 +1,32 @@
+# Build outputs
+dist/
+build/
+*.spec
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# User runtime data
+store/
+!store/rnd_engine.db
+!store/hermes.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+venv/
+.venv/
+
+# Temp
+*.log
+*.tmp

@@ -1,0 +1,12 @@
+[Desktop Entry]
+Name=Hermes Agent Universal
+Name[zh]=Hermes Agent 通用AI代理
+Comment=Universal Portable AI Agent System - Monkey-Horse Architecture
+Comment[zh]=通用可移植AI代理系统 - 猴驭马四角色架构
+Exec=hermes-agent
+Icon=hermes-agent
+Terminal=true
+Type=Application
+Categories=Utility;Development;AI;
+StartupWMClass=HermesAgent
+MimeType=x-scheme-handler/hermes;

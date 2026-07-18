@@ -4,6 +4,7 @@
 
 import os
 import json
+import sys
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from ..engine import EngineDB
@@ -25,7 +26,10 @@ class SubchainScheduler:
         if subchains_dir:
             self.subchains_dir = subchains_dir
         else:
-            base = Path(__file__).parent.parent.parent
+            if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+                base = Path(sys._MEIPASS)
+            else:
+                base = Path(__file__).parent.parent.parent
             self.subchains_dir = str(base / "subchains")
         self.db = db
         self._chains_cache = None

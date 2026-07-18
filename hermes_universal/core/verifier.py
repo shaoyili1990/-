@@ -18,6 +18,7 @@
 import os
 import json
 import re
+import sys
 from pathlib import Path
 from typing import List, Dict, Optional, Tuple
 from ..config import Config
@@ -69,7 +70,10 @@ class Verifier:
         if validations_dir:
             self.validations_dir = validations_dir
         else:
-            base = Path(__file__).parent.parent.parent  # project root
+            if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+                base = Path(sys._MEIPASS)
+            else:
+                base = Path(__file__).parent.parent.parent  # project root
             self.validations_dir = str(base / "validations")
 
         # 使用horse的provider来执行验证(验证也需AI能力)

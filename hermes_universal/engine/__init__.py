@@ -280,9 +280,22 @@ class EngineDB:
     """多维表格引擎 - 统一数据库访问层"""
 
     def __init__(self, engine_path: Optional[str] = None, cognition_path: Optional[str] = None):
-        base = Path(__file__).parent.parent.parent
-        self.engine_path = engine_path or str(base / "store" / "rnd_engine.db")
-        self.cognition_path = cognition_path or str(base / "store" / "hermes.db")
+        """多维表格引擎 - 路径由上层Config驱动，不从__file__硬编码"""
+        if engine_path and cognition_path:
+            # 路径已由上层Config.resolve_paths提供
+            self.engine_path = engine_path
+            self.cognition_path = cognition_path
+        else:
+            # 兜底：走与Config一致的逻辑
+            from ..config import load_config
+            cfg = load_config()
+            self.engine_path = engine_path or cfg.get("keeper", "db_path", default="")
+            self.cognition_path = cognition_path or cfg.get("scribe", "db_path", default="")
+            # 如果Config也返回空，才用硬编码兜底（仅测试场景）
+            if not self.engine_path:
+                self.engine_path = str(Path(__file__).parent.parent.parent / "store" / "rnd_engine.db")
+            if not self.cognition_path:
+                self.cognition_path = str(Path(__file__).parent.parent.parent / "store" / "hermes.db")
         self._ensure_store()
         self._init_engine()
         self._init_cognition()

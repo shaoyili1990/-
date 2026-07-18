@@ -5,6 +5,7 @@
 
 import os
 import json
+import sys
 from pathlib import Path
 from typing import Optional, Dict, Any, List
 
@@ -149,18 +150,53 @@ class Config:
                 self._set_nested(config, path, val)
 
     def _resolve_paths(self, config: Dict):
-        """自动解析项目路径"""
-        base = Path(__file__).parent.parent  # hermes-agent-universal/
+        """自动解析项目路径（支持 PyInstaller 打包环境）"""
+        # PyInstaller onefile: 资源在 sys._MEIPASS
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            base = Path(sys._MEIPASS)
+        else:
+            base = Path(__file__).parent.parent  # hermes-agent-universal/
+
+        # 用户数据目录（可写，持久化）
+        user_data_dir = self._get_user_data_dir()
+
         if not config["system"]["subchains_dir"]:
             config["system"]["subchains_dir"] = str(base / "subchains")
         if not config["system"]["fingerprints_dir"]:
             config["system"]["fingerprints_dir"] = str(base / "fingerprints")
         if not config["system"]["store_dir"]:
-            config["system"]["store_dir"] = str(base / "store")
+            store_dir = user_data_dir / "store"
+            store_dir.mkdir(parents=True, exist_ok=True)
+            config["system"]["store_dir"] = str(store_dir)
+            # 首次运行：从打包目录复制初始 DB 到用户数据目录
+            self._ensure_db_init(base, user_data_dir)
         if not config["keeper"]["db_path"]:
-            config["keeper"]["db_path"] = str(base / "store" / "rnd_engine.db")
+            config["keeper"]["db_path"] = str(user_data_dir / "store" / "rnd_engine.db")
         if not config["scribe"]["db_path"]:
-            config["scribe"]["db_path"] = str(base / "store" / "hermes.db")
+            config["scribe"]["db_path"] = str(user_data_dir / "store" / "hermes.db")
+
+    def _get_user_data_dir(self) -> Path:
+        """获取用户数据目录（跨平台）"""
+        if os.name == 'nt':  # Windows
+            base = Path(os.environ.get('APPDATA', ''))
+        elif sys.platform == 'darwin':  # macOS
+            base = Path.home() / 'Library' / 'Application Support'
+        else:  # Linux
+            base = Path(os.environ.get('XDG_DATA_HOME', Path.home() / '.local' / 'share'))
+        return base / 'HermesAgent'
+
+    def _ensure_db_init(self, base: Path, user_data_dir: Path):
+        """首次运行时将打包的 DB 复制到用户数据目录"""
+        store_target = user_data_dir / "store"
+        for db_name in ['rnd_engine.db', 'hermes.db']:
+            src = base / "store" / db_name
+            dst = store_target / db_name
+            if src.exists() and not dst.exists():
+                try:
+                    import shutil
+                    shutil.copy2(str(src), str(dst))
+                except Exception:
+                    pass
 
     def _detect_encoding(self) -> str:
         """自动检测终端编码"""
