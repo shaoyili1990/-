@@ -1,44 +1,44 @@
-# Hermes Agent Universal ${{ github.ref_name }}
+# Hermes Agent Universal v${{ github.ref_name }}
 
-## 📦 下载
+通用可移植 AI Agent 系统 — 猴驭马（Monkey-Horse）架构
 
-| 平台 | 安装包 | 说明 |
-|------|--------|------|
-| **Linux (通用)** | `hermes-agent` | 独立可执行二进制文件，下载后 `chmod +x` 即可运行 |
-| **Debian/Ubuntu** | `*.deb` | `sudo dpkg -i *.deb` 系统安装 |
-| **Linux (通用AppImage)** | `*.AppImage` | 双击运行，无需安装 |
-| **macOS** | `*.dmg` | 打开 DMG 拖入 Applications |
-| **Windows** | `hermes-agent.exe` | 直接运行 |
-| **Docker** | `shaoyili/hermes-agent:latest` | `docker run -p 8080:8080 shaoyili/hermes-agent` |
-| **PyPI** | `pip install hermes-agent-universal` | Python 包安装 |
+## 下载
 
-## 🚀 快速开始
+| 平台 | 文件 | 说明 |
+|------|------|------|
+| Linux | `hermes-agent` | 独立可执行二进制 |
+| Linux | `*.deb` | Debian/Ubuntu 安装包 |
+| Linux | `*.AppImage` | 通用 Linux 运行格式 |
+| macOS | `*.dmg` | macOS 安装映像 |
+| Windows | `*.exe` | Windows 可执行文件 |
+| pip | `*.whl` | Python pip 包 |
+
+## 快速开始
 
 ```bash
-# 1. 设置 API Key（任选一种）
-export OPENAI_API_KEY=sk-xxx          # Monkey 用 OpenAI
-export DEEPSEEK_API_KEY=sk-xxx        # Horse 用 DeepSeek
+# Linux 独立二进制
+chmod +x hermes-agent
+./hermes-agent
 
-# 2. 运行
-./hermes-agent                         # CLI 模式
-hermes chat                           # 对话模式
-hermes desktop                        # Web UI (http://localhost:8080)
-```
+# 或 DEB 安装
+sudo dpkg -i *.deb
 
-### 混搭模式（Monkey 和 Horse 用不同厂商）
-```bash
-export HERMES_MONKEY_PROVIDER=openai
-export HERMES_MONKEY_KEY=sk-xxx
-export HERMES_HORSE_PROVIDER=deepseek
-export HERMES_HORSE_KEY=sk-xxx
+# 设置 API Key
+export OPENAI_API_KEY=sk-xxx
+export DEEPSEEK_API_KEY=sk-xxx
+
+# 启动 Web UI
 hermes desktop
 ```
 
-## 🧠 架构
+## 架构
 
-灵猴(Monkey) → 路由审核 → 骏马(Horse) → 推理执行 → 司库(Keeper) → 状态驱动 → 书童(Scribe) → 记忆管理
+- **灵猴(Monkey)** — 路由与审核
+- **骏马(Horse)** — 推理与执行，136条子链
+- **司库(Keeper)** — 9状态状态机
+- **书童(Scribe)** — 认知与记忆
+- **质检官** — 4条验证链审查
 
-- **136条推理子链**（4脑：逻辑链/因果链/思维链/推导法）
-- **9状态状态机** + **4级审核**
-- **10认知库** + **SQLite多维表格存储**
-- **4条验证链**（反证逻辑/反AI逻辑/反证思维/逆AI思维）
+## 变更
+
+_由 GitHub Actions 自动生成_

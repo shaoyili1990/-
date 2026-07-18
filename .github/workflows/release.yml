@@ -61,9 +61,14 @@ jobs:
       - name: Install build deps
         run: |
           sudo apt-get update
-          sudo apt-get install -y appimagetool dpkg-dev
+          sudo apt-get install -y dpkg-dev
           pip install pyinstaller
-          pip install -e "."
+          pip install .
+      - name: Install appimagetool
+        run: |
+          sudo wget -O /usr/local/bin/appimagetool \
+            https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-x86_64.AppImage
+          sudo chmod +x /usr/local/bin/appimagetool
       - name: Binary + DEB
         run: make build-linux-deb
       - name: Build AppImage
@@ -82,6 +87,9 @@ jobs:
     name: macOS Build
     needs: check
     runs-on: macos-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -93,9 +101,9 @@ jobs:
           pip install -e "."
       - name: Build .app + DMG
         run: |
+          ls -la *.spec
           pyinstaller --clean hermes-agent.spec
           echo "✅ .app ready"
-          # 生成 DMG
           hdiutil create -srcfolder dist/hermes-agent.app \
             -volname "Hermes Agent ${{ github.ref_name }}" \
             dist/hermes-agent-${{ github.ref_name }}-macos-x86_64.dmg
@@ -113,6 +121,9 @@ jobs:
     name: Windows Build
     needs: check
     runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: ${{ github.workspace }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
@@ -125,7 +136,9 @@ jobs:
           pip install -e "."
       - name: Build exe
         shell: pwsh
-        run: pyinstaller --clean hermes-agent.spec
+        run: |
+          ls *.spec
+          pyinstaller --clean hermes-agent.spec
       - uses: actions/upload-artifact@v4
         with:
           name: windows-build
@@ -143,9 +156,6 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Login to DockerHub (optional)
         uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
         continue-on-error: true
       - name: Extract version
         id: version
@@ -154,10 +164,10 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           context: .
-          push: ${{ secrets.DOCKER_USERNAME != '' }}
+          push: false
           tags: |
-            ${{ secrets.DOCKER_USERNAME }}/hermes-agent:latest
-            ${{ secrets.DOCKER_USERNAME }}/hermes-agent:${{ steps.version.outputs.version }}
+            shaoyili1990/hermes-agent:${{ steps.version.outputs.version }}
+            shaoyili1990/hermes-agent:latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
