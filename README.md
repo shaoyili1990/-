@@ -36,8 +36,8 @@
 
 ```bash
 # Linux
-chmod +x hermes-agent
-./hermes-agent
+chmod +x monkey-harness-agent
+./monkey-harness-agent
 
 # 设置API Key
 export OPENAI_API_KEY=sk-xxx
@@ -64,15 +64,15 @@ hermes desktop
 ### pip 安装
 
 ```bash
-pip install hermes-agent-universal
+pip install monkey-harness-agent
 hermes chat
 ```
 
 ### Docker
 
 ```bash
-docker pull shaoyili1990/hermes-agent:latest
-docker run -e OPENAI_API_KEY=$OPENAI_API_KEY -p 8080:8080 shaoyili1990/hermes-agent
+docker pull shaoyili1990/monkey-harness-agent:latest
+docker run -e OPENAI_API_KEY=$OPENAI_API_KEY -p 9090:9090 shaoyili1990/monkey-harness-agent
 ```
 
 ## 资源

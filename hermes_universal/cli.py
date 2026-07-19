@@ -1,6 +1,6 @@
 """
-Hermes Agent CLI - 命令行界面
-支持: run / chat / desktop / task / config 子命令
+Monkey Harness Agent (弼马温 Agent) - CLI 命令行
+支持: run / chat / desktop / mcp / task / config 子命令
 """
 
 import sys
@@ -14,21 +14,23 @@ from typing import Optional
 def main():
     """CLI入口"""
     parser = argparse.ArgumentParser(
-        description="Hermes Agent Universal - 通用可移植AI Agent",
+        description="Monkey Harness Agent / 弼马温 Agent — 猴驭多源，AI自治巡逻",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 使用示例:
-  hermes run "今天天气怎么样"           # 运行一次对话
-  hermes chat                            # 交互式对话
-  hermes desktop                         # 启动桌面版Web UI
-  hermes task list                       # 查看任务列表
-  hermes config show                     # 查看配置
+  monkey-harness run "今天AI有什么新闻"     # 运行一次
+  monkey-harness chat                       # 交互式对话
+  monkey-harness desktop                    # 启动Web UI
+  monkey-harness mcp                        # 启动MCP服务器
+  monkey-harness task list                  # 查看任务
+
+兼容命令:
+  hermes run "你好"                         # 旧名也支持
+  bimawen run "你好"                        # 中文名也支持
 
 环境变量:
   HERMES_MONKEY_KEY      灵猴API Key
   HERMES_HORSE_KEY       骏马API Key
-  HERMES_MONKEY_PROVIDER 灵猴厂商 (openai/anthropic/deepseek/ollama)
-  HERMES_HORSE_PROVIDER  骏马厂商
         """
     )
 
@@ -45,7 +47,7 @@ def main():
 
     # desktop
     p_desk = sub.add_parser("desktop", help="启动桌面版Web UI")
-    p_desk.add_argument("--port", type=int, default=8080, help="端口号")
+    p_desk.add_argument("--port", type=int, default=9090, help="端口号")
     p_desk.add_argument("--host", default="127.0.0.1", help="监听地址")
 
     # task
@@ -59,6 +61,13 @@ def main():
     p_config.add_argument("key", nargs="?", help="配置项")
     p_config.add_argument("value", nargs="?", help="配置值")
 
+    # mcp
+    p_mcp = sub.add_parser("mcp", help="启动MCP服务器")
+    p_mcp.add_argument("--transport", "-t", choices=["stdio", "http", "sse"], default="stdio",
+                       help="传输协议")
+    p_mcp.add_argument("--host", default="127.0.0.1", help="HTTP监听地址")
+    p_mcp.add_argument("--port", "-p", type=int, default=8000, help="HTTP端口")
+
     # version
     sub.add_parser("version", help="显示版本")
 
@@ -70,7 +79,15 @@ def main():
 
     if args.command == "version":
         from . import __version__
-        print(f"Hermes Agent Universal v{__version__}")
+        print(f"Monkey Harness Agent v{__version__} / 弼马温 Agent")
+        return
+
+    if args.command == "mcp":
+        run_mcp(args)
+        return
+
+    if args.command == "mcp":
+        run_mcp(args)
         return
 
     if args.command == "desktop":
@@ -161,6 +178,16 @@ def run_interactive(agent):
             print(f"\n{result.get('final_output', '')}")
         else:
             print(f"\n{result}")
+
+
+def run_mcp(args):
+    """启动MCP服务器"""
+    from .mcp_server import main as mcp_main
+    import sys
+    sys.argv = [sys.argv[0], "--transport", args.transport]
+    if args.transport in ("http", "sse"):
+        sys.argv += ["--host", args.host, "--port", str(args.port)]
+    mcp_main()
 
 
 def run_desktop(host: str, port: int):

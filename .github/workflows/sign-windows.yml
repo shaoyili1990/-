@@ -34,7 +34,7 @@ jobs:
         uses: signpath/github-action-submit-signing-request@v1
         with:
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
-          project-slug: hermes-agent
+          project-slug: monkey-harness-agent
           signing-policy-slug: release-signing
           artifact-path: ./dist/hermes-agent.exe
         continue-on-error: true
@@ -42,7 +42,7 @@ jobs:
       - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: hermes-agent-windows-${{ github.event.inputs.version || '0.1.0' }}
+          name: monkey-harness-windows-${{ github.event.inputs.version || '0.1.0' }}
           path: |
             ./dist/*.exe
             ./dist/*.msi

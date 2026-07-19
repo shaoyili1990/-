@@ -5,7 +5,7 @@
         check test docker-build docker-run docker-push \
         pip-build pip-publish release
 
-APP_NAME     := hermes-agent
+APP_NAME     := monkey-harness-agent
 VERSION      := $(shell python3 -c "import hermes_universal; print(hermes_universal.__version__)" 2>/dev/null || echo "0.1.0")
 
 # ========== 构建入口 ==========

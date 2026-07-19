@@ -1,5 +1,5 @@
 """
-Hermes Agent Desktop - 多模态可视化界面
+Monkey Harness Agent (弼马温) - 多模态可视化界面
 FastAPI后端 + 三栏可视化HTML前端
 支持：文本对话、图片理解、文件分析、流式输出、实时推理可视化
 新增：多Key管理体系、提供商预设、连接测试、图谱数据API
@@ -163,7 +163,7 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
     if agent:
         _agent = agent
 
-    app = FastAPI(title="Hermes Agent Desktop", version="0.1.0")
+    app = FastAPI(title="Monkey Harness Agent Desktop", version="0.1.0")
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
     agent_ref = get_agent
@@ -175,7 +175,7 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
         html_path = Path(__file__).parent / "templates" / "index.html"
         if html_path.exists():
             return HTMLResponse(html_path.read_text(encoding="utf-8"))
-        return HTMLResponse("<h1>Hermes Agent</h1><p>Loading...</p>")
+        return HTMLResponse("<h1>Monkey Harness Agent (弼马温)</h1><p>Loading...</p>")
 
     # =================== 系统状态 ===================
 

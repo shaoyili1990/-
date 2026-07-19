@@ -3,10 +3,13 @@ requires = ["hatchling>=1.21.0"]
 build-backend = "hatchling.build"
 
 [project]
-name = "hermes-agent-universal"
+name = "monkey-harness-agent"
 version = "0.1.0"
-description = "Hermes Agent Universal - 通用可移植AI Agent系统"
-authors = [{name = "Hermes Agent Team"}]
+description = "🐒 弼马温 Agent — 猴驭多源，AI自治巡逻，多模态智能体系统"
+authors = [
+    {name = "Monkey Harness Team"},
+    {email = "shaoyili1990@gmail.com"},
+]
 requires-python = ">=3.11"
 license = {text = "MIT"}
 readme = "README.md"
@@ -19,6 +22,8 @@ dependencies = [
     "jinja2>=3.0",
     "python-multipart>=0.0.5",
     "pillow>=10.0",
+    "mcp>=1.0",
+    "agent-reach>=1.0",
 ]
 
 [project.optional-dependencies]
@@ -31,9 +36,22 @@ dev = [
     "pytest>=7.0",
     "httpx>=0.27",
 ]
+desktop = [
+    "starlette",
+]
 
 [project.scripts]
+# 旧名兼容
 hermes = "hermes_universal.cli:main"
+# 新名
+monkey-harness = "hermes_universal.cli:main"
+monkey-harness-mcp = "hermes_universal.mcp_server:main"
+bimawen = "hermes_universal.cli:main"
+bimawen-mcp = "hermes_universal.mcp_server:main"
+
+[project.urls]
+Homepage = "https://github.com/shaoyili1990/-"
+Repository = "https://github.com/shaoyili1990/-"
 
 [tool.hatch.build.targets.wheel]
 packages = ["hermes_universal"]
@@ -49,7 +67,3 @@ include = [
     "SKILL.md",
     "pyproject.toml",
 ]
-
-[project.urls]
-Homepage = "https://github.com/hermes-agent/universal"
-Repository = "https://github.com/hermes-agent/universal"

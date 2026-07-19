@@ -15,7 +15,7 @@ on:
         required: false
 
 env:
-  APP_NAME: hermes-agent
+  APP_NAME: monkey-harness-agent
   PYTHON_VERSION: '3.12'
 
 permissions:

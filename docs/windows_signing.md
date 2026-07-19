@@ -55,7 +55,7 @@
    - **项目仓库 URL**：`https://github.com/shaoyili1990/-`
    - **许可证**：MIT
    - **发布版 URL**：`https://github.com/shaoyili1990/-/releases`
-   - **项目描述**：`Hermes Agent — AI多模态智能体和自治巡逻系统。`
+   - **项目描述**：`Monkey Harness Agent (弼马温) — AI多模态智能体和自治巡逻系统。`
    - **代码签名策略 URL**：`https://github.com/shaoyili1990/-#代码签名策略`
    - **你希望使用的证书发布者名称**：SignPath Foundation
 3. 提交后等待审批（通常 1-2 周）
@@ -104,7 +104,7 @@
 # 本地构建测试
 python build.py
 
-# 输出: dist/hermes-agent.exe
+# 输出: dist/monkey-harness-agent.exe
 # 提交到 GitHub Actions 后自动签名
 ```
 
@@ -121,12 +121,12 @@ python build.py
 
 # 1. 创建自签名证书
 New-SelfSignedCertificate -Type CodeSigning `
-  -Subject "CN=Hermes Agent (Dev)" `
+  -Subject "CN=Monkey Harness Agent (Dev)" `
   -CertStoreLocation "Cert:\CurrentUser\My"
 
 # 2. 签名
 $cert = Get-ChildItem Cert:\CurrentUser\My -CodeSigningCert
-Set-AuthenticodeSignature -FilePath "dist/hermes-agent.exe" `
+Set-AuthenticodeSignature -FilePath "dist/monkey-harness-agent.exe" `
   -Certificate $cert -TimestampServer "http://timestamp.digicert.com"
 ```
 
