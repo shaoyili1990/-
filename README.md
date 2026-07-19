@@ -1,14 +1,17 @@
-# Hermes Agent Universal
+# Monkey Harness Agent (弼马温 Agent)
 
-通用可移植 AI Agent 系统 — 猴驭马（Monkey-Horse）架构
+> 🐒 猴驭多源，AI自治巡逻 — 多模态智能体系统
 
-> 🆔 **代码签名策略**  
-> 本项目已向 SignPath Foundation 提交申请，免费签名 Windows 发布构件。  
-> 证书签发方：SignPath Foundation  
-> 源代码已验证：所有发布构件均从本仓库 CI 构建。  
->  
-> **签名后**：Windows SmartScreen 不再警告，用户可验证二进制文件确系本仓库产出。  
-> *详情见 [docs/windows_signing.md](docs/windows_signing.md)*
+## 代码签名策略
+
+本项目签名发布 Windows 构件。
+
+✅ 免费代码签名由 [SignPath.io](https://signpath.io) 提供，证书来自 [SignPath Foundation](https://signpath.org)
+✅ 维护团队: [@shaoyili1990](https://github.com/shaoyili1990)（仓库Owner）
+✅ 审批者: [@shaoyili1990](https://github.com/shaoyili1990)
+✅ 隐私政策: [PRIVACY.md](PRIVACY.md) — 本程序不会将任何信息传输到其他联网系统，除非用户明确请求或操作需要
+
+*详情见 [docs/windows_signing.md](docs/windows_signing.md)*
 
 ## 架构
 
@@ -23,6 +26,7 @@
 - **司库** — 9状态状态机，驱动研发流程的每一步
 - **书童** — 认知与记忆，SQLite多维表格持久化
 - **质检官** — 4条验证链审查产出（反证逻辑/反AI逻辑/反证思维/逆AI思维）
+- **采购员** — 采买与巡检，AgentReach 多源搜索通道 + 11门类自治巡逻
 
 ## 快速开始
 
