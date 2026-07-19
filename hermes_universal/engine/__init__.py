@@ -119,6 +119,13 @@ CREATE TABLE IF NOT EXISTS rnd_dependencies (
 
 -- ========== 认知数据库 (hermes.db) ==========
 
+-- 环境配置
+CREATE TABLE IF NOT EXISTS env_config (
+    key TEXT PRIMARY KEY,
+    value TEXT DEFAULT '',
+    platform TEXT DEFAULT ''
+);
+
 -- API凭证存储
 CREATE TABLE IF NOT EXISTS api_credentials (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -131,11 +138,41 @@ CREATE TABLE IF NOT EXISTS api_credentials (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- 环境配置
-CREATE TABLE IF NOT EXISTS env_config (
-    key TEXT PRIMARY KEY,
-    value TEXT DEFAULT '',
-    platform TEXT DEFAULT ''
+-- 已安装Skill
+CREATE TABLE IF NOT EXISTS installed_skills (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    icon TEXT DEFAULT '📦',
+    description TEXT DEFAULT '',
+    version TEXT DEFAULT '1.0.0',
+    color TEXT DEFAULT '#7c6ff0',
+    source TEXT DEFAULT '',
+    source_url TEXT DEFAULT '',
+    category TEXT DEFAULT '通用',
+    author TEXT DEFAULT '',
+    installed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    config TEXT DEFAULT '{}',
+    enabled INTEGER DEFAULT 1
+);
+
+-- Skill市场注册表（可搜索的公开库）
+CREATE TABLE IF NOT EXISTS skill_market (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    icon TEXT DEFAULT '📦',
+    description TEXT DEFAULT '',
+    version TEXT DEFAULT '1.0.0',
+    color TEXT DEFAULT '#7c6ff0',
+    source_url TEXT DEFAULT '',
+    category TEXT DEFAULT '通用',
+    author TEXT DEFAULT '',
+    tags TEXT DEFAULT '',
+    downloads INTEGER DEFAULT 0,
+    rating REAL DEFAULT 0,
+    published_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    verified INTEGER DEFAULT 0
 );
 
 -- 会话记录

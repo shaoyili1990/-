@@ -363,6 +363,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
   </div>
 </div>
 
+
+<!-- ===== MARKET MODAL ===== -->
+<div class="modal-overlay" id="marketModal">
+  <div class="modal" style="width:720px">
+    <div class="modal-head">
+      <h3>🏪 Skill 市场</h3>
+      <div style="flex:1;max-width:280px;position:relative">
+        <input type="text" id="marketSearch" placeholder="🔍 搜索Skill…" style="width:100%;padding:6px 12px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:12px;outline:none;font-family:inherit">
+      </div>
+      <button class="modal-close" id="marketClose">&times;</button>
+    </div>
+    <div class="modal-body" style="padding:12px 16px">
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px" id="marketFilters"></div>
+      <div id="marketResults" style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px"></div>
+      <div id="marketEmpty" style="display:none;text-align:center;padding:40px;color:var(--fg3);font-size:14px">🏪 市场暂无数据</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="marketClose2">关闭</button>
+      <span style="font-size:11px;color:var(--fg3)" id="marketCount">加载中…</span>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Toast container ===== -->
 <div class="toast" id="toast"></div>
 
@@ -1014,6 +1037,212 @@ document.addEventListener('DOMContentLoaded', async () => {
   if (autoBtn) {
     autoBtn.addEventListener('click', autoAssignThreeKeys);
   }
+
+  // ======== PURCHASER: MARKET ========
+  function openMarket(category) {
+    const modal = document.getElementById('marketModal');
+    if (!modal) return;
+    modal.classList.add('show');
+    loadMarket(category || '');
+  }
+  
+  // Override Skill market icon click
+  window.openSkill = function(id) {
+    if (id === 'market') { openMarket(); return; }
+    if (id === 'brain') { openGraph(); return; }
+    toast(`📱 ${installedSkills.find(s=>s.id===id)?.name || id}`, 'info');
+  };
+  
+  let allMarketSkills = [];
+  
+  async function loadMarket(category) {
+    const results = document.getElementById('marketResults');
+    const empty = document.getElementById('marketEmpty');
+    const count = document.getElementById('marketCount');
+    if (!results) return;
+    results.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--fg3)">⏳ 加载市场…</div>';
+    
+    try {
+      let url = '/api/market/search?limit=100';
+      if (category) url += '&category=' + encodeURIComponent(category);
+      const resp = await fetch(url);
+      const data = await resp.json();
+      allMarketSkills = data.skills || [];
+      
+      // Load installed state
+      const instResp = await fetch('/api/market/installed');
+      const instData = await instResp.json();
+      const installedSet = new Set((instData.skills || []).map(s => s.id));
+      
+      if (allMarketSkills.length === 0) {
+        results.style.display = 'none';
+        empty.style.display = 'block';
+        if (count) count.textContent = '0 个Skill';
+        return;
+      }
+      
+      results.style.display = 'grid';
+      empty.style.display = 'none';
+      if (count) count.textContent = allMarketSkills.length + ' 个Skill';
+      
+      results.innerHTML = allMarketSkills.map(s => {
+        const isInstalled = installedSet.has(s.id);
+        return `<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;gap:10px;align-items:start;background:var(--bg3)">
+          <div style="width:32px;height:32px;border-radius:8px;background:${s.color || '#555'}22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${s.icon || '📦'}</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-weight:600;font-size:12px">${s.name}</div>
+            <div style="font-size:10px;color:var(--fg3);margin-top:2px">${s.description || ''}</div>
+            <div style="display:flex;gap:4px;margin-top:4px">
+              <span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--bg4);color:var(--fg2)">${s.category || '通用'}</span>
+              ${s.author ? `<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--bg4);color:var(--fg2)">${s.author}</span>` : ''}
+            </div>
+          </div>
+          <button class="test-btn ${isInstalled ? 'ok' : ''}" onclick="${isInstalled ? `uninstallSkill('${s.id}')` : `installSkill('${s.id}')`}" style="flex-shrink:0;margin-top:2px">
+            ${isInstalled ? '✅ 已安装' : '📥 安装'}
+          </button>
+        </div>`;
+      }).join('');
+      
+      // Load categories
+      loadMarketFilters();
+      
+    } catch(e) {
+      results.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:30px;color:var(--red)">❌ 加载失败: ' + e.message + '</div>';
+    }
+  }
+  
+  async function loadMarketFilters() {
+    const el = document.getElementById('marketFilters');
+    if (!el) return;
+    try {
+      const resp = await fetch('/api/market/categories');
+      const data = await resp.json();
+      const cats = data.categories || [];
+      el.innerHTML = '<button class="test-btn" onclick="loadMarket('')" style="background:var(--accent);color:#fff">🏠 全部</button>' +
+        cats.map(c => `<button class="test-btn" onclick="loadMarket('${c.category}')">${c.category}</button>`).join('');
+    } catch(e) { /* ignore */ }
+  }
+  
+  async function installSkill(skillId) {
+    try {
+      const resp = await fetch('/api/market/install', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({skill_id: skillId}),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        toast(data.message, 'success');
+        loadMarket(document.querySelector('#marketFilters .test-btn.active')?.textContent || '');
+        loadDesktop();
+      } else {
+        toast(data.message || '安装失败', 'error');
+      }
+    } catch(e) {
+      toast('安装失败: ' + e.message, 'error');
+    }
+  }
+  
+  async function uninstallSkill(skillId) {
+    try {
+      const resp = await fetch('/api/market/uninstall', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({skill_id: skillId}),
+      });
+      const data = await resp.json();
+      if (data.ok) {
+        toast(data.message, 'info');
+        loadMarket(document.querySelector('#marketFilters .test-btn.active')?.textContent || '');
+        loadDesktop();
+      } else {
+        toast(data.message || '卸载失败', 'error');
+      }
+    } catch(e) {
+      toast('卸载失败: ' + e.message, 'error');
+    }
+  }
+  
+  // Market modal events
+  const marketModal = document.getElementById('marketModal');
+  if (marketModal) {
+    document.getElementById('marketClose')?.addEventListener('click', () => marketModal.classList.remove('show'));
+    document.getElementById('marketClose2')?.addEventListener('click', () => marketModal.classList.remove('show'));
+    marketModal.addEventListener('click', e => { if (e.target === marketModal) marketModal.classList.remove('show'); });
+    
+    const searchInput = document.getElementById('marketSearch');
+    if (searchInput) {
+      let searchTimer;
+      searchInput.addEventListener('input', () => {
+        clearTimeout(searchTimer);
+        searchTimer = setTimeout(() => {
+          const q = searchInput.value.trim();
+          if (q) {
+            fetch('/api/market/search?query=' + encodeURIComponent(q) + '&limit=50')
+              .then(r => r.json()).then(data => {
+                allMarketSkills = data.skills || [];
+                renderMarketResults(allMarketSkills);
+              });
+          } else {
+            loadMarket('');
+          }
+        }, 300);
+      });
+    }
+  }
+  
+  function renderMarketResults(skills) {
+    const results = document.getElementById('marketResults');
+    const empty = document.getElementById('marketEmpty');
+    if (!results) return;
+    if (skills.length === 0) {
+      results.style.display = 'none';
+      empty.style.display = 'block';
+      return;
+    }
+    results.style.display = 'grid';
+    empty.style.display = 'none';
+    
+    fetch('/api/market/installed').then(r=>r.json()).then(instData => {
+      const installedSet = new Set((instData.skills || []).map(s => s.id));
+      results.innerHTML = skills.map(s => {
+        const isInstalled = installedSet.has(s.id);
+        return '<div style="border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;display:flex;gap:10px;align-items:start;background:var(--bg3)">' +
+          '<div style="width:32px;height:32px;border-radius:8px;background:' + (s.color||'#555') + '22;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">' + (s.icon||'📦') + '</div>' +
+          '<div style="flex:1;min-width:0">' +
+          '<div style="font-weight:600;font-size:12px">' + s.name + '</div>' +
+          '<div style="font-size:10px;color:var(--fg3);margin-top:2px">' + (s.description||'') + '</div>' +
+          '<div style="display:flex;gap:4px;margin-top:4px">' +
+          '<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--bg4);color:var(--fg2)">' + (s.category||'通用') + '</span>' +
+          '</div></div>' +
+          '<button class="test-btn ' + (isInstalled?'ok':'') + '" onclick="' + (isInstalled?"uninstallSkill('"+s.id+"')":"installSkill('"+s.id+"')") + '" style="flex-shrink:0;margin-top:2px">' +
+          (isInstalled?'✅ 已安装':'📥 安装') + '</button></div>';
+      }).join('');
+    });
+  }
+
+  // ======== GRAPH FULLSCREEN MODE ========
+  function openGraph() {
+    const container = document.getElementById('graphContainer');
+    if (!container) return;
+    container.style.position = 'fixed';
+    container.style.top = '0'; container.style.left = '0';
+    container.style.width = '100vw'; container.style.height = '100vh';
+    container.style.zIndex = '1000'; container.style.background = 'var(--bg)';
+    
+    const closeBtn = document.createElement('button');
+    closeBtn.textContent = '✕';
+    closeBtn.style.cssText = 'position:fixed;top:16px;right:16px;z-index:1001;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg3);color:var(--fg);font-size:18px;cursor:pointer';
+    closeBtn.onclick = () => {
+      container.style.position = '';
+      container.style.top = ''; container.style.left = '';
+      container.style.width = ''; container.style.height = '';
+      container.style.zIndex = ''; container.style.background = '';
+      closeBtn.remove();
+    };
+    document.body.appendChild(closeBtn);
+  }
+  
 
   // ======== DYNAMIC DESKTOP ========
   let installedSkills = [];

@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ..agent import HermesAgent
 from ..config import DEFAULT_CONFIG
+from ..core.purchaser import Purchaser
 from ..engine.subchain import SubchainScheduler
 
 _agent: Optional[HermesAgent] = None
@@ -424,6 +425,77 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
                 "builtin": False, "source": e.get("source", ""),
             })
         return {"skills": skills, "total": len(skills)}
+
+    # =================== 采购员 - 市场与安装管理 ===================
+
+    def get_purchaser():
+        """获取采购员实例"""
+        return agent_ref().purchaser
+
+    @app.get("/api/market/categories")
+    async def market_categories():
+        """市场分类"""
+        p = get_purchaser()
+        return {"categories": p.get_market_categories()}
+
+    @app.get("/api/market/search")
+    async def market_search(query: str = "", category: str = "", limit: int = 50):
+        """搜索Skill市场"""
+        p = get_purchaser()
+        results = p.search_market(query=query, category=category, limit=limit)
+        return {"skills": results, "total": len(results)}
+
+    @app.post("/api/market/install")
+    async def market_install(data: dict):
+        """安装Skill"""
+        skill_id = data.get("skill_id", "")
+        if not skill_id:
+            raise HTTPException(400, "缺少 skill_id")
+        p = get_purchaser()
+        result = p.install(skill_id)
+        if result.get("ok"):
+            return result
+        raise HTTPException(400, result.get("message", "安装失败"))
+
+    @app.post("/api/market/uninstall")
+    async def market_uninstall(data: dict):
+        """卸载Skill"""
+        skill_id = data.get("skill_id", "")
+        if not skill_id:
+            raise HTTPException(400, "缺少 skill_id")
+        p = get_purchaser()
+        return p.uninstall(skill_id)
+
+    @app.get("/api/market/installed")
+    async def market_installed():
+        """已安装Skill"""
+        p = get_purchaser()
+        skills = p.list_installed()
+        return {"skills": skills, "total": len(skills)}
+
+    @app.get("/api/market/inspect")
+    async def market_inspect():
+        """巡检市场更新"""
+        p = get_purchaser()
+        updates = p.inspect_updates()
+        return {"updates": updates, "total": len(updates)}
+
+    @app.get("/api/market/health")
+    async def market_health():
+        """采购员健康状态"""
+        p = get_purchaser()
+        return p.health_check()
+
+    @app.post("/api/market/search-by-need")
+    async def market_search_by_need(data: dict):
+        """根据需求（来自猴子）搜索Skill"""
+        requirement = data.get("requirement", "")
+        use_ai = data.get("use_ai", True)
+        if not requirement:
+            raise HTTPException(400, "缺少需求描述")
+        p = get_purchaser()
+        results = p.search_by_requirement(requirement, use_ai=use_ai)
+        return {"skills": results, "total": len(results)}
 
     # =================== 图谱数据API（Obsidian风格知识图谱） ===================
 

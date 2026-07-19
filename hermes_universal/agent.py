@@ -12,7 +12,7 @@ from .config import Config, load_config
 from .engine import EngineDB, seed_engine_db, seed_fingerprints
 from .engine.state_machine import StateMachine
 from .engine.subchain import SubchainScheduler
-from .core import Monkey, Horse, Keeper, Scribe, Verifier
+from .core import Monkey, Horse, Purchaser, Keeper, Scribe, Verifier
 from .providers import get_provider, ProviderRegistry
 
 
@@ -37,10 +37,11 @@ class HermesAgent:
         fingerprints_dir = self.config.get("system", "fingerprints_dir")
         seed_fingerprints(self.db, fingerprints_dir)
 
-        # ===== 初始化四角色 + 质检官 =====
+        # ===== 初始化五角色 + 质检官 =====
         self.verifier = Verifier(self.config, self.db)
         self.monkey = Monkey(self.config, self.db, self.state_machine, verifier=self.verifier)
         self.horse = Horse(self.config, self.db, self.state_machine, self.subchain)
+        self.purchaser = Purchaser(self.config, self.db)
         self.keeper = Keeper(self.config, self.db)
         self.scribe = Scribe(self.config, self.db)
 
