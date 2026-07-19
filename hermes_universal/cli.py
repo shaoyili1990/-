@@ -119,16 +119,20 @@ def handle_aileran_command(cmd: str, agent) -> bool:
         return False
     if parts[1] in ("on", "1", "true", "开启", "开"):
         agent.db.set_aileran_mode(True)
-        print("🧊 冷监督模式已开启 → 跳过验证链，降低 token 消耗")
+        print("🔄 冷监督已开启 — 允许自治后台循环(20分钟整理 + 10分钟巡检)")
     elif parts[1] in ("off", "0", "false", "关闭", "关"):
         agent.db.set_aileran_mode(False)
-        print("🔥 冷监督模式已关闭 → 恢复完整验证链")
+        print("⏸️ 冷监督已关闭 — 冻结自治后台循环，AI不会自动检索/更新")
     elif parts[1] in ("show", "status", "?"):
         enabled = agent.db.get_aileran_mode()
-        status = "🧊 开启" if enabled else "🔥 关闭"
-        print(f"冷监督模式当前: {status}")
+        if enabled:
+            print("🔄 冷监督: 开启中 — 自治后台循环(20分钟整理 + 10分钟巡检)正常运行")
+        else:
+            print("⏸️ 冷监督: 关闭中 — 自治后台循环冻结，仅手动触发")
     else:
-        print("用法: /aileran on | off | status")
+        print("用法: /aileran on | off | status\n"
+              "  on  = 开启冷监督,允许AI自治后台循环\n"
+              "  off = 关闭冷监督,冻结后台循环(纯手动)")
     return True
 
 

@@ -127,7 +127,19 @@ class IdleScheduler:
         r = {"state": state, "state_seconds": int(elapsed),
              "action": None, "action_detail": ""}
 
-        # ── 任务刚结束 → 强制回到待整理 ──
+        # ── 冷监督关闭: 冻结所有后台自治循环 ──
+        if not self.db.get_aileran_mode():
+            # 有任务完成也可能需要重置,但其他自动推进全部冻结
+            if task_done:
+                self._s(K_STATE, S_WAIT_MAINT)
+                self._s(K_TS, str(now))
+                r["state"] = S_WAIT_MAINT
+                r["action"] = "task_done"
+                r["action_detail"] = f"任务结束→待整理(冷监督关闭,冻结)"
+            else:
+                r["action_detail"] = "冷监督关闭,自治循环冻结"
+            # 无论是否冻结,都不主动调用 patrol.tick()
+            return r
         if task_done:
             self._s(K_STATE, S_WAIT_MAINT)
             self._s(K_TS, str(now))

@@ -77,31 +77,33 @@ class TestAileran:
         print(f"✅ 冷监督状态类型正确: {val}")
 
     def test_aileran_toggle_on(self):
-        """开启后应返回 True"""
+        """开启后应允许自治循环"""
         from hermes_universal.engine import EngineDB
         db = EngineDB()
         db.set_aileran_mode(True)
         assert db.get_aileran_mode() is True
-        print("✅ 冷监督开启成功")
+        print("✅ 冷监督开启成功 — scheduler/patrol 放行")
 
     def test_aileran_toggle_off(self):
-        """关闭后应返回 False"""
+        """关闭后冻结自治循环"""
         from hermes_universal.engine import EngineDB
         db = EngineDB()
         db.set_aileran_mode(False)
         assert db.get_aileran_mode() is False
-        print("✅ 冷监督关闭成功")
+        print("✅ 冷监督关闭成功 — 后台循环冻结")
 
-    def test_aileran_toggle_switch(self):
-        """toggle 应翻转状态"""
+    def test_aileran_freeze_scheduler(self):
+        """关闭冷监督时, scheduler.tick() 不应推进自治状态"""
         from hermes_universal.engine import EngineDB
+        from hermes_universal.core.scheduler import IdleScheduler
         db = EngineDB()
-        # 先设 off
         db.set_aileran_mode(False)
-        old = db.get_aileran_mode()
-        new = db.toggle_aileran()
-        assert new is not old
-        print(f"✅ 冷监督切换: {old} → {new}")
+        scheduler = IdleScheduler(db=db)
+        result = scheduler.tick()
+        assert result is not None
+        # 不应包含整理 or 巡检的动作
+        assert result.get("action") not in ("maint", "inspect")
+        print(f"✅ 冷监督关闭: scheduler 冻结 (action={result.get('action')})")
 
     def test_aileran_isolation(self):
         """多次开关不影响其他preferences"""

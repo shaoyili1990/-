@@ -66,7 +66,7 @@ class HermesAgent:
     # ========== 主流程 ==========
 
     def _is_aileran_mode(self) -> bool:
-        """冷监督模式: 开启则跳过验证链, 降低token消耗"""
+        """冷监督模式: 开启则允许自治后台循环(scheduler/patrol)，关闭则冻结"""
         return self.db.get_aileran_mode()
 
     def run(self, user_input: str, images: Optional[List[str]] = None,
@@ -122,16 +122,6 @@ class HermesAgent:
         else:
             result_text = str(result)
             final_output = result_text
-
-        # ── 冷监督模式：跳过灵猴验证链，直接返回 ──
-        if self._is_aileran_mode():
-            self.keeper.transition(route["task_id"], "完成(冷监督)")
-            return {
-                "final_output": final_output,
-                "route": route,
-                "review": {"pass": True, "mode": "aileran_skip"},
-                "task_id": route.get("task_id", ""),
-            }
 
         # 灵猴审核
 
