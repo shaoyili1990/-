@@ -1,0 +1,56 @@
+name: Sign Windows Release
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version'
+        required: true
+        default: '0.1.0'
+
+jobs:
+  build-and-sign:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install pyinstaller
+          pip install -e .
+      
+      - name: Build Windows executable
+        run: |
+          python build.py --version ${{ github.event.inputs.version || '0.1.0' }}
+      
+      - name: Submit signing request to SignPath
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          project-slug: hermes-agent
+          signing-policy-slug: release-signing
+          artifact-path: ./dist/hermes-agent-setup.exe
+        continue-on-error: true
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: hermes-agent-windows-${{ github.event.inputs.version || '0.1.0' }}
+          path: |
+            ./dist/*.exe
+            ./dist/*.msi
+          
+      - name: Upload to Release
+        uses: softprops/action-gh-release@v1
+        if: github.event_name == 'release'
+        with:
+          files: |
+            ./dist/*.exe
+            ./dist/*.msi

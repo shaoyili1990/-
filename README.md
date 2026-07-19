@@ -2,6 +2,14 @@
 
 通用可移植 AI Agent 系统 — 猴驭马（Monkey-Horse）架构
 
+> 🆔 **代码签名策略**  
+> 本项目已向 SignPath Foundation 提交申请，免费签名 Windows 发布构件。  
+> 证书签发方：SignPath Foundation  
+> 源代码已验证：所有发布构件均从本仓库 CI 构建。  
+>  
+> **签名后**：Windows SmartScreen 不再警告，用户可验证二进制文件确系本仓库产出。  
+> *详情见 [docs/windows_signing.md](docs/windows_signing.md)*
+
 ## 架构
 
 ```
