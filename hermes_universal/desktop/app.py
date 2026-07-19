@@ -22,6 +22,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ..agent import HermesAgent
 from ..config import DEFAULT_CONFIG
+from ..engine.subchain import SubchainScheduler
 
 _agent: Optional[HermesAgent] = None
 
@@ -391,6 +392,38 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
             return {"ok": True, "assigned": results, "message": f"已分配 {len(results)} 个角色"}
         finally:
             conn.close()
+
+    # =================== Skill桌面（动态桌面图标） ===================
+
+    @app.get("/api/skills")
+    async def list_skills():
+        """列出所有已安装的Skill（含内置）"""
+        built_ins = [
+            {"id": "chat", "name": "对话", "icon": "💬", "desc": "多模态对话", "builtin": True, "color": "#7c6ff0"},
+            {"id": "code", "name": "代码", "icon": "💻", "desc": "代码生成与审查", "builtin": True, "color": "#4ade80"},
+            {"id": "image", "name": "图片", "icon": "🖼️", "desc": "图片理解与生成", "builtin": True, "color": "#f472b6"},
+            {"id": "file", "name": "文件", "icon": "📎", "desc": "文件分析与处理", "builtin": True, "color": "#60a5fa"},
+            {"id": "search", "name": "搜索", "icon": "🔍", "desc": "网页搜索与抓取", "builtin": True, "color": "#fbbf24"},
+            {"id": "brain", "name": "认知库", "icon": "🧠", "desc": "记忆与经验管理", "builtin": True, "color": "#f87171"},
+            {"id": "market", "name": "Skill市场", "icon": "🏪", "desc": "发现更多技能", "builtin": True, "color": "#a78bfa"},
+        ]
+        conn = get_db()
+        try:
+            extra = conn.execute(
+                "SELECT id, name, icon, description, color, source FROM installed_skills ORDER BY installed_at"
+            ).fetchall()
+        except:
+            extra = []
+        finally:
+            conn.close()
+        skills = list(built_ins)
+        for e in extra:
+            skills.append({
+                "id": e["id"], "name": e["name"], "icon": e.get("icon", "📦"),
+                "desc": e.get("description", ""), "color": e.get("color", "#555"),
+                "builtin": False, "source": e.get("source", ""),
+            })
+        return {"skills": skills, "total": len(skills)}
 
     # =================== 图谱数据API（Obsidian风格知识图谱） ===================
 
