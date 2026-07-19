@@ -20,10 +20,10 @@ def clean():
     DIST_DIR.mkdir(parents=True)
 
 
-def build():
+def build(version: str = "0.0.0"):
     """使用 PyInstaller 打包为单文件 exe"""
     clean()
-    print("📦 Hermes Agent Windows 构建中…")
+    print(f"📦 Hermes Agent {version} Windows 构建中…")
 
     # 确保依赖
     subprocess.run(
@@ -71,4 +71,10 @@ def build():
 
 
 if __name__ == "__main__":
-    build()
+    import sys
+    version = "0.0.0"
+    for i, arg in enumerate(sys.argv):
+        if arg == "--version" and i + 1 < len(sys.argv):
+            version = sys.argv[i + 1]
+    build(version)
+
