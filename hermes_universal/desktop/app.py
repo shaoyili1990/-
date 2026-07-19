@@ -20,6 +20,9 @@ from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Request
 from fastapi.responses import HTMLResponse, JSONResponse, StreamingResponse
 from fastapi.middleware.cors import CORSMiddleware
 
+import logging
+logger = logging.getLogger("desktop.graph")
+
 from ..agent import HermesAgent
 from ..config import DEFAULT_CONFIG
 from ..core.scheduler import IdleScheduler
@@ -39,6 +42,24 @@ def get_db() -> sqlite3.Connection:
     """获取引擎数据库连接"""
     agent = get_agent()
     return agent.db.engine_conn()
+
+
+def get_cognition_db() -> sqlite3.Connection:
+    """获取认知数据库连接"""
+    try:
+        agent = get_agent()
+        return agent.db.cognition_conn()
+    except Exception:
+        return None
+
+
+def get_cognition_db():
+    """获取认知数据库连接"""
+    try:
+        agent = get_agent()
+        return agent.db.cognition_conn()
+    except Exception:
+        return None
 
 
 # ===== 提供商预设（PromptX风格，用户选厂商→选模型→填Key→测试→保存） =====
@@ -559,72 +580,282 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
         patrol._set("patrol_state", "idle")  # 完成后回到空闲
         return {"round": results, "total": len(results)}
 
-    # =================== 图谱数据API（Obsidian风格知识图谱） ===================
+    # =================== 图谱数据API（Obsidian风格知识图谱 v2） ===================
 
     @app.get("/api/graph")
     async def get_graph():
-        """获取知识图谱节点和关系"""
+        """获取知识图谱节点和关系（全量）"""
         conn = get_db()
         try:
             nodes = []
             edges = []
+            seen_ids = set()
 
-            # 任务节点
+            def add_node(nid: str, label: str, ntype: str,
+                         color: str = "#7c6ff0", size: int = 1,
+                         status: str = "", score: int = 0,
+                         url: str = "", detail: str = ""):
+                if nid not in seen_ids:
+                    seen_ids.add(nid)
+                    nodes.append({
+                        "id": nid, "label": (label or "?")[:25],
+                        "type": ntype, "color": color,
+                        "size": max(5, min(30, size)),
+                        "status": status, "score": score,
+                        "url": url, "detail": detail,
+                    })
+
+            # ── 1. 任务节点 ──
+            status_colors = {
+                "待构思": "#94a3b8", "待执行": "#f59e0b",
+                "执行完成待验证": "#3b82f6", "验证中": "#8b5cf6",
+                "通过(验证)": "#22c55e", "失败(验证)": "#ef4444",
+            }
             try:
                 tasks = conn.execute(
-                    "SELECT task_id, name, status FROM rnd_tasks ORDER BY created_at DESC LIMIT 50"
+                    "SELECT task_id, name, status FROM rnd_tasks ORDER BY created_at DESC LIMIT 30"
                 ).fetchall()
                 for t in tasks:
-                    nodes.append({
-                        "id": t["task_id"],
-                        "label": (t["name"] or "未命名")[:20],
-                        "type": "task",
-                        "status": t["status"] or "待构思",
-                        "color": "#7c6ff0",
+                    add_node(
+                        nid=t["task_id"], label=t["name"] or "未命名",
+                        ntype="task",
+                        color=status_colors.get(t["status"], "#94a3b8"),
+                        size=5, status=t["status"] or "?",
+                    )
+                # 任务间边（通过子链依赖）
+                deps = conn.execute(
+                    "SELECT parent_task_id, child_task_id FROM rnd_dependencies LIMIT 50"
+                ).fetchall()
+                for d in deps:
+                    edges.append({
+                        "source": d["parent_task_id"], "target": d["child_task_id"],
+                        "label": "depends", "style": "dashed",
                     })
-            except:
+            except Exception:
                 pass
 
-            # api_credentials 作为资源节点
-            creds = conn.execute(
-                "SELECT id, vendor, model, service FROM api_credentials"
+            # ── 2. 角色节点（猴/马/采购/司库/书童） ──
+            role_meta = {
+                "monkey": {"label": "🐵 灵猴", "color": "#f59e0b"},
+                "horse": {"label": "🐴 骏马", "color": "#22c55e"},
+                "purchaser": {"label": "🛒 采购员", "color": "#a855f7"},
+                "keeper": {"label": "🗂️ 司库", "color": "#3b82f6"},
+                "scribe": {"label": "📝 书童", "color": "#06b6d4"},
+                "verifier": {"label": "🔍 质检官", "color": "#ec4899"},
+            }
+            for key, meta in role_meta.items():
+                add_node(f"role_{key}", meta["label"], "role",
+                         color=meta["color"], size=8)
+
+            # ── 3. API/供应商节点 ──
+            try:
+                creds = conn.execute(
+                    "SELECT id, vendor, model, service FROM api_credentials"
+                ).fetchall()
+                vendor_colors = {
+                    "openai": "#10a37f", "deepseek": "#4f46e5",
+                    "anthropic": "#d97706", "google": "#4285f4",
+                }
+                for c in creds:
+                    cid = f"cred_{c['id']}"
+                    vendor = c["vendor"] or "unknown"
+                    add_node(cid, f"{vendor}:{c['model']}" if c.get("model") else vendor,
+                             "api", color=vendor_colors.get(vendor, "#60a5fa"), size=4)
+                    # API→角色分配边
+                    assignments = conn.execute(
+                        "SELECT key, value FROM env_config WHERE key LIKE 'role_key_%'"
+                    ).fetchall()
+                    for a in assignments:
+                        role = a["key"].replace("role_key_", "")
+                        try:
+                            val = json.loads(a["value"])
+                            if val.get("cred_id") == c["id"]:
+                                edges.append({
+                                    "source": f"cred_{c['id']}",
+                                    "target": f"role_{role}",
+                                    "label": "uses", "style": "solid",
+                                })
+                        except Exception:
+                            pass
+            except Exception:
+                pass
+
+            # ── 4. Skill节点（从认知DB读取） ──
+            skill_count = 0
+            try:
+                from hermes_universal.engine import EngineDB as _EDB
+                _cc = _EDB()
+                cconn = _cc.cognition_conn()
+                if cconn:
+                    skills = cconn.execute(
+                        "SELECT id, name, icon, category, description FROM installed_skills WHERE enabled=1 LIMIT 20"
+                    ).fetchall()
+                    cat_colors = {"通用": "#6b7280", "编程": "#3b82f6", "AI": "#8b5cf6",
+                                  "工具": "#f59e0b", "数据": "#22c55e", "社区": "#ec4899"}
+                    for s in skills:
+                        cat = s["category"] or "通用"
+                        add_node(f"skill_{s['id']}", 
+                                 f"{s.get('icon','')} {s['name']}" if s.get('icon') else s["name"],
+                                 "skill", color=cat_colors.get(cat, "#6b7280"),
+                                 size=6, detail=s.get("description","")[:80])
+                        skill_count += 1
+                    cconn.close()
+            except Exception:
+                pass
+
+            # ── 5. 巡逻门类节点（11个） ──
+            from hermes_universal.core.patrol import PatrolSystem
+            try:
+                ps = PatrolSystem(engine_db=conn) if hasattr(conn, 'engine_path') else None
+                if ps is None:
+                    from hermes_universal.engine import EngineDB
+                    from hermes_universal.config import load_config
+                    cfg = load_config()
+                    ps = PatrolSystem(EngineDB(
+                        engine_path=cfg.get("keeper", "db_path", default=""),
+                        cognition_path=cfg.get("scribe", "db_path", default=""),
+                    ))
+                patrol_status = ps.get_status() if ps else {}
+                for cat in patrol_status.get("categories", []):
+                    score = cat.get("score", 0) or 0
+                    tier = cat.get("current_tier", "T5")
+                    heat = "ff4444" if score > 100 else ("ff8800" if score > 50 else "44aa44")
+                    add_node(
+                        nid=f"patrol_{cat['id']}",
+                        label=f"{cat['name']} [{tier}]",
+                        ntype="patrol",
+                        color=f"#{heat}",
+                        size=max(5, score // 5),
+                        score=score,
+                    )
+            except Exception as e:
+                logger.warning(f"图谱: 巡逻数据未加载 ({e})")
+
+            # ── 6. Ticket/工单节点 ──
+            try:
+                tickets = conn.execute(
+                    "SELECT number, title, status FROM tickets ORDER BY number DESC LIMIT 10"
+                ).fetchall()
+                for t in tickets:
+                    tn = t["number"]
+                    add_node(f"ticket_{tn}", f"#{tn} {t['title'][:20]}",
+                             "ticket",
+                             color="#22d3ee" if t["status"] == "open" else "#78716c",
+                             size=3, status=t["status"])
+            except Exception:
+                pass
+
+            # ── 7. 图谱关联边（智能连接） ──
+            try:
+                # 角色→Skill
+                role_skills = conn.execute(
+                    "SELECT DISTINCT role, skill_id FROM role_skills LIMIT 30"
+                ).fetchall()
+                for rs in role_skills:
+                    edges.append({
+                        "source": f"role_{rs['role']}",
+                        "target": f"skill_{rs['skill_id']}",
+                        "label": "equips", "style": "solid",
+                    })
+            except Exception:
+                pass
+
+            return {"nodes": nodes, "edges": edges, "total_nodes": len(nodes), "total_edges": len(edges)}
+        except Exception as e:
+            logger.error(f"图谱API错误: {e}")
+            return {"nodes": [], "edges": [], "error": str(e)[:100]}
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
+    @app.get("/api/graph/patrol")
+    async def get_patrol_graph():
+        """巡逻热度图 — 11门类关注度评分可视化"""
+        try:
+            from hermes_universal.core.patrol import PatrolSystem
+            from hermes_universal.engine import EngineDB
+            from hermes_universal.config import load_config
+            cfg = load_config()
+            patrol = PatrolSystem(EngineDB(
+                engine_path=cfg.get("keeper", "db_path", default=""),
+                cognition_path=cfg.get("scribe", "db_path", default=""),
+            ))
+            status = patrol.get_status()
+            categories = sorted(status.get("categories", []),
+                                key=lambda x: x["score"], reverse=True)
+            return {
+                "categories": categories,
+                "tier_distribution": status.get("tier_distribution", {}),
+                "total_categories": status.get("total_categories", 0),
+                "scored_categories": status.get("scored_categories", 0),
+            }
+        except Exception as e:
+            return {"error": str(e)[:100]}
+
+    @app.get("/api/graph/skills")
+    async def get_skill_graph():
+        """Skill 依赖关系图（从认知DB读取）"""
+        conn = get_cognition_db()
+        if conn is None:
+            from hermes_universal.engine import EngineDB
+            conn = EngineDB().cognition_conn()
+        try:
+            nodes = []
+            edges = []
+            skills = conn.execute(
+                "SELECT id, name, icon, category, description FROM installed_skills WHERE enabled=1"
             ).fetchall()
-            for c in creds:
+            for s in skills:
                 nodes.append({
-                    "id": f"cred_{c['id']}",
-                    "label": f"{c['vendor']}:{c['model']}" if c['model'] else c['vendor'],
-                    "type": "api",
-                    "service": c['service'],
-                    "color": "#60a5fa",
+                    "id": f"skill_{s['id']}", "label": s["name"],
+                    "type": "skill", "category": s["category"] or "通用",
                 })
-
-            # 角色分配作为边
-            assignments = conn.execute(
-                "SELECT key, value FROM env_config WHERE key LIKE 'role_key_%'"
+            # 市场Skill（未安装的）
+            market = conn.execute(
+                "SELECT id, name, category FROM skill_market WHERE id NOT IN "
+                "(SELECT id FROM installed_skills WHERE enabled=1) LIMIT 10"
             ).fetchall()
-            for a in assignments:
-                role = a["key"].replace("role_key_", "")
-                try:
-                    val = json.loads(a["value"])
-                    cid = val.get("cred_id")
-                    if cid:
-                        edges.append({
-                            "source": f"cred_{cid}",
-                            "target": f"role_{role}",
-                            "label": role,
-                        })
-                        # 确保角色节点存在
-                        role_labels = {"monkey": "🐵 灵猴", "horse": "🐴 骏马", "purchaser": "🛒 采购员"}
-                        nodes.append({
-                            "id": f"role_{role}",
-                            "label": role_labels.get(role, role),
-                            "type": "role",
-                            "color": "#4ade80",
-                        })
-                except:
-                    pass
+            for m in market:
+                nodes.append({
+                    "id": f"market_{m['id']}", "label": f"📦 {m['name']}",
+                    "type": "market_skill", "category": m["category"] or "通用",
+                })
+            return {"nodes": nodes, "edges": edges,
+                    "total": len(nodes), "market_count": len(market)}
+        except Exception as e:
+            return {"error": str(e)[:100]}
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
-            return {"nodes": nodes, "edges": edges}
+    @app.get("/api/graph/search")
+    async def search_graph(q: str = ""):
+        """搜索图谱节点"""
+        if not q or len(q) < 2:
+            return {"results": []}
+        conn = get_db()
+        try:
+            results = []
+            for table, id_col, name_col, ntype in [
+                ("rnd_tasks", "task_id", "name", "task"),
+                ("installed_skills", "id", "name", "skill"),
+            ]:
+                try:
+                    rows = conn.execute(
+                        f"SELECT {id_col}, {name_col} FROM {table} WHERE {name_col} LIKE ? LIMIT 5",
+                        (f"%{q}%",)
+                    ).fetchall()
+                    for r in rows:
+                        results.append({
+                            "id": r[id_col], "label": r[name_col], "type": ntype,
+                        })
+                except Exception:
+                    pass
+            return {"query": q, "results": results}
         finally:
             conn.close()
 

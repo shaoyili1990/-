@@ -18,6 +18,13 @@ from typing import Dict, List
 
 from ..engine import EngineDB
 
+# Agent Reach — 巡逻首选搜索
+try:
+    from ..tools.agent_reach import patrol_search as _agent_reach_search
+    _HAS_AGENT_REACH = True
+except ImportError:
+    _HAS_AGENT_REACH = False
+
 logger = logging.getLogger("patrol")
 
 CURL_UA = ("Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -257,6 +264,16 @@ class PatrolSystem:
         cid, name, keywords, desc, tier, sources = CATEGORIES[idx]
         kw = urllib.parse.quote(keywords[0] if keywords else name)
 
+        # ── P0: Agent Reach 优先搜索 ──
+        ar_result = {}
+        if _HAS_AGENT_REACH:
+            try:
+                from ..tools.agent_reach import patrol_search as ar_search
+                ar_result = ar_search(name, keywords)
+                logger.info(f"[Patrol] AgentReach搜索 {name}: {ar_result.get('summary','?')}")
+            except Exception as e:
+                logger.warning(f"[Patrol] AgentReach搜索 {name} 失败: {e}")
+
         results = []
         for src_name, src_url, src_type in sources:
             url = src_url.replace("{kw}", kw)
@@ -268,8 +285,10 @@ class PatrolSystem:
 
         ok_count = sum(1 for r in results if "length" in r)
         total_bytes = sum(r.get("length", 0) for r in results)
-        logger.info(f"[Patrol] {name}: {ok_count}/{len(sources)}源, {total_bytes//1024}KB")
+        summary = f"{ok_count}/{len(sources)}源·{total_bytes // 1024}KB"
+        logger.info(f"[Patrol] {name}: {summary}")
 
+        # 更新评分（含 AgentReach 加分）
         self._update_score(cid, {
             "ok": ok_count > 0,
             "success_count": ok_count,
@@ -284,6 +303,8 @@ class PatrolSystem:
         info = f"{ok_count}/{len(sources)}源"
         if total_bytes > 0:
             info += f"·{total_bytes//1024}KB"
+        if ar_result.get("ok"):
+            info += "·AR✨"
 
         return {"action": "patrol", "category": name, "index": idx,
                 "total": len(CATEGORIES), "progress": f"{idx+1}/{len(CATEGORIES)}",
@@ -347,6 +368,26 @@ class PatrolSystem:
         scores[cid] = entry
         self._set(KEY_PATROL_SCORES, json.dumps(scores, ensure_ascii=False))
         logger.info(f"[Patrol] {cid} score={total}/150 (cnt={entry['count']})")
+
+    def _apply_ar_bonus(self, cid: str, ar_result: Dict):
+        """AgentReach 搜索成功奖励分 (5-10分, 不重复累计)"""
+        try:
+            scores = json.loads(self._get(KEY_PATROL_SCORES) or "{}")
+        except Exception:
+            return
+        entry = scores.get(cid)
+        if not entry:
+            return
+        # 只在 Ar 有新内容时加分（不重复累加）
+        bonus_key = f"ar_bonus_{cid}"
+        if self._get(bonus_key) == "1":
+            return  # 已加过不分
+        bonus = 10 if ar_result.get("content_rich") else 5
+        entry["score"] = min(150, entry.get("score", 0) + bonus)
+        scores[cid] = entry
+        self._set(KEY_PATROL_SCORES, json.dumps(scores, ensure_ascii=False))
+        self._set(bonus_key, "1")
+        logger.info(f"[Patrol] {cid} AgentReach加分+{bonus} → {entry['score']}")
 
     # ── 分权 T1-T5 ──
 
