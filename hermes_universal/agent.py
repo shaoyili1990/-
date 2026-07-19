@@ -13,6 +13,7 @@ from .engine import EngineDB, seed_engine_db, seed_fingerprints
 from .engine.state_machine import StateMachine
 from .engine.subchain import SubchainScheduler
 from .core import Monkey, Horse, Purchaser, Keeper, Scribe, Verifier
+from .core.scheduler import IdleScheduler
 from .providers import get_provider, ProviderRegistry
 
 
@@ -45,24 +46,39 @@ class HermesAgent:
         self.keeper = Keeper(self.config, self.db)
         self.scribe = Scribe(self.config, self.db)
 
+        # ===== 后台空闲调度器(自治循环) =====
+        self.scheduler = IdleScheduler(
+            db=self.db,
+            purchaser=self.purchaser,
+            monkey=self.monkey,
+            keeper=self.keeper,
+        )
+
     # ========== 主流程 ==========
 
     def run(self, user_input: str, images: Optional[List[str]] = None,
             stream: bool = False, task_id: Optional[str] = None):
         """
         完整执行流程:
-        灵猴路由 -> 骏马执行 -> 司库状态 -> 书童记忆
+        灵猴路由 -> 采购员补充Skill -> 骏马执行 -> 司库状态 -> 书童记忆
         """
+        # 通知调度器：有活动任务
+        self.scheduler._ping_active()
+
         # 1. 书童构建上下文
         context = self.scribe.build_context(task_id or "new", user_input)
 
         # 2. 灵猴路由决策
         route = self.monkey.route(user_input, multimodal=bool(images))
 
-        # 3. 司库状态转换
+        # 3. 三方协奏：猴子路由后检查是否需要Skill
+        skill_support = self.scheduler.coordinate_skill(user_input, route)
+        route["skill_support"] = skill_support
+
+        # 4. 司库状态转换
         self.keeper.transition(route["task_id"], "待执行")
 
-        # 4. 骏马执行
+        # 5. 骏马执行
         if stream:
             return self._stream_execute(route, user_input, images)
         else:

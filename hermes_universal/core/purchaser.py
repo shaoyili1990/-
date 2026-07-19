@@ -9,12 +9,15 @@
 
 import json
 import uuid
+import logging
 from typing import List, Dict, Optional
 from datetime import datetime, timedelta
 
 from ..config import Config
 from ..engine import EngineDB
 from ..providers import get_provider
+
+logger = logging.getLogger("purchaser")
 
 
 # 内置市场注册表（初始种子数据）
@@ -336,6 +339,119 @@ class Purchaser:
         # 兜底：关键词匹配
         return self.search_market(query=requirement, limit=5)
 
+    # ========== 整理（空闲时自动执行） ==========
+
+    def organize(self) -> Dict:
+        """整理 - 清理无用skill、合并重复、标记过期、整理仓库
+        由IdleScheduler在空闲20分钟后自动触发
+        """
+        conn = self.db.cognition_conn()
+        result = {"ok": True, "actions": [], "message": ""}
+        try:
+            actions = []
+
+            # 1. 检查orphan skill（市场已下架但本地记录还在）
+            for skill in conn.execute(
+                "SELECT id, name FROM installed_skills WHERE enabled=1"
+            ).fetchall():
+                market = conn.execute(
+                    "SELECT id FROM skill_market WHERE id=?", (skill["id"],)
+                ).fetchone()
+                if not market:
+                    actions.append(f"发现已下架Skill: {skill['name']}, 标记为禁用")
+                    conn.execute(
+                        "UPDATE installed_skills SET enabled=0 WHERE id=?",
+                        (skill["id"],)
+                    )
+
+            # 2. 检查重复安装（同名不同id）
+            names = {}
+            for skill in conn.execute(
+                "SELECT id, name FROM installed_skills WHERE enabled=1"
+            ).fetchall():
+                if skill["name"] in names:
+                    actions.append(f"发现重复Skill: {skill['name']}, 移除重复")
+                    conn.execute("DELETE FROM installed_skills WHERE id=?", (skill["id"],))
+                else:
+                    names[skill["name"]] = skill["id"]
+
+            result["actions"] = actions
+            result["count"] = len(actions)
+            result["message"] = f"整理完成: {'; '.join(actions[:5])}" + (
+                f" 等{len(actions)}项" if len(actions) > 5 else ""
+            ) if actions else "整理完成，无需操作"
+
+            conn.commit()
+            logger.info("[采购员] 整理: %s", result["message"])
+        except Exception as e:
+            conn.rollback()
+            result["ok"] = False
+            result["message"] = f"整理失败: {e}"
+            logger.error("[采购员] 整理异常: %s", e)
+        finally:
+            conn.close()
+        return result
+
+    # ========== 猴子+采购员协同评估Skill更新 ==========
+
+    def evaluate_with_monkey(self, monkey_evaluator, updates: List[Dict]) -> Dict:
+        """猴子和采购员一起评估候选更新，决定是否安装"""
+        if not updates:
+            return {"ok": True, "message": "无待评估项", "installed": [], "skipped": []}
+
+        conn = self.db.cognition_conn()
+        installed = []
+        skipped = []
+        try:
+            for upd in updates:
+                skill_id = upd["skill_id"]
+                skill = dict(conn.execute(
+                    "SELECT * FROM skill_market WHERE id=?", (skill_id,)
+                ).fetchone() or {})
+
+                if not skill:
+                    skipped.append({"id": skill_id, "reason": "市场已无此Skill"})
+                    continue
+
+                # 调用猴子做智能评估
+                if monkey_evaluator:
+                    try:
+                        decision = monkey_evaluator(skill)
+                    except Exception:
+                        decision = {"install": True, "reason": "评估异常，默认采纳"}
+                else:
+                    decision = {"install": True, "reason": "猴子无反馈，默认采纳"}
+
+                if decision.get("install", True):
+                    conn.execute(
+                        "UPDATE installed_skills SET version=?, updated_at=CURRENT_TIMESTAMP WHERE id=?",
+                        (skill.get("version", "1.0.0"), skill_id)
+                    )
+                    installed.append({
+                        "id": skill_id, "name": skill["name"],
+                        "version": skill.get("version", "1.0.0"),
+                        "reason": decision.get("reason", ""),
+                    })
+                else:
+                    skipped.append({
+                        "id": skill_id, "name": skill["name"],
+                        "reason": decision.get("reason", "猴子评估跳过"),
+                    })
+
+            conn.commit()
+        except Exception as e:
+            conn.rollback()
+            return {"ok": False, "message": f"评估失败: {e}"}
+        finally:
+            conn.close()
+
+        return {
+            "ok": True,
+            "message": f"评估完成: 安装{len(installed)}个, 跳过{len(skipped)}个",
+            "installed": installed,
+            "skipped": skipped,
+        }
+
     # ========== 健康检查 ==========
 
     def health_check(self) -> Dict:
@@ -357,5 +473,32 @@ class Purchaser:
                 "updates_available": len(updates),
                 "updates": updates,
             }
+        finally:
+            conn.close()
+
+    def suggest_new_skills(self, monkey=None) -> List[Dict]:
+        """
+        巡检时自动发现市场新Skill并评估是否值得安装
+        猴子+采购员联合决策
+        """
+        conn = self.db.cognition_conn()
+        try:
+            installed_ids = [r[0] for r in conn.execute(
+                "SELECT id FROM installed_skills"
+            ).fetchall()]
+            candidates = conn.execute(
+                "SELECT * FROM skill_market ORDER BY downloads DESC, rating DESC LIMIT 10"
+            ).fetchall()
+            suggestions = []
+            for c in candidates:
+                if c["id"] in installed_ids:
+                    continue
+                skill = dict(c)
+                suggestions.append({
+                    "id": skill["id"], "name": skill["name"],
+                    "icon": skill["icon"], "description": skill["description"],
+                    "category": skill["category"], "reason": "热门推荐",
+                })
+            return suggestions[:5]
         finally:
             conn.close()

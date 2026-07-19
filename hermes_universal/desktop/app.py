@@ -22,7 +22,8 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from ..agent import HermesAgent
 from ..config import DEFAULT_CONFIG
-from ..core.purchaser import Purchaser
+from ..core.scheduler import IdleScheduler
+from ..core.scheduler import IdleScheduler
 from ..engine.subchain import SubchainScheduler
 
 _agent: Optional[HermesAgent] = None
@@ -138,9 +139,19 @@ def test_api_connection(vendor: str, api_key: str, base_url: str, model: str) ->
 
 
 def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
-    global _agent
+    global _agent, _scheduler
     if agent:
         _agent = agent
+
+    # ===== 初始化空闲调度器 =====
+    if _agent and _scheduler is None:
+        p = _agent.purchaser
+        _scheduler = IdleScheduler(
+            organize_cb=p.organize,
+            inspect_cb=p.inspect_updates,
+            evaluate_cb=lambda updates: p.evaluate_with_monkey(_monkey_evaluator, updates),
+        )
+        _scheduler.start()
 
     app = FastAPI(title="Hermes Agent Desktop", version="0.1.0")
     app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
@@ -160,11 +171,31 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
 
     @app.get("/api/status")
     async def status():
+        agent = agent_ref()
+        active_count = 0
+        try:
+            tasks = agent.db.list_tasks(limit=100)
+            active_count = sum(1 for t in tasks if t.get("status") in ("待执行", "执行完成待验证", "验证中"))
+        except: pass
+
+        # 调度器tick
+        has_active = active_count > 0
+        sched_state = agent.scheduler.tick(has_active_task=has_active)
+
         return {
             "status": "ok",
             "agent_name": "Hermes Agent",
             "version": "0.1.0",
             "multimodal": True,
+            "has_active_tasks": has_active,
+            "active_task_count": active_count,
+            "scheduler": {
+                "state": sched_state.get("state", "idle"),
+                "action": sched_state.get("action"),
+                "action_detail": sched_state.get("action_detail", ""),
+                "idle_seconds": sched_state.get("idle_seconds", 0),
+                "cycle": sched_state.get("cycle", 0),
+            },
             "roles": [
                 {"name": "Monkey", "title": "灵猴", "desc": "路由与判断", "icon": "🐵"},
                 {"name": "Review", "title": "质检官", "desc": "安全与合规审查", "icon": "🔍"},
@@ -497,6 +528,42 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
         results = p.search_by_requirement(requirement, use_ai=use_ai)
         return {"skills": results, "total": len(results)}
 
+    # =================== 空闲调度器 ===================
+
+    @app.get("/api/scheduler/status")
+    async def scheduler_status():
+        """调度器状态"""
+        agent = agent_ref()
+        # 每次读取时顺便tick一下
+        has_active = False
+        try:
+            tasks = agent.db.list_tasks(limit=100)
+            has_active = sum(1 for t in tasks if t.get("status") in ("待执行", "执行完成待验证", "验证中")) > 0
+        except: pass
+        sched_state = agent.scheduler.tick(has_active_task=has_active)
+        return {
+            **agent.scheduler.get_status(),
+            "last_tick": sched_state,
+        }
+
+    @app.post("/api/scheduler/mark-activity")
+    async def mark_activity():
+        """标记用户活动(重置空闲计时)"""
+        agent_ref().scheduler._ping_active()
+        return {"ok": True}
+
+    @app.post("/api/purchaser/organize")
+    async def trigger_organize():
+        """手动触发整理"""
+        p = get_purchaser()
+        return p.organize()
+
+    @app.post("/api/purchaser/inspect")
+    async def trigger_inspect():
+        """手动触发巡检"""
+        p = get_purchaser()
+        return {"updates": p.inspect_updates()}
+
     # =================== 图谱数据API（Obsidian风格知识图谱） ===================
 
     @app.get("/api/graph")
@@ -574,6 +641,9 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
         images: Optional[str] = Form(None),
         files_data: Optional[str] = Form(None),
     ):
+        global _scheduler
+        if _scheduler:
+            _scheduler.mark_activity()
         start_time = time.time()
         image_list = None
         if images:
@@ -699,3 +769,28 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
             return {"error": "配置不可用"}
 
     return app
+
+
+# ===== 猴子评估器（供调度器使用） =====
+def _monkey_evaluator(skill: dict) -> dict:
+    """猴子对Skill更新做快速评估"""
+    try:
+        agent = get_agent()
+        provider_config = agent.config.get_provider_config("monkey")
+        from ..providers import get_provider
+        provider = get_provider(provider_config["name"], provider_config)
+        prompt = f"""你是灵猴（路由审核官）。有一个Skill更新需要你评估是否采纳。
+
+Skill: {skill.get('name', '?')}
+描述: {skill.get('description', '?')}
+分类: {skill.get('category', '?')}
+版本: {skill.get('version', '?')}
+
+请判断是否应该采纳这个更新。只返回JSON:
+{{"install": true/false, "reason": "简短原因"}}
+不返回其他文字。"""
+        resp = provider.generate([{"role": "user", "content": prompt}])
+        import json
+        return json.loads(resp.content)
+    except Exception:
+        return {"install": True, "reason": "猴子评估异常，默认采纳"}

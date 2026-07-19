@@ -341,3 +341,69 @@ class Monkey:
             "iteration": self.db.get_task(task_id).get("iteration_count", 0),
             "instruction": f"修复以下问题后重新提交: {failed_review.get('issues', [])}",
         }
+
+    # ========== 采购员协奏：Skill评估 ==========
+
+    def evaluate_skill(self, requirement: str, skill: Dict) -> Dict:
+        """评估一个Skill是否符合当前任务需求,返回是否批准安装"""
+        # 规则1: 不信任本地/未经验证的Skill→默认批准(信任市场)
+        if skill.get("verified") == 0 and skill.get("local"):
+            return {"approve": False, "reason": "未经验证的本地Skill"}
+
+        # 规则2: 标签匹配检测
+        requirement_lower = requirement.lower()
+        tags = (skill.get("tags", "") or "")
+        name = skill.get("name", "")
+        desc = (skill.get("description", "") or "")
+
+        # 需求中出现Skill名/描述/标签中的关键词→匹配
+        keywords = (tags + " " + name + " " + desc).lower()
+        req_words = set(requirement_lower.split())
+        kw_set = set(keywords.split())
+
+        overlap = req_words & kw_set
+        if len(overlap) >= 1 or any(kw in requirement_lower for kw in [name.lower(), desc[:10].lower()]):
+            return {"approve": True, "reason": f"需求与Skill匹配(重叠关键词: {overlap})", "confidence": "high"}
+
+        # 规则3: 没有关键词重叠但需求较长→用LLM判断
+        if len(requirement) > 30:
+            try:
+                provider_config = self.config.get_provider_config("monkey")
+                provider = get_provider(provider_config["name"], provider_config)
+                prompt = f"""需求: {requirement}
+Skill: {name} - {desc}
+标签: {tags}
+
+这个Skill是否适合这个需求？只回答YES或NO。"""
+                resp = provider.generate([{"role": "user", "content": prompt}])
+                content = resp.content.strip().upper()
+                if "YES" in content:
+                    return {"approve": True, "reason": "AI评估符合需求", "confidence": "medium"}
+            except Exception:
+                pass
+
+        # 默认:保守策略,不自动安装
+        return {"approve": False, "reason": "与当前需求关联度不足", "confidence": "low"}
+
+    def evaluate_idle_skills(self) -> Optional[str]:
+        """空闲时检查已安装Skill是否有用,记录评估"""
+        installed = self.db.cognition_conn().execute(
+            "SELECT id, name, description, category FROM installed_skills WHERE enabled=1"
+        ).fetchall()
+        if not installed or len(installed) < 3:
+            return None  # Skill太少,不做清理
+
+        # 简单规则: 保留所有类别唯一的,只标记可能重复类别的
+        categories = {}
+        for s in installed:
+            cat = s["category"] or "通用"
+            if cat not in categories:
+                categories[cat] = []
+            categories[cat].append(s["name"])
+
+        redundant = []
+        for cat, names in categories.items():
+            if len(names) > 2:
+                redundant.append(f"{cat}分类有{len(names)}个Skill可能冗余: {', '.join(names[:3])}")
+
+        return f"Skill评估: {len(installed)}个已安装,{'、'.join(redundant)}" if redundant else None

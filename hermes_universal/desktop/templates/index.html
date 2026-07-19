@@ -70,6 +70,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
 .badge{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;background:var(--bg3)}
 .badge .bd{width:6px;height:6px;border-radius:50%}
 .badge.online .bd{background:var(--green);box-shadow:0 0 8px var(--green-glow)}
+.scheduler-badge{background:var(--bg2);color:var(--fg2);font-size:11px;padding:2px 10px;border-radius:10px;display:flex;align-items:center;gap:4px;cursor:pointer;white-space:nowrap;transition:all .2s}
+.scheduler-badge:hover{background:var(--bg3);color:var(--fg)}
 .topbar-btn{background:none;border:none;color:var(--fg2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
 .topbar-btn:hover{background:var(--bg3);color:var(--fg)}
 .flow-indicator{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--fg3);padding:3px 8px;background:var(--bg3);border-radius:20px}
@@ -274,7 +276,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
         <div class="hd"><div class="ic">📝</div><div><div class="nm">书童</div><div class="sb">认知与记忆</div></div><div class="dot idle" id="dot-scribe"></div></div>
       </div>
     </div>
-        <div class="pipeline-foot" id="pipelineFoot">🔄 流水线 · 实时状态</div>
+        <div class="pipeline-foot" id="pipelineFoot">🔄 流水线 · <span id="schedulerBadge">⏳ 启动中…</span></div>
     <div class="desktop-grid" id="desktopGrid"></div>
     <div class="panel-tabs">
       <button class="panel-tab active" data-view="pipeline"><span class="tb-icon">🔧</span>流水线</button>
@@ -294,6 +296,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
         <span class="flow-step wait" id="f-scribe">书童</span>
       </div>
       <div class="badge online"><span class="bd"></span>在线</div>
+      <div class="scheduler-badge" id="schedulerBadge" title="空闲调度器状态">⏳ 待命</div>
       <button class="topbar-btn" id="btnConfig" title="配置">⚙️</button>
     </div>
     <div class="messages" id="messages"></div>
@@ -333,6 +336,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
       <div class="ts-row"><span class="ts-label">路由领域</span><span class="ts-val" id="ts-domain">—</span></div>
       <div class="ts-row"><span class="ts-label">审核结果</span><span class="ts-val" id="ts-review">—</span></div>
       <div class="ts-row"><span class="ts-label">处理耗时</span><span class="ts-val" id="ts-time">—</span></div>
+      <div class="ts-row"><span class="ts-label">🧹 自治状态</span><span class="ts-val" id="ts-scheduler">⏳ 初始</span></div>
     </div>
   </div>
 </div>
@@ -628,6 +632,9 @@ async function send() {
   if(!text && state.attachments.length===0) return;
   if(state.isProcessing) return;
 
+  // 标记用户活动（重置空闲计时器）
+  fetch('/api/scheduler/mark-activity', {method:'POST'}).catch(()=>{});
+
   state.isProcessing = true;
   btnSend.disabled = true;
   const startTime = Date.now();
@@ -729,7 +736,82 @@ async function pollStatus() {
     }
   } catch(e) { /* ignore */ }
 }
+
+// ===== 空闲调度器 =====
+const S_LABELS = {
+  'idle':'⏳ 空闲','maintenance':'🧹 整理中','wait_inspect':'☕ 冷却中',
+  'inspect':'🔍 巡检中','active':'⚡ 活动'
+};
+async function pollScheduler() {
+  try {
+    const resp = await fetch('/api/scheduler/status');
+    const d = await resp.json();
+    const badge = document.getElementById('schedulerBadge');
+    if(!badge) return;
+    let label = S_LABELS[d.state] || d.state;
+    if(d.state==='idle') {
+      const rem = Math.max(0, Math.ceil(20 - (d.idle_seconds||0)/60));
+      label = rem > 0 ? `⏳ 闲置 ${Math.floor((d.idle_seconds||0)/60)}m · ${rem}m后整理` : '⏳ 即将整理';
+    } else if(d.state==='wait_inspect') {
+      const dur = Math.floor((d.wait_remaining||600)/60);
+      label = `☕ 冷却 ${Math.max(0,dur)}m后巡检`;
+    } else if(d.state==='maintenance') {
+      label = '🧹 整理中…';
+    } else if(d.state==='inspect') {
+      label = '🔍 巡检中…';
+    } else if(d.state==='active') {
+      label = '⚡ 活动状态';
+    }
+    badge.textContent = label;
+
+    // 更新右侧状态区
+    const el = document.getElementById('ts-scheduler');
+    if(el) el.textContent = label;
+  } catch(e) { /* ignore */ }
+}
+      label = '巡检中...';
+    } else if(d.state==='EVALUATING') {
+      label = '评估Skill中...';
+    }
+    badge.innerHTML = `${icon} ${label}`;
+    badge.style.opacity = d.state==='IDLE' ? '0.7' : '1';
+  } catch(e) { /* ignore - scheduler may not be running */ }
+}
+
+/** 空闲调度器状态轮询 */
+async function pollScheduler() {
+  try {
+    const resp = await fetch('/api/scheduler/status');
+    const data = await resp.json();
+    const badge = document.getElementById('schedulerBadge');
+    if (!badge) return;
+    const s = data.state || 'STOPPED';
+    const label = data.state_label || s;
+    const next = data.next_action || '';
+    // 颜色映射
+    const colors = {
+      'IDLE': 'var(--fg2)',
+      'ORGANIZING': '#f0a030',
+      'COOLDOWN': 'var(--fg3)',
+      'INSPECTING': '#4a9eff',
+      'EVALUATING': '#a855f7',
+    };
+    const icons = {
+      'IDLE': '⏳',
+      'ORGANIZING': '🧹',
+      'COOLDOWN': '⏱️',
+      'INSPECTING': '🔍',
+      'EVALUATING': '🤔',
+    };
+    const icon = icons[s] || '⏳';
+    badge.style.color = colors[s] || 'var(--fg2)';
+    badge.title = `空闲调度器: ${label}\n${next || ''}`;
+    badge.innerHTML = `${icon} ${label}`;
+  } catch(e) { /* ignore */ }
+}
 setInterval(pollStatus, 10000);
+setInterval(pollScheduler, 30000);
+pollScheduler();
 pollStatus();
 
 // Auto-resize on load
