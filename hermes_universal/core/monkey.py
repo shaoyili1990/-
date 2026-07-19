@@ -67,7 +67,7 @@ class Monkey:
 
         # 3. 加载通用指纹(必选)
         fingerprints = {
-            "generic": self._load_fingerprint("jiapo_unified"),
+            "generic": self._load_fingerprint("thinker"),
         }
 
         # 4. 如有领域,加载领域垂直指纹
@@ -76,8 +76,8 @@ class Monkey:
 
         # 5. 从DB的subchain_weights表查子链(按tier过滤)
         tier_limit = {"snapshot": 1, "standard": 2, "deep": 3}[depth]
-        # 无领域匹配时使用通用指纹(jiapo_unified)的子链
-        chain_domain = domain_id if domain_id else "jiapo_unified"
+        # 无领域匹配时使用通用指纹(thinker)的子链
+        chain_domain = domain_id if domain_id else "thinker"
         active_chains = self._load_active_chains(
             chain_domain, tier_limit
         )
@@ -196,8 +196,8 @@ class Monkey:
         from pathlib import Path
 
         fp_dir = self.config.get("system", "fingerprints_dir")
-        if domain_id == "jiapo_unified":
-            fname = "jiapo_unified_fingerprint.json"
+        if domain_id == "thinker":
+            fname = "thinker_unified_fingerprint.json"
         else:
             fname = f"domain_{domain_id}.json"
 

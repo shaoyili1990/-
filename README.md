@@ -44,10 +44,10 @@ export OPENAI_API_KEY=sk-xxx
 export DEEPSEEK_API_KEY=sk-xxx
 
 # Web UI（浏览器访问 http://localhost:8080）
-hermes desktop
+monkey-harness desktop
 
 # CLI 对话
-hermes chat
+monkey-harness chat
 ```
 
 ### 混搭模式
@@ -58,14 +58,14 @@ export HERMES_MONKEY_KEY=sk-xxx
 export HERMES_HORSE_PROVIDER=deepseek   # 骏马用 DeepSeek
 export HERMES_HORSE_KEY=sk-xxx
 
-hermes desktop
+monkey-harness desktop
 ```
 
 ### pip 安装
 
 ```bash
 pip install monkey-harness-agent
-hermes chat
+monkey-harness chat
 ```
 
 ### Docker

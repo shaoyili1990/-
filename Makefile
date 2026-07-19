@@ -149,6 +149,8 @@ check:
 	@echo "=== Done ==="
 
 test: check
+	@echo "=== 运行测试 ==="
+	@pip install pytest -q 2>/dev/null; python3 -m pytest tests/ -v --tb=short
 
 # ========== 清理 ==========
 

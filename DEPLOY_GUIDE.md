@@ -1,4 +1,4 @@
-# Hermes Agent Universal - PromptX 部署指南
+# Monkey Harness Agent - 部署指南
 
 ## 一、导入方式
 
@@ -26,7 +26,7 @@ action("born", {{
 
 ## 二、文件结构
 ```
-hermes-agent-universal/
+monkey-harness-agent/
 ├── hermes_universal/          # Python源码
 │   ├── core/                  # 五角色实现
 │   ├── engine/                # 引擎+状态机+子链调度
@@ -39,7 +39,7 @@ hermes-agent-universal/
 ├── validations/               # 4条验证链模板
 ├── store/                     # SQLite数据库
 │   ├── rnd_engine.db          # 状态/任务/步骤/审核
-│   └── hermes.db              # 认知/记忆/指纹
+│   └── bimawen.db              # 认知/记忆/指纹
 ├── config.yaml                # 配置文件
 ├── SKILL.md                   # 通用提示词技能
 ├── pyproject.toml             # Python包定义
@@ -49,15 +49,15 @@ hermes-agent-universal/
 ## 三、快速启动
 ```bash
 # Python安装
-pip install hermes-agent-universal
+pip install monkey-harness-agent
 
 # 或直接运行
 python -m hermes_universal
 
 # CLI模式
-hermes run "你的问题"
-hermes chat
-hermes desktop
+monkey-harness run "你的问题"
+monkey-harness chat
+monkey-harness desktop
 ```
 
 ## 四、API配置 (config.yaml)

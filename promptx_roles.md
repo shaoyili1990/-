@@ -1,4 +1,4 @@
-# Hermes Agent Universal - PromptX Role Definitions
+# Monkey Harness Agent - PromptX Role Definitions
 
 ## Role: 灵猴
 

@@ -1,4 +1,4 @@
-# Hermes Agent Universal v${{ github.ref_name }}
+# Monkey Harness Agent v${{ github.ref_name }}
 
 通用可移植 AI Agent 系统 — 猴驭马（Monkey-Horse）架构
 
@@ -6,7 +6,7 @@
 
 | 平台 | 文件 | 说明 |
 |------|------|------|
-| Linux | `hermes-agent` | 独立可执行二进制 |
+| Linux | `monkey-harness-agent` | 独立可执行二进制 |
 | Linux | `*.deb` | Debian/Ubuntu 安装包 |
 | Linux | `*.AppImage` | 通用 Linux 运行格式 |
 | macOS | `*.dmg` | macOS 安装映像 |
@@ -17,8 +17,8 @@
 
 ```bash
 # Linux 独立二进制
-chmod +x hermes-agent
-./hermes-agent
+chmod +x monkey-harness-agent
+./monkey-harness-agent
 
 # 或 DEB 安装
 sudo dpkg -i *.deb
@@ -28,7 +28,7 @@ export OPENAI_API_KEY=sk-xxx
 export DEEPSEEK_API_KEY=sk-xxx
 
 # 启动 Web UI
-hermes desktop
+monkey-harness desktop
 ```
 
 ## 架构

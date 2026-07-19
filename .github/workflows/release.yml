@@ -1,5 +1,5 @@
 # ==============================================================================
-# Hermes Agent Universal - 全平台自动构建与发布
+# Monkey Harness Agent (弼马温) - 全平台自动构建与发布
 # 触发: 推送 v* 标签 或 手动触发
 # 产出: Linux(二进制/DEB/AppImage) + macOS(DMG) + Windows(EXE) + Docker + PyPI
 # ==============================================================================
@@ -23,9 +23,9 @@ permissions:
   packages: write
 
 jobs:
-  # ========== 1. 代码检查 ==========
+  # ========== 1. 代码检查 + 测试 ==========
   check:
-    name: Code Check
+    name: Code Check & Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -34,6 +34,10 @@ jobs:
           python-version: ${{ env.PYTHON_VERSION }}
       - run: pip install .
       - run: make check
+      - name: Run tests
+        run: |
+          pip install pytest
+          python3 -m pytest tests/ -v --tb=short
 
   # ========== 2. 构建 pip 包（所有平台共用） ==========
   build-pip:

@@ -1,8 +1,8 @@
-"""构建 Hermes Agent Universal 导出包"""
+"""构建 Monkey Harness Agent (弼马温) 导出包"""
 import os, json, shutil
 
 TARGET = r'D:\\跑马\\留档'
-PROJECT = r'D:\\爱马仕工作区\\hermes-agent-universal'
+PROJECT = r'D:\\爱马仕工作区\\monkey-harness-agent'
 
 
 def read_file(path):
@@ -25,7 +25,7 @@ def main():
     # ========== 2. 构建导出JSON ==========
     export = {
         'meta': {
-            'name': 'Hermes Agent Universal',
+            'name': 'Monkey Harness Agent (弼马温)',
             'version': '0.1.0',
             'description': '通用可移植AI Agent系统 - 基于猴驭马(Monkey-Horse)架构',
             'type': 'AI Agent Framework',
@@ -74,7 +74,7 @@ def main():
                     '宪法8条执行',
                     '任务生命周期管理',
                 ],
-                'stores': ['rnd_engine.db (状态/任务/步骤/审核)', 'hermes.db (认知/记忆/指纹)'],
+                'stores': ['rnd_engine.db (状态/任务/步骤/审核)', 'bimawen.db (认知/记忆/指纹)'],
                 'states': ['待构思', '构思完成待执行', '待执行', '执行完成待验证', '验证中', '验证通过', '验证未通过', '待复审', '待复查'],
             },
             '书童(Scribe)': {
@@ -120,7 +120,7 @@ def main():
         },
         'fingerprints': {
             'total': len(fingerprint_names),
-            'generic': 'jiapo_unified_fingerprint.json (通用个人思维偏好)',
+            'generic': 'thinker_unified_fingerprint.json (通用个人思维偏好)',
             'domains': [
                 'TECH(技术)', 'ACADEMIC(学术)', 'BUSINESS(商业)', 'FINANCE(金融)',
                 'PRODUCT(产品)', 'POLICY(政策)', 'AUTHOR(创作)', 'CRITIQUE(评论)',
@@ -192,7 +192,7 @@ def main():
         },
     }
 
-    export_path = os.path.join(TARGET, 'hermes_agent_export.json')
+    export_path = os.path.join(TARGET, 'bimawen_export.json')
     with open(export_path, 'w', encoding='utf-8') as f:
         json.dump(export, f, ensure_ascii=False, indent=2)
     print(f'[OK] Export JSON: {export_path}')
@@ -226,12 +226,12 @@ def main():
 
     roles_path = os.path.join(TARGET, 'promptx_roles.md')
     with open(roles_path, 'w', encoding='utf-8') as f:
-        f.write('# Hermes Agent Universal - PromptX Role Definitions\n\n')
+        f.write('# Monkey Harness Agent (弼马温) - PromptX Role Definitions\n\n')
         f.write('\n---\n'.join(roles_dpml))
     print(f'[OK] PromptX Roles: {roles_path}')
 
     # ========== 4. 创建部署指南 ==========
-    deploy_md = '''# Hermes Agent Universal - PromptX 部署指南
+    deploy_md = '''# Monkey Harness Agent (弼马温) - PromptX 部署指南
 
 ## 一、导入方式
 
@@ -259,7 +259,7 @@ action("born", {{
 
 ## 二、文件结构
 ```
-hermes-agent-universal/
+monkey-harness-agent/
 ├── hermes_universal/          # Python源码
 │   ├── core/                  # 五角色实现
 │   ├── engine/                # 引擎+状态机+子链调度
@@ -272,7 +272,7 @@ hermes-agent-universal/
 ├── validations/               # 4条验证链模板
 ├── store/                     # SQLite数据库
 │   ├── rnd_engine.db          # 状态/任务/步骤/审核
-│   └── hermes.db              # 认知/记忆/指纹
+│   └── bimawen.db              # 认知/记忆/指纹
 ├── config.yaml                # 配置文件
 ├── SKILL.md                   # 通用提示词技能
 ├── pyproject.toml             # Python包定义
@@ -282,15 +282,15 @@ hermes-agent-universal/
 ## 三、快速启动
 ```bash
 # Python安装
-pip install hermes-agent-universal
+pip install monkey-harness-agent
 
 # 或直接运行
 python -m hermes_universal
 
 # CLI模式
-hermes run "你的问题"
-hermes chat
-hermes desktop
+monkey-harness run "你的问题"
+monkey-harness chat
+monkey-harness desktop
 ```
 
 ## 四、API配置 (config.yaml)

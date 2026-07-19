@@ -1,5 +1,5 @@
 {
-  "name": "hermes-agent-universal",
+  "name": "monkey-harness-agent",
   "version": "0.1.0",
   "platform": "universal",
 
@@ -11,7 +11,7 @@
 
   "usage": {
     "minimal": "直接复制SKILL.md内容到AI的System Prompt位置",
-    "with_tools": "配合CLI使用: pip install hermes-agent-universal && hermes chat",
+    "with_tools": "配合CLI使用: pip install monkey-harness-agent && monkey-harness chat",
     "advanced": "混搭配置: 不同AI厂商用于Monkey和Horse角色"
   }
 }

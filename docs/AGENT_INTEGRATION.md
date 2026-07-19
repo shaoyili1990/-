@@ -58,9 +58,9 @@ url: http://你的服务器:8000/mcp
 description: "弼马温 Agent — 多源巡逻搜索系统"
 ```
 
-### 作为 Hermes 系统 Skill
+### 作为 MCP 系统 Skill
 
-在 Hermes 的 Skill 配置中注册：
+在 MCP 客户端中注册：
 
 ```json
 {

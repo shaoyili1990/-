@@ -29,6 +29,6 @@
     "咨询",
     "辅导"
   ],
-  "note": "通用领域=贾珀原生擅长的类型，无需领域指纹覆盖，走单路径",
+  "note": "通用领域=Thinker通用类型，无需领域指纹覆盖，走单路径",
   "domain_tags_source": "从各领域指纹的dominant_chain/signature/top10/调整说明自动提取"
 }

@@ -1,7 +1,7 @@
 {
   "name": "产品管理与用户洞察临时指纹",
-  "source": "贾珀思维指纹适配",
-  "based_on": "jiapo_unified_fingerprint.json",
+  "source": "通用思维指纹(thinker)领域适配",
+  "based_on": "thinker_unified_fingerprint.json",
   "domain_id": "PRODUCT",
   "analyze_date": "2026-07-07 14:03:44",
   "dominant_chain": "换位视角思维链",

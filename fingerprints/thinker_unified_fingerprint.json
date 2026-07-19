@@ -1,63 +1,103 @@
 {
-  "name": "学术研究与科学验证临时指纹",
-  "source": "通用思维指纹(thinker)领域适配",
-  "based_on": "thinker_unified_fingerprint.json",
-  "domain_id": "ACADEMIC",
-  "analyze_date": "2026-07-07 14:03:44",
-  "dominant_chain": "假设验证推导法",
-  "signature": "假设验证→演绎推导→反证推导→归纳推导→因果推导",
+  "name": "thinker",
+  "source": "通用思维指纹 — 基于132条子链的理性思维基线模板",
+  "analyze_date": "2026-06-07",
+  "dominant_chain": "互斥",
+  "signature": "主次→互补→因果→传承→依存",
   "top10": [
     {
-      "chain": "假设验证推导法",
+      "chain": "互斥",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.52
     },
     {
-      "chain": "演绎推导法",
+      "chain": "依存",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.52
     },
     {
-      "chain": "反证推导法",
+      "chain": "取舍",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.52
     },
     {
-      "chain": "归纳推导法",
+      "chain": "拆分",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.52
     },
     {
-      "chain": "因果推导法",
+      "chain": "时序",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.52
     },
     {
-      "chain": "互斥逻辑链",
+      "chain": "互补",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.51
     },
     {
-      "chain": "穷尽逻辑链",
+      "chain": "假设",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.51
     },
     {
-      "chain": "条件逻辑链",
+      "chain": "主次",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.5
     },
     {
-      "chain": "量化对比推导法",
+      "chain": "归属",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.5
     },
     {
-      "chain": "归谬推导法",
+      "chain": "聚合",
       "tier": 1,
-      "weight": 0
+      "label": "很活跃",
+      "brains": [
+        "逻辑链"
+      ],
+      "weight": 0.5
     }
   ],
+  "总分析章节": 802,
+  "总推理次数": 107468,
   "tiers": {
     "很活跃(T1)": [
       "互斥",
@@ -67,6 +107,7 @@
       "时序",
       "互补",
       "假设",
+      "主次",
       "归属",
       "聚合",
       "衍生",
@@ -75,35 +116,30 @@
       "穷尽",
       "对比",
       "嵌套",
+      "循环",
       "演绎",
       "并列",
       "转折",
       "连锁",
+      "迁移",
+      "方位",
+      "因果",
       "递进",
-      "权重计算",
-      "穷举推导",
-      "归纳",
-      "概率统计",
-      "边界推导",
-      "阈值判断",
-      "反证推导",
-      "归谬推导",
-      "溯因推导",
-      "范式推导"
+      "类比",
+      "权重计算"
     ],
     "活跃(T2)": [
-      "主次",
-      "循环",
-      "因果",
       "等价",
       "因果推导",
       "主次权重因果",
       "制衡",
       "限定",
+      "穷举推导",
       "溯源",
       "网状交织",
       "总分",
       "滞后因果",
+      "归纳",
       "迭代修正",
       "分叉发散",
       "累积因果",
@@ -119,22 +155,9 @@
       "约束限定",
       "多因多果",
       "混合复合",
-      "反馈因果",
-      "目标导向",
-      "层级拆解",
-      "排除推导",
-      "等效替换",
-      "全局统筹",
-      "局部深挖",
-      "博弈推导",
-      "趋势推演",
-      "风险预判",
-      "矛盾推导"
+      "反馈因果"
     ],
     "一般(T3)": [
-      "迁移",
-      "方位",
-      "类比",
       "多选随机",
       "嵌套层级",
       "必然因果",
@@ -144,8 +167,11 @@
       "反噬反转",
       "多因一果",
       "衰减递减",
+      "目标导向",
+      "概率统计",
       "条件限定",
       "根源表层",
+      "边界推导",
       "并行独立",
       "突发触发",
       "链式因果",
@@ -153,16 +179,21 @@
       "隐性潜藏",
       "择优筛选",
       "问题导向",
+      "层级拆解",
+      "阈值判断",
       "概率或然",
       "周期循环",
       "壁垒突破",
-      "换位视角",
-      "发散思维",
-      "关联联想"
+      "换位视角"
     ],
     "少(T4)": [
       "网状互联",
+      "排除推导",
+      "等效替换",
       "主次优先级",
+      "全局统筹",
+      "发散思维",
+      "局部深挖",
       "层级递进",
       "并行统筹",
       "归纳思维",
@@ -174,10 +205,13 @@
       "试错修正",
       "辨析对比",
       "逆向思维",
+      "博弈推导",
       "守恒推导",
       "归纳推导",
+      "趋势推演",
       "量化对比",
       "假设推演",
+      "关联联想",
       "回溯复盘",
       "拆解思维"
     ],
@@ -187,67 +221,92 @@
       "类比迁移",
       "线性递进",
       "预判推演",
+      "风险预判",
       "演绎推导",
+      "矛盾推导",
       "类比推导",
       "谱系推导",
       "二分判定",
       "传递推导",
       "假设验证",
       "全息推导",
+      "反证推导",
+      "归谬推导",
       "时空推演",
       "映射关联",
       "极值推导",
       "样本抽样",
       "模态推导",
+      "溯因推导",
       "相容互斥",
+      "范式推导",
       "连锁推导",
       "逆向推导"
     ]
   },
+  "stats": {
+    "逻辑链": {
+      "retained": 32,
+      "low_freq": 0
+    },
+    "因果链": {
+      "retained": 33,
+      "low_freq": 2
+    },
+    "思维链": {
+      "retained": 33,
+      "low_freq": 31
+    },
+    "推导链": {
+      "retained": 36,
+      "low_freq": 29
+    }
+  },
+  "chain_details": {},
   "usage_by_chain": {
     "互斥": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.52,
       "brains": [
         "逻辑链"
       ]
     },
     "依存": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.52,
       "brains": [
         "逻辑链"
       ]
     },
     "取舍": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.52,
       "brains": [
         "逻辑链"
       ]
     },
     "拆分": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.52,
       "brains": [
         "逻辑链"
       ]
     },
     "时序": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.52,
       "brains": [
         "逻辑链"
       ]
     },
     "互补": {
       "tier": 1,
-      "label": "很活跃(T1)",
+      "label": "很活跃",
       "weight": 0.51,
       "brains": [
         "逻辑链"
@@ -255,479 +314,479 @@
     },
     "假设": {
       "tier": 1,
-      "label": "很活跃(T1)",
+      "label": "很活跃",
       "weight": 0.51,
       "brains": [
         "逻辑链"
       ]
     },
     "主次": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 1,
+      "label": "很活跃",
+      "weight": 0.5,
       "brains": [
         "逻辑链"
       ]
     },
     "归属": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.5,
       "brains": [
         "逻辑链"
       ]
     },
     "聚合": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.5,
       "brains": [
         "逻辑链"
       ]
     },
     "衍生": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.5,
       "brains": [
         "逻辑链"
       ]
     },
     "传承": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.49,
       "brains": [
         "逻辑链"
       ]
     },
     "条件": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.49,
       "brains": [
         "逻辑链"
       ]
     },
     "穷尽": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.49,
       "brains": [
         "逻辑链"
       ]
     },
     "对比": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.48,
       "brains": [
         "逻辑链"
       ]
     },
     "嵌套": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.47,
       "brains": [
         "逻辑链"
       ]
     },
     "循环": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 1,
+      "label": "很活跃",
+      "weight": 0.47,
       "brains": [
         "逻辑链"
       ]
     },
     "演绎": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.47,
       "brains": [
         "逻辑链"
       ]
     },
     "并列": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.45,
       "brains": [
         "逻辑链"
       ]
     },
     "转折": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.45,
       "brains": [
         "逻辑链"
       ]
     },
     "连锁": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.45,
       "brains": [
         "逻辑链"
       ]
     },
     "迁移": {
-      "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "tier": 1,
+      "label": "很活跃",
+      "weight": 0.44,
       "brains": [
         "逻辑链"
       ]
     },
     "方位": {
-      "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "tier": 1,
+      "label": "很活跃",
+      "weight": 0.42,
       "brains": [
         "逻辑链"
       ]
     },
     "因果": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 1,
+      "label": "很活跃",
+      "weight": 0.39,
       "brains": [
         "逻辑链"
       ]
     },
     "递进": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.39,
       "brains": [
         "逻辑链"
       ]
     },
     "类比": {
-      "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "tier": 1,
+      "label": "很活跃",
+      "weight": 0.36,
       "brains": [
         "逻辑链"
       ]
     },
     "权重计算": {
       "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "label": "很活跃",
+      "weight": 0.36,
       "brains": [
         "推导链"
       ]
     },
     "等价": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.32,
       "brains": [
         "逻辑链"
       ]
     },
     "因果推导": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.32,
       "brains": [
         "推导链"
       ]
     },
     "主次权重因果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.27,
       "brains": [
         "因果链"
       ]
     },
     "制衡": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.26,
       "brains": [
         "逻辑链"
       ]
     },
     "限定": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.26,
       "brains": [
         "逻辑链"
       ]
     },
     "穷举推导": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 2,
+      "label": "活跃",
+      "weight": 0.25,
       "brains": [
         "推导链"
       ]
     },
     "溯源": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.19,
       "brains": [
         "逻辑链"
       ]
     },
     "网状交织": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.19,
       "brains": [
         "因果链"
       ]
     },
     "总分": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.17,
       "brains": [
         "逻辑链"
       ]
     },
     "滞后因果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.17,
       "brains": [
         "因果链"
       ]
     },
     "归纳": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 2,
+      "label": "活跃",
+      "weight": 0.16,
       "brains": [
         "逻辑链"
       ]
     },
     "迭代修正": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.15,
       "brains": [
         "推导链"
       ]
     },
     "分叉发散": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.14,
       "brains": [
         "因果链"
       ]
     },
     "累积因果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.14,
       "brains": [
         "因果链"
       ]
     },
     "一因一果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.13,
       "brains": [
         "因果链"
       ]
     },
     "阻断抵消": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.13,
       "brains": [
         "因果链"
       ]
     },
     "协同加成": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.12,
       "brains": [
         "因果链"
       ]
     },
     "稳态恒定": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.12,
       "brains": [
         "因果链"
       ]
     },
     "互为因果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.11,
       "brains": [
         "因果链"
       ]
     },
     "即时因果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.11,
       "brains": [
         "因果链"
       ]
     },
     "放大递增": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.11,
       "brains": [
         "因果链"
       ]
     },
     "显性直观": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.11,
       "brains": [
         "因果链"
       ]
     },
     "汇聚收敛": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.11,
       "brains": [
         "因果链"
       ]
     },
     "约束限定": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.11,
       "brains": [
         "推导链"
       ]
     },
     "多因多果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.1,
       "brains": [
         "因果链"
       ]
     },
     "混合复合": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.1,
       "brains": [
         "因果链"
       ]
     },
     "反馈因果": {
       "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "label": "活跃",
+      "weight": 0.09,
       "brains": [
         "因果链"
       ]
     },
     "多选随机": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.09,
       "brains": [
         "因果链"
       ]
     },
     "嵌套层级": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.09,
       "brains": [
         "因果链"
       ]
     },
     "必然因果": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.09,
       "brains": [
         "因果链"
       ]
     },
     "拮抗制约": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.09,
       "brains": [
         "因果链"
       ]
     },
     "跳跃跨阶": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.09,
       "brains": [
         "因果链"
       ]
     },
     "一因多果": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.08,
       "brains": [
         "因果链"
       ]
     },
     "反噬反转": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.08,
       "brains": [
         "因果链"
       ]
     },
     "多因一果": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.08,
       "brains": [
         "因果链"
       ]
     },
     "衰减递减": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.08,
       "brains": [
         "因果链"
       ]
     },
     "目标导向": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 3,
+      "label": "一般",
+      "weight": 0.08,
       "brains": [
         "思维链"
       ]
     },
     "概率统计": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 3,
+      "label": "一般",
+      "weight": 0.08,
       "brains": [
         "推导链"
       ]
     },
     "条件限定": {
       "tier": 3,
-      "label": "一般(T3)",
+      "label": "一般",
       "weight": 0.07,
       "brains": [
         "因果链"
@@ -735,183 +794,183 @@
     },
     "根源表层": {
       "tier": 3,
-      "label": "一般(T3)",
+      "label": "一般",
       "weight": 0.07,
       "brains": [
         "因果链"
       ]
     },
     "边界推导": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 3,
+      "label": "一般",
+      "weight": 0.07,
       "brains": [
         "推导链"
       ]
     },
     "并行独立": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.06,
       "brains": [
         "因果链"
       ]
     },
     "突发触发": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.06,
       "brains": [
         "因果链"
       ]
     },
     "链式因果": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.06,
       "brains": [
         "因果链"
       ]
     },
     "权衡取舍": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.06,
       "brains": [
         "思维链"
       ]
     },
     "隐性潜藏": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.05,
       "brains": [
         "因果链"
       ]
     },
     "择优筛选": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.04,
       "brains": [
         "思维链"
       ]
     },
     "问题导向": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.04,
       "brains": [
         "思维链"
       ]
     },
     "层级拆解": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 3,
+      "label": "一般",
+      "weight": 0.04,
       "brains": [
         "推导链"
       ]
     },
     "阈值判断": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 3,
+      "label": "一般",
+      "weight": 0.04,
       "brains": [
         "推导链"
       ]
     },
     "概率或然": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.03,
       "brains": [
         "因果链"
       ]
     },
     "周期循环": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.03,
       "brains": [
         "思维链"
       ]
     },
     "壁垒突破": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.03,
       "brains": [
         "思维链"
       ]
     },
     "换位视角": {
       "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "label": "一般",
+      "weight": 0.03,
       "brains": [
         "思维链"
       ]
     },
     "网状互联": {
       "tier": 4,
-      "label": "少(T4)",
-      "weight": 0.02,
+      "label": "少",
+      "weight": 0.03,
       "brains": [
         "思维链"
       ]
     },
     "排除推导": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.03,
       "brains": [
         "推导链"
       ]
     },
     "等效替换": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.03,
       "brains": [
         "推导链"
       ]
     },
     "主次优先级": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
       ]
     },
     "全局统筹": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.02,
       "brains": [
         "思维链"
       ]
     },
     "发散思维": {
-      "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.02,
       "brains": [
         "思维链"
       ]
     },
     "局部深挖": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.02,
       "brains": [
         "思维链"
       ]
     },
     "层级递进": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -919,7 +978,7 @@
     },
     "并行统筹": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -927,7 +986,7 @@
     },
     "归纳思维": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -935,7 +994,7 @@
     },
     "收敛思维": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -943,7 +1002,7 @@
     },
     "标准化流程": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -951,7 +1010,7 @@
     },
     "溯源思维": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -959,7 +1018,7 @@
     },
     "演绎思维": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -967,7 +1026,7 @@
     },
     "组合拼装": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -975,7 +1034,7 @@
     },
     "试错修正": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -983,7 +1042,7 @@
     },
     "辨析对比": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
@@ -991,23 +1050,23 @@
     },
     "逆向思维": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "思维链"
       ]
     },
     "博弈推导": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.02,
       "brains": [
         "推导链"
       ]
     },
     "守恒推导": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "推导链"
@@ -1015,23 +1074,23 @@
     },
     "归纳推导": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "推导链"
       ]
     },
     "趋势推演": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.02,
       "brains": [
         "推导链"
       ]
     },
     "量化对比": {
       "tier": 4,
-      "label": "少(T4)",
+      "label": "少",
       "weight": 0.02,
       "brains": [
         "推导链"
@@ -1039,39 +1098,39 @@
     },
     "假设推演": {
       "tier": 4,
-      "label": "少(T4)",
-      "weight": 0.02,
+      "label": "少",
+      "weight": 0.01,
       "brains": [
         "思维链"
       ]
     },
     "关联联想": {
-      "tier": 3,
-      "label": "一般(T3)",
-      "weight": 0.07,
+      "tier": 4,
+      "label": "少",
+      "weight": 0.01,
       "brains": [
         "思维链"
       ]
     },
     "回溯复盘": {
       "tier": 4,
-      "label": "少(T4)",
-      "weight": 0.02,
+      "label": "少",
+      "weight": 0.01,
       "brains": [
         "思维链"
       ]
     },
     "拆解思维": {
       "tier": 4,
-      "label": "少(T4)",
-      "weight": 0.02,
+      "label": "少",
+      "weight": 0.01,
       "brains": [
         "思维链"
       ]
     },
     "时序排序": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "思维链"
@@ -1079,7 +1138,7 @@
     },
     "极限边界": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "思维链"
@@ -1087,7 +1146,7 @@
     },
     "类比迁移": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "思维链"
@@ -1095,7 +1154,7 @@
     },
     "线性递进": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "思维链"
@@ -1103,39 +1162,39 @@
     },
     "预判推演": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "思维链"
       ]
     },
     "风险预判": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 5,
+      "label": "很少",
+      "weight": 0.01,
       "brains": [
         "思维链"
       ]
     },
     "演绎推导": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "推导链"
       ]
     },
     "矛盾推导": {
-      "tier": 2,
-      "label": "活跃(T2)",
-      "weight": 0.2,
+      "tier": 5,
+      "label": "很少",
+      "weight": 0.01,
       "brains": [
         "推导链"
       ]
     },
     "类比推导": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "推导链"
@@ -1143,7 +1202,7 @@
     },
     "谱系推导": {
       "tier": 5,
-      "label": "很少(T5)",
+      "label": "很少",
       "weight": 0.01,
       "brains": [
         "推导链"
@@ -1151,162 +1210,397 @@
     },
     "二分判定": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "传递推导": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "假设验证": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "全息推导": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "反证推导": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 5,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "归谬推导": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 5,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "时空推演": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "映射关联": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "极值推导": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "样本抽样": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "模态推导": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "溯因推导": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 5,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "相容互斥": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "范式推导": {
-      "tier": 1,
-      "label": "很活跃(T1)",
-      "weight": 0.51,
+      "tier": 5,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "连锁推导": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     },
     "逆向推导": {
       "tier": 5,
-      "label": "很少(T5)",
-      "weight": 0.01,
+      "label": "很少",
+      "weight": 0.0,
       "brains": [
         "推导链"
       ]
     }
   },
+  "error_memory": [
+    {
+      "brain": "因果链",
+      "chain": "隐性潜藏",
+      "hits": 5,
+      "total": 52,
+      "reason": "低频(10%)"
+    },
+    {
+      "brain": "因果链",
+      "chain": "概率或然",
+      "hits": 3,
+      "total": 52,
+      "reason": "低频(6%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "择优筛选",
+      "hits": 4,
+      "total": 52,
+      "reason": "低频(8%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "问题导向",
+      "hits": 4,
+      "total": 52,
+      "reason": "低频(8%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "周期循环",
+      "hits": 3,
+      "total": 52,
+      "reason": "低频(6%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "壁垒突破",
+      "hits": 3,
+      "total": 52,
+      "reason": "低频(6%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "换位视角",
+      "hits": 3,
+      "total": 52,
+      "reason": "低频(6%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "网状互联",
+      "hits": 3,
+      "total": 52,
+      "reason": "低频(6%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "主次优先级",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "全局统筹",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "发散思维",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "局部深挖",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "层级递进",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "并行统筹",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "归纳思维",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "收敛思维",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "标准化流程",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "溯源思维",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "演绎思维",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "组合拼装",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "试错修正",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "辨析对比",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "逆向思维",
+      "hits": 2,
+      "total": 52,
+      "reason": "低频(4%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "假设推演",
+      "hits": 1,
+      "total": 52,
+      "reason": "低频(2%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "关联联想",
+      "hits": 1,
+      "total": 52,
+      "reason": "低频(2%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "回溯复盘",
+      "hits": 1,
+      "total": 52,
+      "reason": "低频(2%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "拆解思维",
+      "hits": 1,
+      "total": 52,
+      "reason": "低频(2%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "时序排序",
+      "hits": 1,
+      "total": 52,
+      "reason": "低频(2%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "极限边界",
+      "hits": 1,
+      "total": 52,
+      "reason": "低频(2%)"
+    },
+    {
+      "brain": "思维链",
+      "chain": "类比迁移",
+      "hits": 1,
+      "total": 52,
+      "reason": "低频(2%)"
+    }
+  ],
   "core_portrait": {
-    "主导思维链": "假设验证推导法",
-    "主导思维链解释": "ACADEMIC 领域临时指纹，以假设验证推导法为核心",
+    "主导思维链": "主次",
+    "主导思维链解释": "在所有长篇作品中均以区分主次矛盾为核心思维方式",
     "思维架构层次": {
-      "第一层_领域核心": [
-        "假设验证推导法",
-        "演绎推导法",
-        "反证推导法",
-        "归谬推导法",
-        "溯因推导法"
+      "第一层_通用基底": [
+        "互补",
+        "传承",
+        "依存",
+        "取舍",
+        "嵌套",
+        "归属",
+        "拆分",
+        "方位",
+        "时序",
+        "衍生"
       ],
-      "第二层_领域支撑": [
-        "范式推导法",
-        "归纳推导法",
-        "归纳逻辑链",
-        "溯源逻辑链",
-        "穷举推导法"
+      "第二层_高频骨架": [
+        "主次",
+        "因果",
+        "假设",
+        "归纳",
+        "总分",
+        "条件",
+        "溯源",
+        "演绎",
+        "穷尽",
+        "转折"
       ],
-      "第三层_领域辅助": [
-        "矛盾推导法",
-        "等效替换推导法",
-        "趋势推演法",
-        "博弈推导法",
-        "排除推导法"
+      "第三层_叙事工具": [
+        "分叉发散",
+        "协同加成",
+        "递进",
+        "聚合",
+        "穷尽",
+        "迁移",
+        "连锁"
+      ],
+      "第四层_个人风格": [
+        "主次权重因果",
+        "滞后因果",
+        "即时因果",
+        "反馈因果",
+        "网状交织",
+        "目标导向"
       ]
     },
     "思维模式签名": {
-      "base": "主次→互补→因果→传承→依存",
-      "domain": "假设验证→演绎推导→反证推导→归纳推导→因果推导"
+      "primacy": "主次",
+      "complementarity": "互补",
+      "causality": "因果",
+      "inheritance": "传承",
+      "interdependence": "依存"
     },
     "五维评分": {
       "主次优先级": {
@@ -1330,21 +1624,11 @@
         "说明": "分叉发散、协同加成等出现，但非主导"
       }
     },
-    "adjustment_rationale": "学术研究与科学验证强调可重复性、严谨逻辑和证据强度，因此大幅提升假设验证、反证、归谬、溯因、归纳等推导链的权重，形成从假设提出到数据验证的闭环。同时降低易导致过度推广的类比、发散、联想等链，保留互斥、条件、穷尽等逻辑链以支撑变量控制。引入概率统计、阈值判断、边界推导强化定量规范，使每步论断都有明确证据强度标注，符合科研论文写作要求。"
-  },
-  "domain_tags": [
-    "学术研究",
-    "论文写作",
-    "科学验证",
-    "实验设计",
-    "文献综述",
-    "方法论",
-    "数据分析",
-    "统计验证",
-    "理论研究",
-    "学术写作",
-    "科研方法",
-    "假设验证",
-    "学术论证"
-  ]
+    "四脑特征": {
+      "逻辑链": "主次主导（极稳定，7/7作品）",
+      "因果链": "一因一果主导（极稳定，7/7作品）",
+      "思维链": "目标导向为主，辅以试错修正、权衡取舍",
+      "推导链": "二分判定为主，辅以传递推导"
+    }
+  }
 }

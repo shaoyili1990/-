@@ -21,7 +21,7 @@ SmartScreen 的判定逻辑：
 # 2. 创建 Trusted Signing 账户
 az trusted-signing create \
   --resource-group mygroup \
-  --account-name HermesAgentSign
+  --account-name MonkeyHarnessSign
 
 # 3. 在 CI 中签名
 - name: Sign Windows binaries
@@ -31,9 +31,9 @@ az trusted-signing create \
     azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
     azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
     endpoint: https://wus.codesigning.azure.net
-    code-signing-account-name: HermesAgentSign
+    code-signing-account-name: MonkeyHarnessSign
     certificate-profile-name: PublicTrust
-    files: dist/hermes-agent.exe
+    files: dist/monkey-harness-agent.exe
 ```
 
 优势：免费、受微软信任、可在 CI 中自动执行
@@ -54,13 +54,13 @@ EV 证书可以直接绕过 SmartScreen，安装后即受信任。
 ```powershell
 # 生成自签名证书
 New-SelfSignedCertificate -Type Custom \
-  -Subject "CN=Hermes Agent" \
+  -Subject "CN=Monkey Harness Agent" \
   -KeyUsage DigitalSignature \
   -TextExtension @("2.5.29.37={text}1.3.6.1.5.5.7.3.3") \
   -CertStoreLocation "Cert:\CurrentUser\My"
 
 # 签名 exe
-signtool sign /fd SHA256 /a /f mycert.pfx /p mypassword dist/hermes-agent.exe
+signtool sign /fd SHA256 /a /f mycert.pfx /p mypassword dist/monkey-harness-agent.exe
 ```
 
 缺点：用户电脑不信任你的自签名证书，警告仍然存在，只是换了个措辞
@@ -68,7 +68,7 @@ signtool sign /fd SHA256 /a /f mycert.pfx /p mypassword dist/hermes-agent.exe
 ### 方案 4：NSIS 安装器（当前已实现）
 
 安装包（`.exe` 安装器）比裸 `.exe` 更不容易触发 SmartScreen。
-用户只需运行 `Hermes-Agent-Setup-0.1.0.exe`，安装后程序自动加入开始菜单。
+用户只需运行 `MonkeyHarness-Setup-0.1.0.exe`，安装后程序自动加入开始菜单。
 
 ## ✅ 短期 vs 长期
 

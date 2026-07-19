@@ -197,7 +197,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=hermes
+User=monkey-harness
 ExecStart=/usr/local/bin/monkey-harness-mcp --transport http --host 0.0.0.0 --port 8000
 Restart=always
 Environment=HERMES_MONKEY_KEY=sk-xxx
@@ -209,17 +209,16 @@ WantedBy=multi-user.target
 
 ---
 
-## 八、从 Hermes Agent 升级
+## 八、从旧版迁移
 
-如果之前安装了 `hermes-agent-universal`，迁移方式：
+如果之前安装了旧版，迁移方式：
 
 ```bash
 pip uninstall hermes-agent-universal
 pip install monkey-harness-agent
 
-# CLI 兼容：旧命令仍可用
-hermes desktop           # 仍然可用
-hermes run "你好"        # 仍然可用
-monkey-harness desktop   # 新命令
+# CLI 兼容：旧命令仍可用（通过别名）
+monkey-harness desktop   # 启动桌面Web UI
 bimawen desktop          # 中文名命令
+monkey-harness-mcp       # 启动MCP服务器
 ```

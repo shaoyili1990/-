@@ -1,4 +1,4 @@
-# Hermes Agent Universal - Agent Kit
+# Monkey Harness Agent (弼马温) - Agent Kit
 
 通用可移植 AI Agent 系统，基于猴驭马(Monkey-Horse)四角色架构。
 
@@ -9,7 +9,7 @@ agent-kit/
 ├── SKILL.md              # 核心系统提示词（纯文本，无需代码）
 ├── manifest.json         # Agent平台兼容性清单
 ├── config/
-│   ├── hermes.json       # Hermes平台配置
+│   ├── monkey-harness.json       # Hermes平台配置
 │   ├── openclaw.json     # OpenClaw平台配置
 │   └── universal.json    # 通用配置
 ├── fingerprints/         # 领域指纹（11个JSON）
@@ -23,14 +23,14 @@ agent-kit/
 
 ### Python包模式
 ```bash
-pip install hermes-agent-universal
-hermes run "你的问题"
+pip install monkey-harness-agent
+monkey-harness run "你的问题"
 ```
 
 ### Docker模式
 ```bash
-docker build -t hermes-agent .
-docker run -p 8080:8080 hermes-agent
+docker build -t monkey-harness-agent .
+docker run -p 8080:8080 monkey-harness-agent
 ```
 
 ## 架构

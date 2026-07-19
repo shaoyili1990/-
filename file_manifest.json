@@ -4,7 +4,7 @@
     "size": 1217
   },
   {
-    "path": "agent-kit\\config\\hermes.json",
+    "path": "agent-kit\\config\\monkey-harness.json",
     "size": 658
   },
   {
@@ -60,7 +60,7 @@
     "size": 26871
   },
   {
-    "path": "fingerprints\\jiapo_unified_fingerprint.json",
+    "path": "fingerprints\\thinker_unified_fingerprint.json",
     "size": 31393
   },
   {
@@ -188,7 +188,7 @@
     "size": 2446
   },
   {
-    "path": "store\\hermes.db",
+    "path": "store\\bimawen.db",
     "size": 942080
   },
   {

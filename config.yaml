@@ -1,4 +1,4 @@
-# Hermes Agent Universal 配置文件
+# Monkey Harness Agent / 弼马温 Agent 配置文件
 # 支持混搭模式:
 #   - 双API Key (Monkey用OpenAI, Horse用Claude)
 #   - 单Key+本地 (Monkey用DeepSeek, Horse用Ollama)
@@ -26,7 +26,7 @@ keeper:
   auto_migrate: true
 
 scribe:
-  db_path: ""                # 默认为 store/hermes.db
+  db_path: ""                # 默认为 store/bimawen.db
   auto_init: true
 
 system:

@@ -1,8 +1,8 @@
 {
-  "name": "Hermes Agent Universal",
+  "name": "Monkey Harness Agent (弼马温)",
   "version": "0.1.0",
   "description": "通用可移植AI Agent系统 - 猴驭马四角色架构(灵猴/骏马/司库/书童)",
-  "author": "Hermes Agent Team",
+  "author": "Monkey Harness Team",
   "license": "MIT",
   "protocol": "universal-prompt-v1",
 
@@ -17,7 +17,7 @@
       "total": 10,
       "domains": ["TECH", "ACADEMIC", "BUSINESS", "FINANCE", "POLICY",
                    "PRODUCT", "AUTHOR", "CRITIQUE", "CHAOS", "WEATHER"],
-      "generic": "jiapo_unified"
+      "generic": "thinker"
     },
     "state_machine": {
       "states": 9,
@@ -40,15 +40,15 @@
     "core_prompt": "SKILL.md",
     "fingerprints": "fingerprints/",
     "subchains": "subchains/",
-    "python_package": "hermes_universal/",
+    "python_package": "monkey_harness_agent/",
     "config": "config.yaml",
-    "cli_entry": "hermes"
+    "cli_entry": "monkey-harness"
   },
 
   "requirements": {
     "python": ">=3.11",
     "prompt_only": "无需任何依赖 - 纯文本System Prompt",
-    "full_mode": "pip install hermes-agent-universal"
+    "full_mode": "pip install monkey-harness-agent"
   },
 
   "architecture": {

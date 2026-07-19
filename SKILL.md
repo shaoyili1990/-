@@ -1,4 +1,4 @@
-# Hermes Agent Universal - 通用提示词技能
+# Monkey Harness Agent (弼马温) - 通用提示词技能
 
 > 版本: 0.1.0 | 协议: MIT
 > 此技能可在任何AI平台(Claude/ChatGPT/DeepSeek等)独立使用
@@ -53,7 +53,7 @@
 ## 三、领域指纹（通用+10领域）
 
 本系统使用**双指纹体系**:
-- **通用指纹(jiapo)**: 个人思维偏好的基准权重,每次推理必加载
+- **通用指纹(thinker)**: 个人思维偏好的基准权重,每次推理必加载
 - **领域垂直指纹**: domain_TECH/ACADEMIC/BUSINESS等,按需加载
 
 | 领域 | 典型路由类型 | 思考深度 | 4脑参与 | 链数 |

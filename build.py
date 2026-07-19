@@ -1,5 +1,5 @@
 """
-Hermes Agent — Windows 安装包构建脚本
+Monkey Harness Agent — Windows 安装包构建脚本
 用于通过 SignPath Foundation 签名
 """
 import os
@@ -23,7 +23,7 @@ def clean():
 def build(version: str = "0.0.0"):
     """使用 PyInstaller 打包为单文件 exe"""
     clean()
-    print(f"📦 Hermes Agent {version} Windows 构建中…")
+    print(f"📦 Monkey Harness Agent {version} Windows 构建中…")
 
     # 确保依赖
     subprocess.run(
@@ -37,7 +37,7 @@ def build(version: str = "0.0.0"):
     pyinstaller_args = [
         "pyinstaller",
         "--onefile",                    # 单文件 exe
-        "--name", "hermes-agent",
+        "--name", "monkey-harness-agent",
         "--distpath", str(DIST_DIR),
         "--workpath", str(PROJECT_ROOT / "build" / "pyi"),
         "--specpath", str(PROJECT_ROOT / "build"),
@@ -59,7 +59,7 @@ def build(version: str = "0.0.0"):
         sys.exit(1)
 
     # 输出
-    exe_path = DIST_DIR / "hermes-agent.exe"
+    exe_path = DIST_DIR / "monkey-harness-agent.exe"
     if exe_path.exists():
         size_mb = exe_path.stat().st_size / (1024 * 1024)
         print(f"✅ 构建成功: {exe_path} ({size_mb:.1f} MB)")

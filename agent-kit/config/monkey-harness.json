@@ -1,7 +1,7 @@
 {
-  "name": "hermes-agent-universal",
+  "name": "monkey-harness-agent",
   "version": "0.1.0",
-  "platform": "hermes",
+  "platform": "mcp",
 
   "agent": {
     "skill_path": "SKILL.md",
@@ -25,7 +25,7 @@
 
   "fingerprints": {
     "path": "fingerprints/",
-    "generic": "jiapo_unified_fingerprint.json",
+    "generic": "thinker_unified_fingerprint.json",
     "auto_load": true
   },
 
