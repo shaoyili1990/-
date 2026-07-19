@@ -592,6 +592,52 @@ class EngineDB:
         finally:
             conn.close()
 
+    # ══════════════════════════════════════════
+    # 冷监督 (Aileran) 模式开关
+    # 开启后跳过灵猴审核(4条反AI验证链),降低token消耗
+    # ══════════════════════════════════════════
+
+    def set_aileran_mode(self, enabled: bool) -> None:
+        """设置冷监督模式 on/off"""
+        conn = self.cognition_conn()
+        try:
+            existing = conn.execute(
+                "SELECT id FROM preferences WHERE pref_type='aileran_mode'"
+            ).fetchone()
+            if existing:
+                conn.execute(
+                    "UPDATE preferences SET strength=? WHERE pref_type='aileran_mode'",
+                    (1.0 if enabled else 0.0,)
+                )
+            else:
+                conn.execute(
+                    "INSERT INTO preferences (pref_type, pref_desc, strength) VALUES (?, ?, ?)",
+                    ("aileran_mode", "冷监督模式: on=跳过验证链省token, off=完整验证", 1.0 if enabled else 0.0)
+                )
+            conn.commit()
+        finally:
+            conn.close()
+
+    def get_aileran_mode(self) -> bool:
+        """查询冷监督模式是否开启"""
+        conn = self.cognition_conn()
+        try:
+            row = conn.execute(
+                "SELECT strength FROM preferences WHERE pref_type='aileran_mode'"
+            ).fetchone()
+            if row:
+                return bool(row["strength"])
+            return False  # 默认关闭（完整验证模式）
+        finally:
+            conn.close()
+
+    def toggle_aileran(self) -> bool:
+        """切换冷监督开关,返回新状态"""
+        current = self.get_aileran_mode()
+        new_state = not current
+        self.set_aileran_mode(new_state)
+        return new_state
+
 
 # ========== Seed 函数: 填充多维表格 ==========
 

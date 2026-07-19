@@ -112,8 +112,34 @@ def main():
         run_interactive(agent)
 
 
+def handle_aileran_command(cmd: str, agent) -> bool:
+    """处理 /aileran on|off 命令, 返回 True 表示已处理"""
+    parts = cmd.strip().lower().split()
+    if len(parts) < 2 or parts[0] != "/aileran":
+        return False
+    if parts[1] in ("on", "1", "true", "开启", "开"):
+        agent.db.set_aileran_mode(True)
+        print("🧊 冷监督模式已开启 → 跳过验证链，降低 token 消耗")
+    elif parts[1] in ("off", "0", "false", "关闭", "关"):
+        agent.db.set_aileran_mode(False)
+        print("🔥 冷监督模式已关闭 → 恢复完整验证链")
+    elif parts[1] in ("show", "status", "?"):
+        enabled = agent.db.get_aileran_mode()
+        status = "🧊 开启" if enabled else "🔥 关闭"
+        print(f"冷监督模式当前: {status}")
+    else:
+        print("用法: /aileran on | off | status")
+    return True
+
+
 def run_once(agent, args):
     """单次运行"""
+    # 处理 /aileran 命令
+    message = args.message or ""
+    if message.startswith("/aileran"):
+        handle_aileran_command(message, agent)
+        return
+
     images = None
     if args.images:
         from .messages.content import load_image
@@ -153,8 +179,9 @@ def run_once(agent, args):
 def run_interactive(agent):
     """交互式对话"""
     print("=" * 50)
-    print(" Hermes Agent Interactive Chat")
-    print(" 输入 'exit' 退出, 'clear' 清屏")
+    print(" Monkey Harness Agent / 弼马温 Agent — 交互式对话")
+    mode_hint = "🧊 冷监督" if agent.db.get_aileran_mode() else "🔥 完整验证"
+    print(f" 输入 'exit' 退出, 'clear' 清屏, '/aileran on|off' 切换{mode_hint}")
     print("=" * 50)
 
     while True:
@@ -171,6 +198,9 @@ def run_interactive(agent):
             break
         if user_input.lower() == "clear":
             os.system("cls" if os.name == "nt" else "clear")
+            continue
+        if user_input.startswith("/aileran"):
+            handle_aileran_command(user_input, agent)
             continue
 
         result = agent.run(user_input)

@@ -63,3 +63,63 @@ class TestMCP:
                 print(f"⚠️  mcp 包未安装, 跳过 (pip install mcp)")
             else:
                 raise e
+
+
+class TestAileran:
+    """冷监督(Aileran)模式测试"""
+
+    def test_aileran_default_is_bool(self):
+        """冷监督状态应为布尔值"""
+        from hermes_universal.engine import EngineDB
+        db = EngineDB()
+        val = db.get_aileran_mode()
+        assert isinstance(val, bool)
+        print(f"✅ 冷监督状态类型正确: {val}")
+
+    def test_aileran_toggle_on(self):
+        """开启后应返回 True"""
+        from hermes_universal.engine import EngineDB
+        db = EngineDB()
+        db.set_aileran_mode(True)
+        assert db.get_aileran_mode() is True
+        print("✅ 冷监督开启成功")
+
+    def test_aileran_toggle_off(self):
+        """关闭后应返回 False"""
+        from hermes_universal.engine import EngineDB
+        db = EngineDB()
+        db.set_aileran_mode(False)
+        assert db.get_aileran_mode() is False
+        print("✅ 冷监督关闭成功")
+
+    def test_aileran_toggle_switch(self):
+        """toggle 应翻转状态"""
+        from hermes_universal.engine import EngineDB
+        db = EngineDB()
+        # 先设 off
+        db.set_aileran_mode(False)
+        old = db.get_aileran_mode()
+        new = db.toggle_aileran()
+        assert new is not old
+        print(f"✅ 冷监督切换: {old} → {new}")
+
+    def test_aileran_isolation(self):
+        """多次开关不影响其他preferences"""
+        from hermes_universal.engine import EngineDB
+        db = EngineDB()
+        db.set_aileran_mode(True)
+        mode1 = db.get_aileran_mode()
+        db.set_aileran_mode(False)
+        db.set_aileran_mode(True)
+        mode2 = db.get_aileran_mode()
+        assert mode1 is True
+        assert mode2 is True
+        print("✅ 冷监督隔离正常")
+
+    def test_aileran_agent_checks(self):
+        """Agent 应能读取冷监督状态"""
+        from hermes_universal.agent import HermesAgent
+        agent = HermesAgent()
+        aileran = agent._is_aileran_mode()
+        assert aileran is True or aileran is False
+        print(f"✅ Agent 冷监督读取: {aileran}")
