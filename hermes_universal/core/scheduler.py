@@ -17,9 +17,13 @@
 import json
 import logging
 import time
-from typing import Dict, Optional, List
+from datetime import datetime
+from typing import Dict, Optional, List, TYPE_CHECKING
 
 from ..engine import EngineDB
+
+if TYPE_CHECKING:
+    from .patrol import PatrolSystem
 
 logger = logging.getLogger("scheduler")
 
@@ -58,10 +62,11 @@ class IdleScheduler:
         K_EVENTS: "[]",
     }
 
-    def __init__(self, db: EngineDB, purchaser=None, monkey=None):
+    def __init__(self, db: EngineDB, purchaser=None, monkey=None, patrol: 'PatrolSystem' = None):
         self.db = db
         self.purchaser = purchaser
         self.monkey = monkey
+        self.patrol = patrol
         self._ensure()
 
     def _conn(self):
@@ -149,6 +154,13 @@ class IdleScheduler:
 
         if state == S_INSPECTING:
             return self._inspect_done(now)
+
+        # ── 每次tick驱动巡逻系统(检查是否到1:00、执行巡逻) ──
+        if self.patrol:
+            try:
+                self.patrol.tick()
+            except Exception as e:
+                logger.warning(f"[Scheduler] 巡逻异常: {e}")
 
         return r
 

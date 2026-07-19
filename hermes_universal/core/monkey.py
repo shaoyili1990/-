@@ -9,7 +9,7 @@
 
 import json
 import uuid
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Callable
 from ..config import Config
 from ..engine import EngineDB
 from ..engine.state_machine import StateMachine
@@ -407,3 +407,72 @@ Skill: {name} - {desc}
                 redundant.append(f"{cat}分类有{len(names)}个Skill可能冗余: {', '.join(names[:3])}")
 
         return f"Skill评估: {len(installed)}个已安装,{'、'.join(redundant)}" if redundant else None
+
+    # ========== 采购员协奏：自动Skill匹配 ==========
+
+    def match_skills_for_tags(self, domain_tags: List[str]) -> List[Dict]:
+        """
+        根据domain_tags自动匹配Skill市场中的可用技能
+        猴子用标签关键词去skill_market表做交集匹配
+        """
+        if not domain_tags:
+            return []
+        conn = self.db.cognition_conn()
+        try:
+            all_skills = conn.execute(
+                "SELECT id, name, icon, description, category, tags FROM skill_market"
+            ).fetchall()
+            matched = []
+            for skill in all_skills:
+                skill_tags = (skill["tags"] or "").lower().split(",")
+                skill_name = (skill["name"] or "").lower()
+                skill_desc = (skill["description"] or "").lower()
+                for tag in domain_tags:
+                    tag_lower = tag.lower().strip()
+                    if (tag_lower in skill_tags
+                            or tag_lower in skill_name
+                            or tag_lower in skill_desc):
+                        matched.append(dict(skill))
+                        break
+            return matched[:10]
+        finally:
+            conn.close()
+
+    def suggest_skills_for_route(self, route: Dict) -> Dict:
+        """
+        路由决策后自动建议匹配的Skill
+        monkey在route返回后调用,自动装匹配的Skill
+        """
+        domain_tags = route.get("domain_tags", [])
+        domain_id = route.get("domain")
+
+        tagged_skills = self.match_skills_for_tags(domain_tags) if domain_tags else []
+
+        fp_skills = []
+        if domain_id:
+            fp = self._load_fingerprint(domain_id)
+            if fp:
+                fp_keywords = fp.get("domain_tags", []) + fp.get("keywords", [])
+                fp_skills = self.match_skills_for_tags(fp_keywords)
+
+        seen = set()
+        all_matched = []
+        for s in tagged_skills + fp_skills:
+            if s["id"] not in seen:
+                seen.add(s["id"])
+                all_matched.append(s)
+
+        conn = self.db.cognition_conn()
+        try:
+            installed_ids = {r[0] for r in conn.execute("SELECT id FROM installed_skills").fetchall()}
+        finally:
+            conn.close()
+
+        auto_install = [s for s in all_matched if s["id"] not in installed_ids]
+
+        return {
+            "matched_skills": all_matched,
+            "auto_install_candidates": auto_install,
+            "already_installed": [s for s in all_matched if s["id"] in installed_ids],
+            "total_matched": len(all_matched),
+        }

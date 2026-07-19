@@ -14,6 +14,7 @@ from .engine.state_machine import StateMachine
 from .engine.subchain import SubchainScheduler
 from .core import Monkey, Horse, Purchaser, Keeper, Scribe, Verifier
 from .core.scheduler import IdleScheduler
+from .core.patrol import PatrolSystem
 from .providers import get_provider, ProviderRegistry
 
 
@@ -46,11 +47,20 @@ class HermesAgent:
         self.keeper = Keeper(self.config, self.db)
         self.scribe = Scribe(self.config, self.db)
 
+        # ===== 多门类巡检系统(每日1:00自治巡逻) =====
+        self.patrol = PatrolSystem(
+            db=self.db,
+            agent=self,
+            monkey=self.monkey,
+            purchaser=self.purchaser,
+        )
+
         # ===== 后台空闲调度器(自治循环) =====
         self.scheduler = IdleScheduler(
             db=self.db,
             purchaser=self.purchaser,
             monkey=self.monkey,
+            patrol=self.patrol,
         )
 
     # ========== 主流程 ==========
@@ -71,8 +81,20 @@ class HermesAgent:
         route = self.monkey.route(user_input, multimodal=bool(images))
 
         # 3. 三方协奏：猴子路由后检查是否需要Skill
-        skill_support = self.scheduler.coordinate_skill(user_input, route)
-        route["skill_support"] = skill_support
+        skill_support = {}
+        matched_skills = self.monkey.suggest_skills_for_route(route) if route.get("domain_tags") else {}
+        if matched_skills and matched_skills.get("auto_install_candidates"):
+            for skill in matched_skills["auto_install_candidates"]:
+                try:
+                    self.purchaser.install(skill["id"])
+                    skill_support.setdefault("installed", []).append(skill["name"])
+                except Exception:
+                    pass
+
+        route["skill_support"] = {
+            "matched": matched_skills.get("total_matched", 0),
+            "installed_during_route": skill_support.get("installed", []),
+        }
 
         # 4. 司库状态转换
         self.keeper.transition(route["task_id"], "待执行")
@@ -196,10 +218,13 @@ class HermesAgent:
 
     def get_status(self) -> Dict:
         """获取系统状态(触发一次心跳)"""
-        # 心跳: 无活跃任务,推进调度器
         tasks = self.db.list_tasks(limit=10)
         has_active = any(t.get("status") in ("待执行", "执行完成待验证", "验证中") for t in tasks)
         sched_state = self.scheduler.tick(has_active_task=has_active)
+        
+        # 巡逻系统tick驱动(检查是否到1:00)
+        patrol_state = self.patrol.tick()
+        
         stats = self.subchain.get_statistics()
         validation_chains = self.verifier.get_chain_info()
         return {
@@ -211,6 +236,8 @@ class HermesAgent:
             "horse_provider": self.config.get("horse", "provider"),
             "scheduler": sched_state,
             "scheduler_detail": self.scheduler.get_status(),
+            "patrol": patrol_state,
+            "patrol_status": self.patrol.get_status(),
         }
 
     def get_task_status(self, task_id: str) -> Optional[Dict]:

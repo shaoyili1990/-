@@ -525,6 +525,40 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
         p = get_purchaser()
         return {"updates": p.inspect_updates()}
 
+    @app.post("/api/purchaser/community-search")
+    async def community_search(data: dict):
+        """社区Skill搜索(智柴网等)"""
+        query = data.get("query", "")
+        source = data.get("source", "zhichai.net")
+        if not query:
+            raise HTTPException(400, "缺少搜索词")
+        p = get_purchaser()
+        return {"results": p.community_search(query, source=source)}
+
+    # =================== 多门类巡逻系统 ===================
+
+    @app.get("/api/patrol/status")
+    async def patrol_status():
+        """巡逻系统状态"""
+        return agent_ref().patrol.get_status()
+
+    @app.post("/api/patrol/trigger")
+    async def patrol_trigger():
+        """手动触发完整一轮巡逻（逐分类执行）"""
+        patrol = agent_ref().patrol
+        # 强制启动
+        start = patrol.tick(force_patrol=True)
+        results = [start]
+        # 持续巡逻直到全部分类完成
+        max_iter = 50
+        for _ in range(max_iter):
+            r = patrol.tick()
+            results.append(r)
+            if r.get("action") in ("scoring_complete", "idle"):
+                break
+        patrol._set("patrol_state", "idle")  # 完成后回到空闲
+        return {"round": results, "total": len(results)}
+
     # =================== 图谱数据API（Obsidian风格知识图谱） ===================
 
     @app.get("/api/graph")

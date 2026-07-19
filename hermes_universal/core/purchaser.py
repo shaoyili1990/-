@@ -502,3 +502,58 @@ class Purchaser:
             return suggestions[:5]
         finally:
             conn.close()
+
+    # ========== 社区Skill市场匹配 ==========
+
+    def community_search(self, query: str, source: str = "zhichai.net") -> List[Dict]:
+        """
+        搜索AI社区(如智柴网)的可用Skill
+        返回当前搜到的社区Skill列表
+        """
+        import urllib.request
+        import urllib.parse
+
+        # 智柴网等AI社区搜索
+        sources = {
+            "zhichai.net": f"https://zhichai.net/search?q={urllib.parse.quote(query)}",
+            "github.com": f"https://github.com/search?q={urllib.parse.quote(query)}+ai+skill&type=repositories",
+            "huggingface.co": f"https://huggingface.co/models?search={urllib.parse.quote(query)}",
+        }
+
+        url = sources.get(source, sources["zhichai.net"])
+        results = []
+
+        try:
+            req = urllib.request.Request(url, headers={
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            })
+            with urllib.request.urlopen(req, timeout=10) as resp:
+                content = resp.read().decode("utf-8", errors="replace")[:500]
+                results.append({
+                    "source": source,
+                    "url": url,
+                    "status": resp.status,
+                    "preview": content[:200],
+                })
+        except Exception as e:
+            results.append({"source": source, "url": url, "error": str(e)[:100]})
+
+        # 注册到市场
+        conn = self.db.cognition_conn()
+        try:
+            for r in results:
+                if r.get("status") == 200:
+                    conn.execute(
+                        "INSERT OR IGNORE INTO skill_market (id, name, icon, description, category, tags, version) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                        (f"community_{source.replace('.','_')}_{urllib.parse.quote(query)[:20]}",
+                         f"社区搜索: {query}", "🌐",
+                         f"来自{source}的社区搜索结果: {r.get('preview','')[:100]}",
+                         "社区", f"{source},{query}", "1.0.0")
+                    )
+            conn.commit()
+        except Exception:
+            pass
+        finally:
+            conn.close()
+
+        return results
