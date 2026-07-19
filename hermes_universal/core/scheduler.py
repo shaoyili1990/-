@@ -1,349 +1,315 @@
 """
-后台空闲调度器 - 自治状态机
-空闲20分钟 → 整理 → 等10分钟 → 巡检 → 循环
+后台自治调度器 - 冷监督心跳状态机
 
-原理: 非线程,基于poll检查。每次被调用时检查时间戳,
-判断当前空闲状态,需要执行的动作立即同步执行。
+核心: tick() 是唯一心跳入口,每次被调用时:
+  1. 从本地多维表格(env_config)读取当前状态+时间戳
+  2. 计算时间差,判断是否需要状态迁移
+  3. 需要时执行动作(整理/巡检),更新状态
+  4. 返回当前状态
+
+四态循环:
+  待整理 -(20分钟不活动)-> 整理中 -> 已整理待巡检 -(10分钟)-> 巡检中 -> 待整理(循环)
+                ↑                        ↑                           ↑
+             任务打断                 任务跳过巡检                任务结束
+
+存储: 引擎DB的env_config表(多维表格),纯冷,零线程
 """
 import json
 import logging
 import time
-from datetime import datetime, timedelta
-from typing import Dict, Optional, List, Tuple
+from typing import Dict, Optional, List
+
 from ..engine import EngineDB
 
 logger = logging.getLogger("scheduler")
 
-# 空闲调度状态
-STATE_IDLE = "idle"
-STATE_MAINTENANCE = "maintenance"
-STATE_WAIT_INSPECT = "wait_inspect"
-STATE_INSPECT = "inspect"
-STATE_ACTIVE = "active"  # 有用户任务时
+# ── 四状态 ──
+S_WAIT_MAINT = "待整理"
+S_MAINTING = "整理中"
+S_WAIT_INSPECT = "已整理待巡检"
+S_INSPECTING = "巡检中"
 
-# 时间参数(秒)
-IDLE_TRIGGER = 20 * 60      # 20分钟空闲触发整理
-WAIT_INSPECT_TIME = 10 * 60 # 整理后等10分钟再巡检
-POLL_INTERVAL = 10           # 轮询间隔(秒, 与前端对齐)
+# ── 时间参数(秒) ──
+T_IDLE = 20 * 60      # 空闲20min→整理
+T_WAIT_INSPECT = 10 * 60  # 10min→巡检
 
-# DB表名
-SCHED_TABLE = "scheduler_state"
-SCHED_SQL = f"""
-CREATE TABLE IF NOT EXISTS {SCHED_TABLE} (
-    key TEXT PRIMARY KEY,
-    value TEXT NOT NULL,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-"""
+# ── env_config key ──
+K_STATE = "sched_state"
+K_TS = "sched_ts"       # 进入当前状态时的时间戳
+K_M_CNT = "sched_maint_cnt"
+K_I_CNT = "sched_inspect_cnt"
+K_M_LAST = "sched_maint_last"
+K_I_LAST = "sched_inspect_last"
+K_EVENTS = "sched_events"
+
+
+def _human_ts(t: float = None) -> str:
+    return time.strftime("%m-%d %H:%M", time.localtime(t or time.time()))
 
 
 class IdleScheduler:
-    """
-    空闲调度器 - 自治循环:
-    IDLE(20min) → MAINTENANCE → WAIT_INSPECT(10min) → INSPECT → IDLE(loop)
-    """
+    """冷监督心跳状态机"""
 
-    def __init__(self, db: EngineDB, purchaser=None, monkey=None, keeper=None):
+    DEFAULTS = {
+        K_STATE: S_WAIT_MAINT,
+        K_TS: str(time.time()),
+        K_M_CNT: "0", K_I_CNT: "0",
+        K_M_LAST: "从未", K_I_LAST: "从未",
+        K_EVENTS: "[]",
+    }
+
+    def __init__(self, db: EngineDB, purchaser=None, monkey=None):
         self.db = db
         self.purchaser = purchaser
         self.monkey = monkey
-        self.keeper = keeper
-        self._init_db()
+        self._ensure()
 
-    def _init_db(self):
-        """初始化调度器本身到认知DB"""
-        conn = self.db.cognition_conn()
+    def _conn(self):
+        return self.db.engine_conn()
+
+    def _ensure(self):
+        conn = self._conn()
         try:
-            conn.executescript(SCHED_SQL)
-            # 初始化状态
-            defaults = {
-                "state": STATE_IDLE,
-                "last_active_time": "0",
-                "last_maintenance_time": "0",
-                "last_inspect_time": "0",
-                "idle_start_time": str(time.time()),
-                "wait_start_time": "0",
-                "cycle_count": "0",
-                "total_maintenance": "0",
-                "total_inspects": "0",
-            }
-            for k, v in defaults.items():
+            for k, v in self.DEFAULTS.items():
                 conn.execute(
-                    f"INSERT OR IGNORE INTO {SCHED_TABLE} (key, value) VALUES (?, ?)",
-                    (k, v)
+                    "INSERT OR IGNORE INTO env_config (key, value) VALUES (?, ?)", (k, v)
                 )
             conn.commit()
-        except Exception as e:
-            logger.warning(f"Scheduler init: {e}")
-            conn.rollback()
         finally:
             conn.close()
 
-    # ========== 读写状态 ==========
-
-    def _get(self, key: str) -> str:
-        conn = self.db.cognition_conn()
+    def _g(self, k: str) -> str:
+        conn = self._conn()
         try:
-            r = conn.execute(f"SELECT value FROM {SCHED_TABLE} WHERE key=?", (key,)).fetchone()
-            return r[0] if r else ""
+            r = conn.execute("SELECT value FROM env_config WHERE key=?", (k,)).fetchone()
+            return r[0] if r else self.DEFAULTS.get(k, "")
         finally:
             conn.close()
 
-    def _set(self, key: str, value: str):
-        conn = self.db.cognition_conn()
+    def _s(self, k: str, v: str):
+        conn = self._conn()
         try:
-            conn.execute(
-                f"INSERT OR REPLACE INTO {SCHED_TABLE} (key, value, updated_at) VALUES (?, ?, CURRENT_TIMESTAMP)",
-                (key, value)
-            )
+            conn.execute("INSERT OR REPLACE INTO env_config (key, value) VALUES (?, ?)", (k, v))
             conn.commit()
         finally:
             conn.close()
 
-    def state(self) -> str:
-        return self._get("state") or STATE_IDLE
+    def _add_event(self, text: str):
+        raw = self._g(K_EVENTS) or "[]"
+        try:
+            events = json.loads(raw)
+        except (json.JSONDecodeError, TypeError):
+            events = []
+        events.insert(0, {"t": _human_ts(), "text": text})
+        self._s(K_EVENTS, json.dumps(events[:5], ensure_ascii=False))
 
-    def _set_state(self, s: str):
-        self._set("state", s)
+    # ================================================================
+    #  心跳入口 — tick()
+    #  这是唯一的推进方法。每次前端/用户操作都会触发。
+    # ================================================================
 
-    # ========== 核心：每次poll时调用 ==========
-
-    def tick(self, has_active_task: bool = False) -> Dict:
+    def tick(self, has_active_task: bool = False, task_done: bool = False) -> Dict:
         """
-        每次poll检查,返回当前状态和最近动作记录
-        has_active_task: 当前是否有用户任务在处理
+        has_active_task: 当前有用户任务在执行
+        task_done:       用户任务刚结束
+        返回: {state, state_seconds, action, action_detail, ...}
         """
         now = time.time()
-        state = self.state()
-        result = {
-            "state": state,
-            "action": None,
-            "action_detail": "",
-            "idle_seconds": 0,
-        }
+        state = self._g(K_STATE)
+        ts = float(self._g(K_TS) or now)
+        elapsed = now - ts
 
-        # 有活动任务 → 重置空闲计时
+        r = {"state": state, "state_seconds": int(elapsed),
+             "action": None, "action_detail": ""}
+
+        # ── 任务刚结束 → 强制回到待整理 ──
+        if task_done:
+            self._s(K_STATE, S_WAIT_MAINT)
+            self._s(K_TS, str(now))
+            r["state"] = S_WAIT_MAINT
+            r["action"] = "task_done"
+            r["action_detail"] = f"任务结束→待整理"
+            return r
+
+        # ── 有活跃任务 → 仅重置计时,不推进状态 ──
         if has_active_task:
-            self._ping_active()
-            if state != STATE_ACTIVE:
-                self._set_state(STATE_ACTIVE)
-                self._set("last_active_time", str(now))
-            return {**result, "state": STATE_ACTIVE}
+            self._s(K_TS, str(now))
+            return r
 
-        # 刚从活动转为空闲 → 记录空闲开始时间
-        if state == STATE_ACTIVE:
-            self._set_state(STATE_IDLE)
-            self._set("idle_start_time", str(now))
-            self._set("last_active_time", str(now))
-            return {**result, "state": STATE_IDLE}
+        # ── 无任务: 标准状态机推进 ──
 
-        # === 正常空闲状态机 ===
-        idle_start = float(self._get("idle_start_time") or "0")
-        idle_secs = now - idle_start
-        result["idle_seconds"] = int(idle_secs)
+        if state == S_WAIT_MAINT and elapsed >= T_IDLE:
+            return self._do_maint(now)
 
-        if state == STATE_IDLE:
-            # 空闲累计 ≥ 20分钟 → 执行整理
-            if idle_secs >= IDLE_TRIGGER:
-                return self._do_maintenance(now)
-            return result
+        if state == S_MAINTING:
+            return self._maint_done(now)
 
-        elif state == STATE_MAINTENANCE:
-            # 整理完成 → 进入等待巡检
-            self._set_state(STATE_WAIT_INSPECT)
-            self._set("wait_start_time", str(now))
-            return {**result, "state": STATE_WAIT_INSPECT}
+        if state == S_WAIT_INSPECT and elapsed >= T_WAIT_INSPECT:
+            return self._do_inspect(now)
 
-        elif state == STATE_WAIT_INSPECT:
-            # 等待 ≥ 10分钟 → 执行巡检
-            wait_start = float(self._get("wait_start_time") or "0")
-            if now - wait_start >= WAIT_INSPECT_TIME:
-                return self._do_inspect(now)
-            return {**result, "state": STATE_WAIT_INSPECT,
-                    "wait_remaining": int(WAIT_INSPECT_TIME - (now - wait_start))}
+        if state == S_INSPECTING:
+            return self._inspect_done(now)
 
-        elif state == STATE_INSPECT:
-            # 巡检完成 → 重置空闲计时器,回到IDLE
-            self._set_state(STATE_IDLE)
-            self._set("idle_start_time", str(now))
-            cycle = int(self._get("cycle_count") or "0") + 1
-            self._set("cycle_count", str(cycle))
-            return {**result, "state": STATE_IDLE, "cycle": cycle}
+        return r
 
-        return result
+    def task_incoming(self):
+        """任务进来时调用。如果正在整理/巡检,让它们走完再切"""
+        now = time.time()
+        state = self._g(K_STATE)
+        if state in (S_WAIT_MAINT, S_WAIT_INSPECT):
+            # 空闲/等待态: 直接重置空闲计时
+            self._s(K_TS, str(now))
+        # 整理中/巡检中: 什么也不做,等它们自然完成
 
-    def _ping_active(self):
-        """标记活动状态"""
-        self._set("last_active_time", str(time.time()))
+    def task_done(self):
+        """任务结束 → 回到待整理"""
+        return self.tick(task_done=True)
 
-    def _do_maintenance(self, now: float) -> Dict:
-        """执行整理"""
-        self._set_state(STATE_MAINTENANCE)
+    # ── 内部: 状态转换 ──
 
-        maint_count = int(self._get("total_maintenance") or "0") + 1
-        self._set("total_maintenance", str(maint_count))
-        self._set("last_maintenance_time", str(now))
+    def _do_maint(self, now: float) -> Dict:
+        state = self._g(K_STATE)
+        self._s(K_STATE, S_MAINTING)
+        self._s(K_TS, str(now))
+        cnt = int(self._g(K_M_CNT) or "0") + 1
+        self._s(K_M_CNT, str(cnt))
+        self._s(K_M_LAST, _human_ts(now))
 
-        actions = []
-        # 调用采购员整理
+        acts = []
         if self.purchaser:
             try:
                 r = self.purchaser.organize()
                 if r.get("ok"):
-                    actions = r.get("actions", [])
+                    acts.extend(r.get("actions", []))
             except Exception as e:
-                logger.warning(f"Maintenance error: {e}")
-
-        # 猴子评估空转skill
-        if self.monkey and self.keeper:
+                logger.warning(f"[Sched] 整理异常: {e}")
+        if self.monkey:
             try:
-                skill_check = self.monkey.evaluate_idle_skills()
-                if skill_check:
-                    actions.append(skill_check)
+                ck = self.monkey.evaluate_idle_skills()
+                if ck:
+                    acts.append(ck)
             except Exception:
                 pass
 
-        logger.info(f"[Scheduler] 整理完成, 动作: {len(actions)}")
-        return {
-            "state": STATE_MAINTENANCE,
-            "action": "maintenance",
-            "action_detail": f"整理完成, {len(actions)}项操作",
-            "maintenance_count": maint_count,
-            "actions": actions,
-        }
+        msg = f"整理完成({len(acts)}项)" if acts else "整理完成(无操作)"
+        self._add_event(msg)
+        return {"state": S_MAINTING, "state_seconds": 0,
+                "action": "maintenance", "action_detail": msg}
+
+    def _maint_done(self, now: float) -> Dict:
+        self._s(K_STATE, S_WAIT_INSPECT)
+        self._s(K_TS, str(now))
+        self._add_event("→已整理待巡检")
+        return {"state": S_WAIT_INSPECT, "state_seconds": 0,
+                "action": "maint_done", "action_detail": "整理完成,等待10分钟后巡检"}
 
     def _do_inspect(self, now: float) -> Dict:
-        """执行巡检"""
-        self._set_state(STATE_INSPECT)
-
-        inspect_count = int(self._get("total_inspects") or "0") + 1
-        self._set("total_inspects", str(inspect_count))
-        self._set("last_inspect_time", str(now))
+        self._s(K_STATE, S_INSPECTING)
+        self._s(K_TS, str(now))
+        cnt = int(self._g(K_I_CNT) or "0") + 1
+        self._s(K_I_CNT, str(cnt))
+        self._s(K_I_LAST, _human_ts(now))
 
         updates = []
-        suggestions = []
-
-        # 采购员巡检市场
         if self.purchaser:
             try:
                 updates = self.purchaser.inspect_updates()
             except Exception as e:
-                logger.warning(f"Inspect error: {e}")
-
-            # 猴子+采购员联合评估新Skill
+                logger.warning(f"[Sched] 巡检异常: {e}")
             try:
-                suggestions = self.purchaser.suggest_new_skills(self.monkey)
+                self.purchaser.suggest_new_skills(self.monkey)
             except Exception:
                 pass
 
-        logger.info(f"[Scheduler] 巡检完成, 更新: {len(updates)}, 推荐: {len(suggestions)}")
-        return {
-            "state": STATE_INSPECT,
-            "action": "inspect",
-            "action_detail": f"巡检完成, {len(updates)}项更新, {len(suggestions)}项推荐",
-            "inspect_count": inspect_count,
-            "updates": updates,
-            "suggestions": suggestions,
-        }
+        msg = f"巡检完成({len(updates)}项更新)" if updates else "巡检完成(无更新)"
+        self._add_event(msg)
+        return {"state": S_INSPECTING, "state_seconds": 0,
+                "action": "inspect", "action_detail": msg}
 
-    # ========== 三方协作入口 ==========
+    def _inspect_done(self, now: float) -> Dict:
+        self._s(K_STATE, S_WAIT_MAINT)
+        self._s(K_TS, str(now))
+        cnt = self._g(K_M_CNT) or "0"
+        self._add_event(f"→待整理(第{cnt}轮)")
+        return {"state": S_WAIT_MAINT, "state_seconds": 0,
+                "action": "cycle", "action_detail": f"巡检完成→待整理(第{cnt}轮)"}
 
-    def coordinate_skill(self, requirement: str, route_context: Dict) -> Dict:
-        """
-        猴子路由后,检查是否需要Skill支持,
-        采购员搜索→猴子评估→安装→骏马使用
-        返回安装结果和补充信息
-        """
-        if not self.purchaser or not self.monkey:
-            return {"ok": False, "message": "采购员或猴子不可用"}
-
-        # 1. 采购员搜索匹配Skill
-        candidates = self.purchaser.search_by_requirement(requirement, use_ai=True)
-        if not candidates:
-            return {"ok": True, "found": False, "message": "无匹配Skill,使用默认能力"}
-
-        # 2. 猴子评估是否应该安装
-        best = candidates[0]
-        skill_id = best["id"]
-
-        # 检查是否已安装
-        installed = self.purchaser.list_installed()
-        if any(s["id"] == skill_id for s in installed):
-            return {"ok": True, "found": True, "skill": best, "installed": True}
-
-        # 猴子决策: 匹配度>阈值则自动安装
-        monkey_verdict = self.monkey.evaluate_skill(requirement, best)
-        if monkey_verdict.get("approve", False):
-            result = self.purchaser.install(skill_id)
-            if result.get("ok"):
-                return {
-                    "ok": True,
-                    "found": True,
-                    "installed": True,
-                    "skill": best,
-                    "message": f"✅ {best['name']} 已自动安装",
-                    "reason": monkey_verdict.get("reason", ""),
-                }
-
-        return {
-            "ok": True,
-            "found": True,
-            "installed": False,
-            "skill": best,
-            "message": f"发现 {best['name']}, 未被猴子批准",
-        }
+    # ================================================================
+    #  查询
+    # ================================================================
 
     def get_status(self) -> Dict:
-        """调度器完整状态"""
         now = time.time()
-        state = self.state()
-        idle_start = float(self._get("idle_start_time") or "0")
-        last_active = float(self._get("last_active_time") or "0")
-        last_maint = float(self._get("last_maintenance_time") or "0")
-        last_inspect = float(self._get("last_inspect_time") or "0")
+        state = self._g(K_STATE)
+        ts = float(self._g(K_TS) or now)
+        elapsed = now - ts
+
+        remain = 0
+        if state == S_WAIT_MAINT:
+            remain = max(0, T_IDLE - elapsed)
+        elif state == S_WAIT_INSPECT:
+            remain = max(0, T_WAIT_INSPECT - elapsed)
+        elif state == S_MAINTING:
+            remain = 0  # 正在整理
+        elif state == S_INSPECTING:
+            remain = 0  # 正在巡检
+
+        try:
+            events = json.loads(self._g(K_EVENTS) or "[]")
+        except (json.JSONDecodeError, TypeError):
+            events = []
 
         return {
             "state": state,
-            "idle_seconds": int(now - idle_start) if state in (STATE_IDLE, STATE_WAIT_INSPECT) else 0,
-            "idle_display": self._fmt_duration(now - idle_start),
-            "last_active": self._fmt_ago(now - last_active) if last_active > 0 else "从未",
-            "last_maintenance": self._fmt_ago(now - last_maint) if last_maint > 0 else "从未",
-            "last_inspect": self._fmt_ago(now - last_inspect) if last_inspect > 0 else "从未",
-            "cycle_count": int(self._get("cycle_count") or "0"),
-            "total_maintenance": int(self._get("total_maintenance") or "0"),
-            "total_inspects": int(self._get("total_inspects") or "0"),
-            "next_action": self._next_action(state, idle_start, now),
+            "elapsed_seconds": int(elapsed),
+            "remaining_seconds": int(remain),
+            "idle_display": f"{int(elapsed//60)}m{int(elapsed%60)}s",
+            "last_maintenance": self._g(K_M_LAST),
+            "last_inspect": self._g(K_I_LAST),
+            "maintenance_count": int(self._g(K_M_CNT) or "0"),
+            "inspect_count": int(self._g(K_I_CNT) or "0"),
+            "events": events,
         }
 
-    def _next_action(self, state: str, idle_start: float, now: float) -> str:
-        if state == STATE_IDLE:
-            remaining = IDLE_TRIGGER - (now - idle_start)
-            if remaining > 0:
-                return f"空闲后 {self._fmt_duration(remaining)} 开始整理"
-            return "即将整理"
-        if state == STATE_WAIT_INSPECT:
-            wait_start = float(self._get("wait_start_time") or "0")
-            remaining = WAIT_INSPECT_TIME - (now - wait_start)
-            return f"等待 {self._fmt_duration(max(0, remaining))} 后巡检"
-        return "—"
+    def coordinate_skill(self, user_input: str, route: Dict) -> Optional[Dict]:
+        """
+        猴购协奏: 用户输入进入后,采购员搜索匹配Skill,
+        猴子评估是否值得安装,自动判断
+        """
+        if not self.purchaser or not self.monkey:
+            return None
 
-    @staticmethod
-    def _fmt_duration(seconds: float) -> str:
-        if seconds < 0:
-            seconds = 0
-        m = int(seconds // 60)
-        s = int(seconds % 60)
-        if m >= 60:
-            h = m // 60
-            return f"{h}h{m%60}m"
-        return f"{m}m{s}s" if m > 0 else f"{s}s"
+        # 用猴子的路由信息判断是否需要Skill
+        domain = route.get("domain")
+        depth = route.get("depth", "snapshot")
 
-    @staticmethod
-    def _fmt_ago(seconds: float) -> str:
-        if seconds < 60:
-            return "刚刚"
-        m = int(seconds // 60)
-        if m < 60:
-            return f"{m}分钟前"
-        h = m // 60
-        return f"{h}小时前"
+        # snapshot不需要额外Skill
+        if depth == "snapshot":
+            return None
+
+        try:
+            candidates = self.purchaser.search_by_requirement(user_input, use_ai=False)
+            if not candidates:
+                return None
+
+            approved = []
+            for c in candidates[:3]:
+                eval_result = self.monkey.evaluate_skill(user_input, c)
+                if eval_result.get("approve"):
+                    # 自动安装
+                    r = self.purchaser.install(c["id"])
+                    if r.get("ok"):
+                        approved.append({"id": c["id"], "name": c["name"],
+                                         "icon": c.get("icon", "📦")})
+            if approved:
+                self._add_event(f"猴购协奏: 自动安装{','.join(a['name'] for a in approved)}")
+                return {"installed": approved}
+        except Exception as e:
+            logger.warning(f"[Sched] coordinate_skill: {e}")
+
+        return None
+
+    def mark_idle_now(self):
+        """标记立刻空闲(用于测试)"""
+        self._s(K_STATE, S_WAIT_MAINT)
+        self._s(K_TS, str(time.time()))

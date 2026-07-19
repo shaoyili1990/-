@@ -51,7 +51,6 @@ class HermesAgent:
             db=self.db,
             purchaser=self.purchaser,
             monkey=self.monkey,
-            keeper=self.keeper,
         )
 
     # ========== 主流程 ==========
@@ -62,8 +61,8 @@ class HermesAgent:
         完整执行流程:
         灵猴路由 -> 采购员补充Skill -> 骏马执行 -> 司库状态 -> 书童记忆
         """
-        # 通知调度器：有活动任务
-        self.scheduler._ping_active()
+        # 通知调度器: 任务进来了
+        self.scheduler.task_incoming()
 
         # 1. 书童构建上下文
         context = self.scribe.build_context(task_id or "new", user_input)
@@ -140,6 +139,9 @@ class HermesAgent:
         self.scribe.record_chat(route["task_id"], "user", user_input)
         self.scribe.record_chat(route["task_id"], "assistant", final_output)
 
+        # 任务结束 → 重置调度器到待整理
+        self.scheduler.task_done()
+
         return {
             "task_id": route["task_id"],
             "route": route,
@@ -193,8 +195,11 @@ class HermesAgent:
     # ========== 系统信息 ==========
 
     def get_status(self) -> Dict:
-        """获取系统状态"""
+        """获取系统状态(触发一次心跳)"""
+        # 心跳: 无活跃任务,推进调度器
         tasks = self.db.list_tasks(limit=10)
+        has_active = any(t.get("status") in ("待执行", "执行完成待验证", "验证中") for t in tasks)
+        sched_state = self.scheduler.tick(has_active_task=has_active)
         stats = self.subchain.get_statistics()
         validation_chains = self.verifier.get_chain_info()
         return {
@@ -204,6 +209,8 @@ class HermesAgent:
             "validation_chains": validation_chains,
             "monkey_provider": self.config.get("monkey", "provider"),
             "horse_provider": self.config.get("horse", "provider"),
+            "scheduler": sched_state,
+            "scheduler_detail": self.scheduler.get_status(),
         }
 
     def get_task_status(self, task_id: str) -> Optional[Dict]:
