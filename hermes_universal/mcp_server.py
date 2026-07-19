@@ -22,6 +22,7 @@ Streamable HTTP + stdio 双模式 MCP 服务端
 import argparse
 import json
 import logging
+import os
 from typing import Optional
 
 from mcp.server.fastmcp import FastMCP
@@ -203,6 +204,118 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
             elif key:
                 cfg[role]["api_key"] = "****"
         return json.dumps(cfg, ensure_ascii=False, indent=2)
+
+    # ══════════════════════════════════════════════
+    #  工作区输出工具
+    # ══════════════════════════════════════════════
+
+    @mcp.tool()
+    def workspace_init(output_root: str = "~/workspace") -> str:
+        """初始化 workspace/output 目录结构, 生成 _README.md
+        
+        Args:
+            output_root: 输出根目录（默认 ~/workspace）
+        """
+        from hermes_universal.tools.output_engine import init_workspace
+        path = init_workspace(output_root)
+        return json.dumps({"ok": True, "path": path}, ensure_ascii=False)
+
+    @mcp.tool()
+    def task_output_save(task_id: str, version: str = "",
+                         problem: str = "", reasoning: str = "",
+                         result: str = "", iteration_note: str = "") -> str:
+        """将任务输出保存到 workspace/output 文件 + 同时写入本地多维表格
+        
+        创建的目录结构: workspace/output/T{task_id}/v{version}/
+        包含文件: 01_问题.md, 02_推理过程.md, 03_输出结果.md
+        
+        Args:
+            task_id: 任务ID（如 T001）
+            version: 版本号（默认自动递增）
+            problem: 01_问题内容
+            reasoning: 02_推理过程内容
+            result: 03_输出结果内容
+            iteration_note: 本次迭代说明（可选）
+        """
+        agent = _get_agent()
+        output_root = os.path.expanduser("~/workspace/output")
+        
+        # 自动确定版本号
+        if not version:
+            version = agent.db.suggest_next_version(task_id)
+            # 如果没有任何记录,从 v1 开始
+            existing = agent.db.get_task_versions(task_id)
+            if not existing:
+                version = "v1"
+        
+        # 构建文件字典
+        files = {}
+        if problem:
+            files["01_问题"] = problem
+        if reasoning:
+            files["02_推理过程"] = reasoning
+        if result:
+            files["03_输出结果"] = result
+        
+        # 写入文件系统
+        from hermes_universal.tools.output_engine import save_output_to_files
+        created = save_output_to_files(
+            output_root, task_id, version, files, iteration_note
+        )
+        
+        # 同时写入多维表格
+        for fname, content in files.items():
+            agent.db.save_task_output(task_id, version, fname, content, iteration_note)
+        
+        return json.dumps({
+            "ok": True,
+            "task_id": task_id,
+            "version": version,
+            "files": created,
+        }, ensure_ascii=False, indent=2)
+
+    @mcp.tool()
+    def task_output_list(task_id: str = "") -> str:
+        """列出所有任务版本
+        
+        Args:
+            task_id: 可选，指定任务ID查看其版本列表
+        """
+        agent = _get_agent()
+        output_root = os.path.expanduser("~/workspace/output")
+        from hermes_universal.tools.output_engine import list_all_tasks, list_task_versions
+        
+        if task_id:
+            versions = list_task_versions(output_root, task_id)
+            db_versions = agent.db.get_task_versions(task_id)
+            return json.dumps({
+                "task_id": task_id,
+                "file_versions": versions,
+                "db_versions": db_versions,
+            }, ensure_ascii=False, indent=2)
+        else:
+            tasks = list_all_tasks(output_root)
+            return json.dumps({"tasks": tasks}, ensure_ascii=False, indent=2)
+
+    @mcp.tool()
+    def task_output_read(task_id: str, version: str) -> str:
+        """读取某版本的所有输出文件内容
+        
+        Args:
+            task_id: 任务ID（如 T001）
+            version: 版本号（如 v1, v2）
+        """
+        output_root = os.path.expanduser("~/workspace/output")
+        from hermes_universal.tools.output_engine import read_version_files
+        files = read_version_files(output_root, task_id, version)
+        if not files:
+            return json.dumps({"ok": False, "error": f"未找到 {task_id}/{version}"})
+        return json.dumps({
+            "ok": True,
+            "task_id": task_id,
+            "version": version,
+            "files": files,
+        }, ensure_ascii=False, indent=2)
 
     return mcp
 

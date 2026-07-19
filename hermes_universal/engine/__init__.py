@@ -310,6 +310,27 @@ CREATE TABLE IF NOT EXISTS api_providers (
     model TEXT DEFAULT '',
     params_json TEXT DEFAULT '{}'
 );
+
+-- 输出模板规则（按任务类型定义输出文件格式）
+CREATE TABLE IF NOT EXISTS output_templates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_type TEXT NOT NULL UNIQUE,
+    output_schema TEXT NOT NULL DEFAULT '[]',
+    description TEXT DEFAULT '',
+    priority INTEGER DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- 任务输出记录（workspace/output 的表格镜像，用于迭代和历史追溯）
+CREATE TABLE IF NOT EXISTS task_outputs (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    task_id TEXT NOT NULL,
+    version TEXT NOT NULL DEFAULT 'v1',
+    file_name TEXT NOT NULL,
+    content TEXT DEFAULT '',
+    iteration_note TEXT DEFAULT '',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
 """
 
 
@@ -638,6 +659,99 @@ class EngineDB:
         self.set_aileran_mode(new_state)
         return new_state
 
+    # ═════════════════════════════════════════════════════════
+    # 输出管理 — workspace/output + 迭代版本控制
+    # ═════════════════════════════════════════════════════════
+
+    def get_output_template(self, task_type: str) -> Optional[List[str]]:
+        """获取指定任务类型的输出格式模板(文件名列表)"""
+        conn = self.engine_conn()
+        try:
+            row = conn.execute(
+                "SELECT output_schema FROM output_templates WHERE task_type=?",
+                (task_type,)
+            ).fetchone()
+            if row:
+                return json.loads(row["output_schema"])
+            # 默认三文件制: 问题→推理→结果
+            return ["01_问题", "02_推理过程", "03_输出结果"]
+        finally:
+            conn.close()
+
+    def list_output_templates(self) -> List[Dict]:
+        """列出所有输出模板定义"""
+        conn = self.engine_conn()
+        try:
+            rows = conn.execute(
+                "SELECT task_type, output_schema, description, priority FROM output_templates ORDER BY priority DESC"
+            ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def save_task_output(self, task_id: str, version: str, file_name: str,
+                         content: str, iteration_note: str = "") -> int:
+        """保存一份任务输出到多维表格"""
+        conn = self.engine_conn()
+        try:
+            cur = conn.execute(
+                "INSERT INTO task_outputs (task_id, version, file_name, content, iteration_note) VALUES (?, ?, ?, ?, ?)",
+                (task_id, version, file_name, content, iteration_note)
+            )
+            conn.commit()
+            return cur.lastrowid
+        finally:
+            conn.close()
+
+    def get_task_outputs(self, task_id: str, version: Optional[str] = None) -> List[Dict]:
+        """获取任务所有输出记录,按版本+文件名排序"""
+        conn = self.engine_conn()
+        try:
+            if version:
+                rows = conn.execute(
+                    "SELECT * FROM task_outputs WHERE task_id=? AND version=? ORDER BY file_name",
+                    (task_id, version)
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT * FROM task_outputs WHERE task_id=? ORDER BY version, file_name",
+                    (task_id,)
+                ).fetchall()
+            return [dict(r) for r in rows]
+        finally:
+            conn.close()
+
+    def get_task_versions(self, task_id: str) -> List[str]:
+        """获取任务的所有版本号(如 ['v1','v2'])"""
+        conn = self.engine_conn()
+        try:
+            rows = conn.execute(
+                "SELECT DISTINCT version FROM task_outputs WHERE task_id=? ORDER BY version",
+                (task_id,)
+            ).fetchall()
+            return [r["version"] for r in rows]
+        finally:
+            conn.close()
+
+    def get_latest_version(self, task_id: str) -> str:
+        """获取任务的最新版本号,默认 v1"""
+        versions = self.get_task_versions(task_id)
+        return versions[-1] if versions else "v1"
+
+    def suggest_next_version(self, task_id: str) -> str:
+        """建议下一个版本号: 新任务→v1, 有v1→v2→v3..."""
+        versions = self.get_task_versions(task_id)
+        if not versions:
+            return "v1"
+        latest = versions[-1]
+        if latest == "v1":
+            return "v2"
+        try:
+            n = int(latest[1:]) + 1
+            return f"v{n}"
+        except (ValueError, IndexError):
+            return "v2"
+
 
 # ========== Seed 函数: 填充多维表格 ==========
 
@@ -691,6 +805,26 @@ def seed_engine_db(db: EngineDB):
         conn.commit()
     finally:
         conn.close()
+
+    # ── 输出模板种子(引擎库) ──
+    cog = db.engine_conn()
+    try:
+        templates = [
+            ("创作", '["01_问题", "02_推理过程", "03_输出结果"]', "三文件: 问题→推理→输出(适合小说/世界构建)", 1),
+            ("分析", '["01_问题", "02_推理过程", "03_输出结果"]', "三文件: 问题→推理→输出(适合分析/评估)", 1),
+            ("编程", '["01_需求", "02_设计方案", "03_代码实现", "04_测试验证"]', "四文件: 需求→方案→代码→测试", 2),
+            ("推理", '["01_问题", "02_推理过程", "03_输出结果"]', "三文件: 问题→推理→输出(适合逻辑推理)", 1),
+            ("研究", '["01_研究问题", "02_方法论", "03_发现", "04_结论"]', "四文件: 问题→方法→发现→结论", 2),
+            ("默认", '["01_问题", "02_推理过程", "03_输出结果"]', "三文件制(默认)", 0),
+        ]
+        for ttype, schema, desc, priority in templates:
+            cog.execute(
+                "INSERT OR IGNORE INTO output_templates (task_type, output_schema, description, priority) VALUES (?, ?, ?, ?)",
+                (ttype, schema, desc, priority)
+            )
+        cog.commit()
+    finally:
+        cog.close()
 
 
 def seed_fingerprints(db: EngineDB, fingerprints_dir: str):
