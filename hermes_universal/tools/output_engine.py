@@ -112,32 +112,48 @@ def save_output_to_files(
     return created
 
 
-def build_iteration_input(prev_files: Dict[str, str], feedback: str) -> Dict[str, str]:
-    """构建迭代输入: 将反馈+旧推理作为新问题的上下文
+def build_iteration_input(prev_files: Dict[str, str], feedback: str,
+                          template: str = "创作") -> Dict[str, str]:
+    """构建迭代输入: 将反馈+旧内容作为新问题的上下文
+    
+    支持任意模板(三文件制、四文件制等)。
+    关键是"上一版的全部内容 + 反馈 → 新问题"。
     
     Args:
         prev_files: 上一版本的输出文件 {文件名: 内容}
-        feedback: 用户反馈/甲方修改意见
+        feedback: 用户/甲方修改意见
+        template: 输出模板类型名(用于描述)
     
     Returns:
-        新版本的 files 字典(只有 01_问题)
+        新版本的 01_问题 或 01_思路 内容(含完整上下文)
     """
-    prev_problem = prev_files.get("01_问题", "无原始问题记录")
-    prev_reasoning = prev_files.get("02_推理过程", "无原始推理记录")
-    prev_output = prev_files.get("03_输出结果", "无原始输出记录")
+    # 找到 "第一个文件" 的 key: 01_问题 或 01_思路 或 01_需求 等
+    first_key = None
+    ordered = sorted(prev_files.keys())
+    if ordered:
+        first_key = ordered[0]  # 一般是 01_xx
+    
+    # 构建完整的上下文,按文件顺序排列
+    context_parts = []
+    for fname in ordered:
+        content = prev_files[fname]
+        label = fname.replace("_", "」").replace("01", "❶").replace("02", "❷")\
+                     .replace("03", "❸").replace("04", "❹")
+        context_parts.append(f"━━━ {label} ━━━\n{content}")
+    
+    prev_context = "\n\n".join(context_parts)
+    next_key = first_key or "01_问题"
     
     new_problem = (
-        f"【迭代输入 — 基于上一版修订】\n\n"
-        f"━━━ 原始输入 ━━━\n{prev_problem}\n\n"
+        f"【迭代输入 — 基于上一版修订 (模板: {template})】\n\n"
         f"━━━ 用户/甲方反馈 ━━━\n{feedback}\n\n"
-        f"━━━ 上一版推理过程(参考) ━━━\n{prev_reasoning}\n\n"
-        f"━━━ 上一版输出结果(参考) ━━━\n{prev_output}\n\n"
+        f"━━━ 上一版所有文件(参考) ━━━\n{prev_context}\n\n"
         f"━━━ 修订要求 ━━━\n"
         f"基于以上反馈,对上一版输出进行修订。\n"
         f"保持合理的部分,修改被指出的问题,形成新的版本。\n"
         f"输出新的完整结果,不要只说修改了什么。"
     )
-    return {"01_问题": new_problem}
+    return {next_key: new_problem}
 
 
 def read_version_files(output_root: str, task_id: str, version: str) -> Dict[str, str]:

@@ -690,8 +690,20 @@ class EngineDB:
             conn.close()
 
     def save_task_output(self, task_id: str, version: str, file_name: str,
-                         content: str, iteration_note: str = "") -> int:
-        """保存一份任务输出到多维表格"""
+                         content: str, iteration_note: str = "",
+                         store_full: bool = False) -> int:
+        """保存任务输出到多维表格(仅存摘要用于检索)
+        
+        表格是中继器,用于快速检索/索引。完整内容存在 workspace/output/ 文件。
+        
+        Args:
+            store_full: 设为True强制存全文(内容<500字自动存全文)
+        """
+        # 自动截断: <500字存全文,>500字存摘要
+        if store_full or len(content) < 500:
+            stored = content[:500]  # 最多500
+        else:
+            stored = content[:300] + f"\n\n... (余{len(content)-300}字符, 详见文件)"
         conn = self.engine_conn()
         try:
             cur = conn.execute(
@@ -815,6 +827,7 @@ def seed_engine_db(db: EngineDB):
             ("编程", '["01_需求", "02_设计方案", "03_代码实现", "04_测试验证"]', "四文件: 需求→方案→代码→测试", 2),
             ("推理", '["01_问题", "02_推理过程", "03_输出结果"]', "三文件: 问题→推理→输出(适合逻辑推理)", 1),
             ("研究", '["01_研究问题", "02_方法论", "03_发现", "04_结论"]', "四文件: 问题→方法→发现→结论", 2),
+            ("项目", '["01_思路", "02_流程", "03_执行方法", "04_结果"]', "四文件: 思路→流程→执行方法→结果(适合PRD/方案/项目)", 3),
             ("默认", '["01_问题", "02_推理过程", "03_输出结果"]', "三文件制(默认)", 0),
         ]
         for ttype, schema, desc, priority in templates:

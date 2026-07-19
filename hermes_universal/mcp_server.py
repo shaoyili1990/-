@@ -222,20 +222,27 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
 
     @mcp.tool()
     def task_output_save(task_id: str, version: str = "",
+                         files_json: str = "",  # 通用接口: JSON {文件名: 内容}
                          problem: str = "", reasoning: str = "",
                          result: str = "", iteration_note: str = "") -> str:
-        """将任务输出保存到 workspace/output 文件 + 同时写入本地多维表格
+        """将任务输出保存到 workspace/output 文件 + 多维表格
         
-        创建的目录结构: workspace/output/T{task_id}/v{version}/
-        包含文件: 01_问题.md, 02_推理过程.md, 03_输出结果.md
+        目录结构: workspace/output/T{task_id}/v{version}/
+        
+        通用用法(任意模板):
+          files_json = '{"01_思路": "...", "02_流程": "...", "03_执行方法": "...", "04_结果": "..."}'
+        
+        快速用法(三文件制):
+          problem="问题内容", reasoning="推理内容", result="结果内容"
         
         Args:
             task_id: 任务ID（如 T001）
             version: 版本号（默认自动递增）
+            files_json: 通用文件字典(JSON字符串), 覆盖problem/reasoning/result
             problem: 01_问题内容
             reasoning: 02_推理过程内容
             result: 03_输出结果内容
-            iteration_note: 本次迭代说明（可选）
+            iteration_note: 本次迭代说明
         """
         agent = _get_agent()
         output_root = os.path.expanduser("~/workspace/output")
@@ -243,27 +250,29 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
         # 自动确定版本号
         if not version:
             version = agent.db.suggest_next_version(task_id)
-            # 如果没有任何记录,从 v1 开始
             existing = agent.db.get_task_versions(task_id)
             if not existing:
                 version = "v1"
         
         # 构建文件字典
-        files = {}
-        if problem:
-            files["01_问题"] = problem
-        if reasoning:
-            files["02_推理过程"] = reasoning
-        if result:
-            files["03_输出结果"] = result
+        if files_json:
+            files = json.loads(files_json)
+        else:
+            files = {}
+            if problem: files["01_问题"] = problem
+            if reasoning: files["02_推理过程"] = reasoning
+            if result: files["03_输出结果"] = result
         
-        # 写入文件系统
+        if not files:
+            return json.dumps({"ok": False, "error": "没有输出内容"}, ensure_ascii=False)
+        
+        # STEP 1: 写入文件系统(完整内容)
         from hermes_universal.tools.output_engine import save_output_to_files
         created = save_output_to_files(
             output_root, task_id, version, files, iteration_note
         )
         
-        # 同时写入多维表格
+        # STEP 2: 写入多维表格(仅存摘要用于检索)
         for fname, content in files.items():
             agent.db.save_task_output(task_id, version, fname, content, iteration_note)
         
@@ -272,6 +281,56 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
             "task_id": task_id,
             "version": version,
             "files": created,
+            "note": "完整内容存于文件, 表格仅存摘要用于检索",
+        }, ensure_ascii=False, indent=2)
+
+    @mcp.tool()
+    def task_output_iterate(task_id: str, feedback: str,
+                            previous_version: str = "") -> str:
+        """准备迭代: 读取上一版的完整文件,构建下一版的问题输入
+        
+        用户/甲方不满意当前版本 → 给出反馈 → 本工具读取v1全量文件
+        → 打包成新的 01_问题 (含旧推理+旧输出+新反馈) → AI重新推理
+        
+        Args:
+            task_id: 任务ID（如 T001）
+            feedback: 用户/甲方的修改意见
+            previous_version: 上一版版本号(默认最新版)
+        """
+        output_root = os.path.expanduser("~/workspace/output")
+        from hermes_universal.tools.output_engine import (
+            read_version_files, list_task_versions, build_iteration_input
+        )
+        agent = _get_agent()
+        
+        # 自动找最新版
+        if not previous_version:
+            versions = list_task_versions(output_root, task_id)
+            if not versions:
+                return json.dumps({"ok": False, "error": f"{task_id} 无历史版本"},
+                                  ensure_ascii=False)
+            previous_version = versions[-1]
+        
+        # 读完整文件
+        prev_files = read_version_files(output_root, task_id, previous_version)
+        if not prev_files:
+            return json.dumps({"ok": False, "error": f"{task_id}/{previous_version} 不存在"},
+                              ensure_ascii=False)
+        
+        # 构建新问题(含反馈)
+        next_version = agent.db.suggest_next_version(task_id)
+        new_files = build_iteration_input(prev_files, feedback)
+        
+        return json.dumps({
+            "ok": True,
+            "task_id": task_id,
+            "previous_version": previous_version,
+            "next_version": next_version,
+            "prev_files": prev_files,  # 上一版全量文件, 供AI参考
+            "new_problem": new_files["01_问题"],  # 新问题(含反馈上下文)
+            "instruction": f"读取 prev_files 了解上一版内容, "
+                           f"然后用 new_problem 作为 01_问题, "
+                           f"重新推理并调用 task_output_save 保存为 {next_version}",
         }, ensure_ascii=False, indent=2)
 
     @mcp.tool()
