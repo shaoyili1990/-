@@ -657,64 +657,63 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
                     "anthropic": "#d97706", "google": "#4285f4",
                 }
                 for c in creds:
-                    cid = f"cred_{c['id']}"
-                    vendor = c["vendor"] or "unknown"
-                    add_node(cid, f"{vendor}:{c['model']}" if c.get("model") else vendor,
-                             "api", color=vendor_colors.get(vendor, "#60a5fa"), size=4)
-                    # API→角色分配边
+                    cdict = dict(c)
+                    cid = f"cred_{cdict['id']}"
+                    vendor = cdict.get("vendor", "unknown")
+                    label = f"{vendor}:{cdict.get('model','?')}" if cdict.get("model") else vendor
+                    add_node(cid, label, "api",
+                             color=vendor_colors.get(vendor.lower(), "#60a5fa"), size=4)
+                # API→角色分配边
+                for c in creds:
+                    cdict = dict(c)
                     assignments = conn.execute(
                         "SELECT key, value FROM env_config WHERE key LIKE 'role_key_%'"
                     ).fetchall()
                     for a in assignments:
-                        role = a["key"].replace("role_key_", "")
+                        ad = dict(a)
+                        role = ad["key"].replace("role_key_", "")
                         try:
-                            val = json.loads(a["value"])
-                            if val.get("cred_id") == c["id"]:
+                            val = json.loads(ad["value"])
+                            if val.get("cred_id") == cdict["id"]:
                                 edges.append({
-                                    "source": f"cred_{c['id']}",
+                                    "source": f"cred_{cdict['id']}",
                                     "target": f"role_{role}",
                                     "label": "uses", "style": "solid",
                                 })
                         except Exception:
                             pass
-            except Exception:
-                pass
+            except Exception as e:
+                logger.warning(f"API节点加载: {e}")
 
             # ── 4. Skill节点（从认知DB读取） ──
             skill_count = 0
             try:
                 from hermes_universal.engine import EngineDB as _EDB
-                _cc = _EDB()
-                cconn = _cc.cognition_conn()
-                if cconn:
-                    skills = cconn.execute(
+                _cconn = _EDB().cognition_conn()
+                if _cconn:
+                    srows = _cconn.execute(
                         "SELECT id, name, icon, category, description FROM installed_skills WHERE enabled=1 LIMIT 20"
                     ).fetchall()
+                    # sqlite3.Row doesn't support .get() — convert to dict
                     cat_colors = {"通用": "#6b7280", "编程": "#3b82f6", "AI": "#8b5cf6",
                                   "工具": "#f59e0b", "数据": "#22c55e", "社区": "#ec4899"}
-                    for s in skills:
-                        cat = s["category"] or "通用"
-                        add_node(f"skill_{s['id']}", 
-                                 f"{s.get('icon','')} {s['name']}" if s.get('icon') else s["name"],
+                    for sr in srows:
+                        s = dict(sr)
+                        cat = s.get("category") or "通用"
+                        label = f"{s.get('icon','')} {s['name']}" if s.get('icon') else s["name"]
+                        add_node(f"skill_{s['id']}", label,
                                  "skill", color=cat_colors.get(cat, "#6b7280"),
                                  size=6, detail=s.get("description","")[:80])
                         skill_count += 1
-                    cconn.close()
-            except Exception:
-                pass
+                    _cconn.close()
+            except Exception as e:
+                logger.warning(f"Skill加载: {e}")
 
             # ── 5. 巡逻门类节点（11个） ──
-            from hermes_universal.core.patrol import PatrolSystem
             try:
-                ps = PatrolSystem(engine_db=conn) if hasattr(conn, 'engine_path') else None
-                if ps is None:
-                    from hermes_universal.engine import EngineDB
-                    from hermes_universal.config import load_config
-                    cfg = load_config()
-                    ps = PatrolSystem(EngineDB(
-                        engine_path=cfg.get("keeper", "db_path", default=""),
-                        cognition_path=cfg.get("scribe", "db_path", default=""),
-                    ))
+                from hermes_universal.core.patrol import PatrolSystem, CATEGORIES
+                from hermes_universal.engine import EngineDB as _EDBp
+                ps = PatrolSystem(_EDBp())
                 patrol_status = ps.get_status() if ps else {}
                 for cat in patrol_status.get("categories", []):
                     score = cat.get("score", 0) or 0
@@ -733,32 +732,155 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
 
             # ── 6. Ticket/工单节点 ──
             try:
-                tickets = conn.execute(
+                tkts = conn.execute(
                     "SELECT number, title, status FROM tickets ORDER BY number DESC LIMIT 10"
                 ).fetchall()
-                for t in tickets:
-                    tn = t["number"]
-                    add_node(f"ticket_{tn}", f"#{tn} {t['title'][:20]}",
+                for t_data in tkts:
+                    tdict = dict(t_data)
+                    tn = tdict["number"]
+                    add_node(f"ticket_{tn}", f"#{tn} {tdict.get('title','')[:20]}",
                              "ticket",
-                             color="#22d3ee" if t["status"] == "open" else "#78716c",
-                             size=3, status=t["status"])
-            except Exception:
-                pass
+                             color="#22d3ee" if tdict.get("status") == "open" else "#78716c",
+                             size=3, status=tdict.get("status",""))
+            except Exception as e:
+                if "no such table" not in str(e).lower():
+                    logger.warning(f"Ticket节点: {e}")
 
-            # ── 7. 图谱关联边（智能连接） ──
+            # ── 7. 图谱关联边（智能连接 — 8种边类型） ──
             try:
-                # 角色→Skill
-                role_skills = conn.execute(
-                    "SELECT DISTINCT role, skill_id FROM role_skills LIMIT 30"
+                # 7a. 角色流水线边（猴→质检→马→司库→书童→采购）
+                pipe = ["role_monkey", "role_verifier", "role_horse",
+                        "role_keeper", "role_scribe", "role_purchaser"]
+                for i in range(len(pipe)-1):
+                    if pipe[i] in seen_ids and pipe[i+1] in seen_ids:
+                        edges.append({"source": pipe[i], "target": pipe[i+1],
+                                      "label": "→", "style": "dashed"})
+
+                # 7b. 任务→巡逻门类（任务名匹配巡逻分类）
+                #   任务名如"搜索 AI领域 最新动态: AI, 人工智能" → 映射到 patrol_ai
+                patrol_cat_names = {
+                    "ai": "AI领域", "current_affairs": "时事新闻",
+                    "national_affairs": "国家大事", "gossip": "八卦新闻",
+                    "entertainment": "综艺娱乐", "showbiz": "演艺圈",
+                    "tech": "科技发展", "digital_humanities": "数字人文",
+                    "history": "人文历史", "archaeology": "人文考古",
+                    "skill_community": "技能社区",
+                }
+                task_rows = conn.execute(
+                    "SELECT task_id, name FROM rnd_tasks WHERE name LIKE '%搜索%' LIMIT 30"
                 ).fetchall()
-                for rs in role_skills:
-                    edges.append({
-                        "source": f"role_{rs['role']}",
-                        "target": f"skill_{rs['skill_id']}",
-                        "label": "equips", "style": "solid",
-                    })
-            except Exception:
-                pass
+                for t in task_rows:
+                    tname = t["name"] or ""
+                    for cid, cname in patrol_cat_names.items():
+                        if cname in tname and f"patrol_{cid}" in seen_ids:
+                            edges.append({
+                                "source": t["task_id"],
+                                "target": f"patrol_{cid}",
+                                "label": "monitors", "style": "dashed",
+                            })
+                            break  # one task → one primary category
+
+                # 7c. 审核→任务（rnd_reviews 关联的任务）
+                revs = conn.execute(
+                    "SELECT DISTINCT target_id FROM rnd_reviews LIMIT 50"
+                ).fetchall()
+                for r in revs:
+                    tid = r["target_id"]
+                    if tid in seen_ids:
+                        edges.append({
+                            "source": f"role_verifier",
+                            "target": tid,
+                            "label": "reviewed", "style": "dotted",
+                        })
+
+                # 7d. 步骤→任务（rnd_steps 的执行步骤）
+                steps_data = conn.execute(
+                    "SELECT DISTINCT task_id FROM rnd_steps LIMIT 50"
+                ).fetchall()
+                for s in steps_data:
+                    tid = s["task_id"]
+                    if tid in seen_ids:
+                        edges.append({
+                            "source": tid,
+                            "target": f"role_horse",
+                            "label": "executed_by", "style": "dotted",
+                        })
+
+                # 7e. 认知记忆→任务（cognition DB memories）
+                try:
+                    from hermes_universal.engine import EngineDB as _EDB2
+                    _cc2 = _EDB2()
+                    mconn = _cc2.cognition_conn()
+                    if mconn:
+                        mems = mconn.execute(
+                            "SELECT combo_id, task FROM memories LIMIT 30"
+                        ).fetchall()
+                        for m in mems:
+                            cid = m["combo_id"] or ""
+                            # combo_id = "session-task-<task_id>" pattern
+                            for tid in seen_ids:
+                                if tid in cid:
+                                    edges.append({
+                                        "source": tid,
+                                        "target": f"role_scribe",
+                                        "label": "remembered_by", "style": "dotted",
+                                    })
+                                    break
+                        mconn.close()
+                except Exception:
+                    pass
+
+                # 7f. Skill→角色（每个角色使用的Skill）
+                skill_role_map = {
+                    "translate": ["role_scribe", "role_purchaser"],
+                    "web-search": ["role_horse", "role_monkey", "role_purchaser"],
+                    "image-gen": ["role_horse"],
+                    "file-parse": ["role_scribe", "role_keeper"],
+                    "summarize": ["role_horse", "role_scribe", "role_monkey"],
+                    "data-chart": ["role_keeper", "role_horse"],
+                }
+                for skid, roles in skill_role_map.items():
+                    sk_node = f"skill_{skid}"
+                    if sk_node in seen_ids:
+                        for r in roles:
+                            if r in seen_ids:
+                                edges.append({
+                                    "source": sk_node,
+                                    "target": r,
+                                    "label": "serves", "style": "solid",
+                                })
+
+                # 7g. 任务→任务（同巡逻分类的搜索任务互为关联）
+                task_ids_by_cat = {}
+                for t in task_rows:
+                    tname = t["name"] or ""
+                    for cid, cname in patrol_cat_names.items():
+                        if cname in tname:
+                            task_ids_by_cat.setdefault(cid, []).append(t["task_id"])
+                for cid, tids in task_ids_by_cat.items():
+                    for i in range(len(tids)-1):
+                        if tids[i] in seen_ids and tids[i+1] in seen_ids:
+                            edges.append({
+                                "source": tids[i], "target": tids[i+1],
+                                "label": "same_category", "style": "dashed",
+                            })
+
+                # 7h. 巡逻门类→API（热度高的巡逻关联到使用的搜索API）
+                if "cred_1" in seen_ids:
+                    high_cats = [
+                        "patrol_ai", "patrol_current_affairs",
+                        "patrol_tech", "patrol_national_affairs"
+                    ]
+                    for pc in high_cats:
+                        if pc in seen_ids:
+                            edges.append({
+                                "source": pc,
+                                "target": "cred_1",
+                                "label": "uses_search", "style": "dotted",
+                            })
+
+            except Exception as e:
+                logger.warning(f"图谱关联边: {e}")
 
             return {"nodes": nodes, "edges": edges, "total_nodes": len(nodes), "total_edges": len(edges)}
         except Exception as e:
