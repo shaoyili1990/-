@@ -4,6 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Hermes · 多模态可视化智能体</title>
+<script src="https://d3js.org/d3-force.v3.min.js"></script>
+<script src="https://d3js.org/d3-dispatch.v3.min.js"></script>
+<script src="https://d3js.org/d3-quadtree.v3.min.js"></script>
+<script src="https://d3js.org/d3-timer.v3.min.js"></script>
+<script>d3={force:d3_force,dispatch:d3_dispatch,quadtree:d3_quadtree,timer:d3_timer}</script>
 <style>
 :root {
   --bg: #0a0a12; --bg2: #12121f; --bg3: #1a1a2f; --bg4: #242440;
@@ -234,6 +239,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
 .d-item .di-badge{position:absolute;top:-2px;right:-2px;width:8px;height:8px;border-radius:50%;border:2px solid var(--bg2)}
 .d-item.pos{position:relative}
 
+/* ===== GRAPH VIEW (full center) ===== */
+.graph-view{display:none;flex-direction:column;flex:1;overflow:hidden;background:var(--bg);position:relative}
+.graph-view.show{display:flex}
+.graph-toolbar{display:flex;align-items:center;gap:8px;padding:8px 14px;border-bottom:1px solid var(--border);flex-shrink:0;flex-wrap:wrap}
+.gf-group{display:flex;gap:3px;flex-wrap:wrap}
+.gf-btn{padding:3px 10px;border-radius:12px;border:1px solid var(--border);background:var(--bg2);color:var(--fg2);font-size:11px;cursor:pointer;transition:all .15s;white-space:nowrap;font-family:inherit}
+.gf-btn:hover{background:var(--bg3);color:var(--fg)}
+.gf-btn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.gf-right{display:flex;align-items:center;gap:8px;margin-left:auto}
+.gf-search{padding:4px 10px;border-radius:12px;border:1px solid var(--border);background:var(--bg2);color:var(--fg);font-size:12px;outline:none;width:160px;font-family:inherit;transition:all .15s}
+.gf-search:focus{border-color:var(--accent);background:var(--bg3)}
+.gf-count{font-size:10px;color:var(--fg3);white-space:nowrap}
+.graph-canvas-wrap{flex:1;position:relative;overflow:hidden;background:radial-gradient(ellipse at center,var(--bg3) 0%,var(--bg) 80%)}
+.graph-svg{width:100%;height:100%;display:block}
+.graph-loading{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:12px;background:var(--bg);z-index:5}
+.gl-spinner{width:28px;height:28px;border:3px solid var(--bg4);border-top-color:var(--accent);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.gl-text{font-size:13px;color:var(--fg2)}
+.graph-detail{position:absolute;right:12px;top:12px;width:260px;max-height:calc(100% - 24px);background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);overflow-y:auto;z-index:10}
+.gd-close{position:sticky;top:4px;float:right;background:var(--bg3);border:none;color:var(--fg2);width:24px;height:24px;border-radius:50%;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.gd-close:hover{background:var(--bg4);color:var(--fg)}
+.gd-body{padding:12px;font-size:12px;line-height:1.7}
+.gd-body .gd-title{font-size:16px;font-weight:600;margin-bottom:8px}
+.gd-body .gd-row{display:flex;justify-content:space-between;padding:2px 0;border-bottom:1px solid var(--border)}
+.gd-body .gd-label{color:var(--fg3)}
+.gd-body .gd-val{color:var(--fg);text-align:right;max-width:160px;word-break:break-all}
+.gd-body .gd-tag{display:inline-block;padding:1px 6px;border-radius:4px;font-size:10px;margin-right:3px}
+
 /* Graph Knowledge View */
 .graph-container{flex:1;position:relative;overflow:hidden;cursor:grab}
 .graph-container:active{cursor:grabbing}
@@ -297,9 +330,39 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
       </div>
       <div class="badge online"><span class="bd"></span>在线</div>
       <div class="scheduler-badge" id="schedulerBadge" title="空闲调度器状态">⏳ 待命</div>
+      <button class="topbar-btn" id="btnGraph" title="知识图谱">🕸️</button>
       <button class="topbar-btn" id="btnConfig" title="配置">⚙️</button>
     </div>
     <div class="messages" id="messages"></div>
+
+    <!-- ===== GRAPH VIEW ===== -->
+    <div class="graph-view" id="graphView" style="display:none">
+      <div class="graph-toolbar">
+        <div class="gf-group">
+          <button class="gf-btn active" data-type="all">🌐 全部</button>
+          <button class="gf-btn" data-type="task">🔵 任务</button>
+          <button class="gf-btn" data-type="skill">🟢 Skill</button>
+          <button class="gf-btn" data-type="role">🟡 角色</button>
+          <button class="gf-btn" data-type="api">🟣 API</button>
+          <button class="gf-btn" data-type="patrol">🔴 巡逻</button>
+        </div>
+        <div class="gf-right">
+          <input class="gf-search" id="graphSearch" placeholder="🔍 搜索节点…" spellcheck="false">
+          <span class="gf-count" id="graphCount">0 节点</span>
+        </div>
+      </div>
+      <div class="graph-canvas-wrap" id="graphCanvasWrap">
+        <svg class="graph-svg" id="graphSvg"></svg>
+        <div class="graph-loading" id="graphLoading">
+          <div class="gl-spinner"></div>
+          <div class="gl-text">加载图谱数据…</div>
+        </div>
+      </div>
+      <div class="graph-detail" id="graphDetail" style="display:none">
+        <button class="gd-close" id="gdClose">&times;</button>
+        <div class="gd-body" id="gdBody"></div>
+      </div>
+    </div>
     <div class="input-area">
       <div class="attach-preview" id="attachPreview"></div>
       <div class="input-wrap">
@@ -1324,88 +1387,234 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
   });
 
-  // ======== KNOWLEDGE GRAPH ========
-  let graphNodes = [], graphEdges = [], graphAnimId = null;
-  async function loadGraph() {
-    const canvas = document.getElementById('graphCanvas');
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    const container = document.getElementById('graphContainer');
-    function resize() { canvas.width = container.clientWidth; canvas.height = container.clientHeight; }
-    resize(); window.addEventListener('resize', resize);
+  // ======== D3 FORCE GRAPH ========
+  let graphData = {nodes:[], edges:[]};
+  let sim = null, svg_el = null, gRoot = null, gEdges = null, gNodes = null, gLabels = null, gEdgeLabels = null;
+  let zoom = null, activeType = 'all', searchTerm = '';
+  let selectedNode = null;
+
+  const TYPE_COLORS = {
+    task:   {c:'#7c6ff0', r:6, label:'任务'},
+    skill:  {c:'#22c55e', r:8, label:'Skill'},
+    role:   {c:'#fbbf24', r:10, label:'角色'},
+    api:    {c:'#60a5fa', r:7, label:'API'},
+    patrol: {c:'#ef4444', r:9, label:'巡逻'},
+    ticket: {c:'#f472b6', r:8, label:'工单'},
+  };
+
+  async function initGraph() {
+    if (graphData.nodes.length) { resizeSvg(); return; }
+    const wrap = document.getElementById('graphCanvasWrap');
+    if (!wrap) return;
+
+    svg_el = d3.select('#graphSvg');
+    
+    zoom = d3.zoom().scaleExtent([0.1, 6]).on('zoom', (e) => {
+      gRoot && gRoot.attr('transform', e.transform);
+    });
+    svg_el.call(zoom);
+
+    const defs = svg_el.append('defs');
+    defs.append('marker').attr('id','arrow').attr('viewBox','0 -5 10 10')
+      .attr('refX',22).attr('refY',0).attr('markerWidth',6).attr('markerHeight',6).attr('orient','auto')
+      .append('path').attr('d','M0,-5L10,0L0,5').attr('fill','#555577').attr('fill-opacity',0.4);
+
+    gRoot = svg_el.append('g').attr('class','graph-root');
+    gEdges = gRoot.append('g').attr('class','edges');
+    gEdgeLabels = gRoot.append('g').attr('class','edge-labels');
+    gNodes = gRoot.append('g').attr('class','nodes');
+    gLabels = gRoot.append('g').attr('class','labels');
+
+    await fetchGraphData();
+    buildGraph();
+    const ro = new ResizeObserver(() => resizeSvg());
+    ro.observe(wrap);
+    document.getElementById('graphLoading').style.display = 'none';
+  }
+
+  function resizeSvg() {
+    const wrap = document.getElementById('graphCanvasWrap');
+    if (!wrap) return;
+    const w = wrap.clientWidth, h = wrap.clientHeight;
+    svg_el.attr('width', w).attr('height', h).attr('viewBox', `0 0 ${w} ${h}`);
+    if (sim) sim.alpha(0.3).restart();
+  }
+
+  async function fetchGraphData() {
     try {
-      const resp = await fetch('/api/graph');
-      const data = await resp.json();
-      graphNodes = (data.nodes || []).map((n,i) => ({
-        ...n, x: Math.random()*canvas.width, y: Math.random()*canvas.height, vx:0, vy:0,
-        radius: n.type==='task'?8 : n.type==='role'?10 : n.type==='api'?7 : 6
-      }));
-      graphEdges = data.edges || [];
-      runForceSim(ctx, canvas, container);
-    } catch(e) {
-      ctx.fillStyle = '#8888aa'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
-      ctx.fillText('暂无图谱数据', canvas.width/2, canvas.height/2);
+      const [graphR, patrolR, skillR] = await Promise.all([
+        fetch('/api/graph').then(r=>r.json()),
+        fetch('/api/graph/patrol').then(r=>r.json()),
+        fetch('/api/graph/skills').then(r=>r.json()),
+      ]);
+      const nodes = [], edges = [], seen = new Set();
+      function addNode(n) { if (!seen.has(n.id)) { seen.add(n.id); nodes.push({...n}); } }
+      (graphR.nodes||[]).forEach(addNode);
+      (graphR.edges||[]).forEach(e => edges.push({source:e.source, target:e.target, label:e.label}));
+      (skillR.nodes||[]).forEach(n => { n.type='skill'; addNode(n); });
+      (skillR.edges||[]).forEach(e => edges.push({source:e.source, target:e.target, label:e.label}));
+      (patrolR.categories||[]).forEach(c => {
+        addNode({id:'patrol_'+c.id, label:c.name, type:'patrol',
+          color:c.score>100?'#ef4444':c.score>50?'#f59e0b':'#22c55e',
+          score:c.score, status:c.current_tier||'T?', size:Math.max(5,Math.round(c.score/10))});
+      });
+      graphData = {nodes, edges};
+      document.getElementById('graphCount').textContent = nodes.length+' 节点 · '+edges.length+' 边';
+    } catch(e) { console.error('Graph error:', e); }
+  }
+
+  function buildGraph(filteredNodes) {
+    const nodes = filteredNodes || graphData.nodes;
+    const edges = graphData.edges.filter(e => {
+      const sId = typeof e.source==='object'?e.source.id:e.source;
+      const tId = typeof e.target==='object'?e.target.id:e.target;
+      return nodes.some(n=>n.id===sId) && nodes.some(n=>n.id===tId);
+    });
+    if (!nodes.length) return;
+
+    const w = +svg_el.attr('width') || 800, h = +svg_el.attr('height') || 600;
+    const cx = w/2, cy = h/2;
+
+    gEdges.selectAll('*').remove();
+    gEdgeLabels.selectAll('*').remove();
+    gNodes.selectAll('*').remove();
+    gLabels.selectAll('*').remove();
+    if (sim) sim.stop();
+
+    const simNodes = nodes.map(n => ({
+      ...n,
+      radius: TYPE_COLORS[n.type]?.r || 6,
+      color: n.color || TYPE_COLORS[n.type]?.c || '#7c6ff0',
+      x: cx+(Math.random()-0.5)*cx*0.4, y: cy+(Math.random()-0.5)*cy*0.4
+    }));
+
+    const elEdges = gEdges.selectAll('line').data(edges).join('line')
+      .attr('class','graph-edge').attr('marker-end','url(#arrow)')
+      .attr('stroke','#555577').attr('stroke-opacity',0.15).attr('stroke-width',1.2);
+
+    const elEdgeLabels = gEdgeLabels.selectAll('text').data(edges.filter(e=>e.label)).join('text')
+      .attr('class','graph-edge-label').text(d=>d.label)
+      .attr('fill','#555577').attr('font-size',8).attr('text-anchor','middle');
+
+    const elNodes = gNodes.selectAll('circle').data(simNodes).join('circle')
+      .attr('class','graph-node').attr('data-id',d=>d.id)
+      .attr('r',d=>d.radius).attr('fill',d=>d.color)
+      .attr('stroke','rgba(255,255,255,0.12)').attr('stroke-width',1)
+      .style('cursor','pointer')
+      .call(d3.drag()
+        .on('start',(e,d)=>{if(!e.active)sim.alphaTarget(0.3).restart();d.fx=d.x;d.fy=d.y;})
+        .on('drag',(e,d)=>{d.fx=e.x;d.fy=e.y;})
+        .on('end',(e,d)=>{if(!e.active)sim.alphaTarget(0);d.fx=null;d.fy=null;})
+      )
+      .on('mouseenter',(e,d)=>highlightNodes(d))
+      .on('mouseleave',()=>unhighlightNodes())
+      .on('click',(e,d)=>{e.stopPropagation();showNodeDetail(d);});
+
+    const elLabels = gLabels.selectAll('text').data(simNodes).join('text')
+      .attr('class','graph-label').attr('fill','#8888aa').attr('font-size',9).attr('text-anchor','middle')
+      .attr('font-weight',500).style('pointer-events','none')
+      .text(d=>{const l=d.label||d.id||'';return l.length>8?l.slice(0,7)+'…':l;});
+
+    svg_el.on('click',()=>{selectedNode=null;document.getElementById('graphDetail').style.display='none';unhighlightNodes();});
+
+    sim = d3.forceSimulation(simNodes)
+      .force('link', d3.forceLink(edges).id(d=>d.id).distance(90).strength(0.25))
+      .force('charge', d3.forceManyBody().strength(-250))
+      .force('center', d3.forceCenter(cx,cy).strength(0.03))
+      .force('collision', d3.forceCollide().radius(d=>d.radius+10))
+      .on('tick',()=>{
+        elEdges.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y)
+               .attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);
+        elEdgeLabels.attr('x',d=>(d.source.x+d.target.x)/2).attr('y',d=>(d.source.y+d.target.y)/2-5);
+        elNodes.attr('cx',d=>d.x).attr('cy',d=>d.y);
+        elLabels.attr('x',d=>d.x).attr('y',d=>d.y+d.radius+13);
+      });
+  }
+
+  function highlightNodes(d) {
+    const connected = new Set([d.id]);
+    graphData.edges.forEach(e=>{
+      const s=typeof e.source==='object'?e.source.id:e.source;
+      const t=typeof e.target==='object'?e.target.id:e.target;
+      if(s===d.id)connected.add(t); if(t===d.id)connected.add(s);
+    });
+    gNodes.selectAll('circle').attr('opacity',n=>connected.has(n.id)?1:0.12);
+    gEdges.selectAll('line').attr('opacity',e=>{
+      const s=typeof e.source==='object'?e.source.id:e.source;
+      const t=typeof e.target==='object'?e.target.id:e.target;
+      return(s===d.id||t===d.id)?0.6:0.03;
+    });
+    gLabels.selectAll('text').attr('opacity',n=>connected.has(n.id)?1:0.12);
+    gEdgeLabels.selectAll('text').attr('opacity',e=>{
+      const s=typeof e.source==='object'?e.source.id:e.source;
+      const t=typeof e.target==='object'?e.target.id:e.target;
+      return(s===d.id||t===d.id)?1:0.05;
+    });
+  }
+
+  function unhighlightNodes() {
+    gNodes.selectAll('circle').attr('opacity',1);
+    gEdges.selectAll('line').attr('opacity',null);
+    gLabels.selectAll('text').attr('opacity',1);
+    gEdgeLabels.selectAll('text').attr('opacity',1);
+  }
+
+  function applyGraphFilter() {
+    if (!graphData.nodes.length) return;
+    let filtered = graphData.nodes;
+    if (activeType!=='all') filtered = filtered.filter(n=>n.type===activeType);
+    if (searchTerm) filtered = filtered.filter(n=>(n.label||'').toLowerCase().includes(searchTerm)||n.id.toLowerCase().includes(searchTerm));
+    buildGraph(filtered);
+    document.getElementById('graphCount').textContent = filtered.length+'/'+graphData.nodes.length+' 节点';
+  }
+
+  function showNodeDetail(d) {
+    selectedNode = d;
+    const tc = TYPE_COLORS[d.type]||{};
+    const b = document.getElementById('gdBody');
+    b.innerHTML = '<div class="gd-title" style="color:'+d.color+'">'+(d.label||d.id)+'</div>'+
+      '<div class="gd-row"><span class="gd-label">类型</span><span class="gd-tag" style="background:'+d.color+'22;color:'+d.color+'">'+(tc.label||d.type)+'</span>'+
+      (d.status?'<span class="gd-tag" style="background:'+(d.status.includes('T')?'var(--accent)':'var(--green)')+'22;color:'+(d.status.includes('T')?'var(--accent)':'var(--green)')+'">'+d.status+'</span>':'')+'</div>'+
+      (d.detail?'<div class="gd-row" style="flex-wrap:wrap"><span class="gd-label">详情</span><span class="gd-val">'+d.detail+'</span></div>':'')+
+      (d.score!=null?'<div class="gd-row"><span class="gd-label">评分</span><span class="gd-val">'+d.score+'/150</span></div>':'')+
+      (d.category?'<div class="gd-row"><span class="gd-label">分类</span><span class="gd-val">'+d.category+'</span></div>':'')+
+      (d.service?'<div class="gd-row"><span class="gd-label">服务</span><span class="gd-val">'+d.service+'</span></div>':'')+
+      '<div class="gd-row"><span class="gd-label">ID</span><span class="gd-val" style="font-family:var(--mono);font-size:10px">'+d.id+'</span></div>'+
+      '<div style="margin-top:8px;font-size:10px;color:var(--fg3)">关联: '+graphData.edges.filter(e=>{const s=typeof e.source==='object'?e.source.id:e.source;const t=typeof e.target==='object'?e.target.id:e.target;return s===d.id||t===d.id;}).length+' 条边</div>';
+    document.getElementById('graphDetail').style.display = 'block';
+  }
+
+  function toggleGraph(show) {
+    const gv = document.getElementById('graphView');
+    const msgs = document.getElementById('messages');
+    const ia = document.querySelector('.input-area');
+    const btn = document.getElementById('btnGraph');
+    const vis = gv.classList.contains('show');
+    if (show === undefined) show = !vis;
+    if (show) {
+      gv.classList.add('show'); msgs.style.display='none'; if(ia)ia.style.display='none';
+      btn.style.background='var(--bg3)';
+      if (!graphData.nodes.length) initGraph(); else resizeSvg();
+    } else {
+      gv.classList.remove('show'); msgs.style.display=''; if(ia)ia.style.display='';
+      btn.style.background='';
     }
   }
-  function runForceSim(ctx, canvas, container) {
-    let isDragging = false, dragNode = null;
-    const REP = 6000, ATT = 0.003, DAMP = 0.9;
-    function sim() {
-      const w=canvas.width, h=canvas.height, cx=w/2, cy=h/2;
-      for (let i=0;i<graphNodes.length;i++) {
-        const a=graphNodes[i];
-        if (a===dragNode) continue;
-        a.vx += (cx-a.x)*0.001; a.vy += (cy-a.y)*0.001;
-        for (let j=i+1;j<graphNodes.length;j++) {
-          const b=graphNodes[j];
-          let dx=a.x-b.x, dy=a.y-b.y, dist=Math.sqrt(dx*dx+dy*dy)||1, f=REP/(dist*dist);
-          a.vx += (dx/dist)*f; a.vy += (dy/dist)*f;
-          b.vx -= (dx/dist)*f; b.vy -= (dy/dist)*f;
-        }
-      }
-      for (const e of graphEdges) {
-        const s=graphNodes.find(n=>n.id===e.source), t=graphNodes.find(n=>n.id===e.target);
-        if (s&&t) { let dx=t.x-s.x, dy=t.y-s.y; s.vx+=dx*ATT; s.vy+=dy*ATT; t.vx-=dx*ATT; t.vy-=dy*ATT; }
-      }
-      for (const n of graphNodes) {
-        n.vx*=DAMP; n.vy*=DAMP; n.x+=n.vx; n.y+=n.vy;
-        n.x=Math.max(10,Math.min(w-10,n.x)); n.y=Math.max(10,Math.min(h-10,n.y));
-      }
-      draw(ctx,w,h);
-      graphAnimId = requestAnimationFrame(sim);
-    }
-    function draw(ctx,w,h) {
-      ctx.clearRect(0,0,w,h);
-      ctx.strokeStyle='rgba(136,136,170,0.15)'; ctx.lineWidth=1;
-      for (const e of graphEdges) {
-        const s=graphNodes.find(n=>n.id===e.source), t=graphNodes.find(n=>n.id===e.target);
-        if (s&&t) { ctx.beginPath(); ctx.moveTo(s.x,s.y); ctx.lineTo(t.x,t.y); ctx.stroke(); }
-      }
-      for (const n of graphNodes) {
-        ctx.beginPath(); ctx.arc(n.x,n.y,n.radius,0,Math.PI*2);
-        ctx.fillStyle=n.color||'#7c6ff0'; ctx.fill();
-        ctx.strokeStyle='rgba(255,255,255,0.1)'; ctx.lineWidth=1; ctx.stroke();
-        if (n.label) { ctx.fillStyle='#aaa'; ctx.font='9px sans-serif'; ctx.textAlign='center';
-          ctx.fillText(n.label.length>6?n.label.slice(0,6)+'…':n.label,n.x,n.y+n.radius+12); }
-      }
-    }
-    function onDown(e) {
-      const r=canvas.getBoundingClientRect(), mx=e.clientX-r.left, my=e.clientY-r.top;
-      for (const n of graphNodes) {
-        if (Math.abs(mx-n.x)<n.radius+4 && Math.abs(my-n.y)<n.radius+4) { isDragging=true; dragNode=n; return; }
-      }
-    }
-    function onMove(e) {
-      if (!isDragging||!dragNode) return;
-      const r=canvas.getBoundingClientRect();
-      dragNode.x=e.clientX-r.left; dragNode.y=e.clientY-r.top;
-    }
-    function onUp() { isDragging=false; dragNode=null; }
-    canvas.addEventListener('mousedown',onDown); canvas.addEventListener('mousemove',onMove);
-    canvas.addEventListener('mouseup',onUp); canvas.addEventListener('mouseleave',onUp);
-    sim();
-  }
-  setTimeout(loadGraph, 600);
+
+  // Event listeners
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('btnGraph').addEventListener('click', () => toggleGraph(true));
+    document.getElementById('gdClose').addEventListener('click', () => { selectedNode=null; document.getElementById('graphDetail').style.display='none'; });
+    document.getElementById('graphSearch').addEventListener('input', e => { searchTerm=e.target.value.toLowerCase(); applyGraphFilter(); });
+    document.querySelectorAll('.gf-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.gf-btn').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active'); activeType=btn.dataset.type; applyGraphFilter();
+      });
+    });
+    // Keyboard shortcut: Escape to close graph
+    document.addEventListener('keydown', e => { if (e.key==='Escape' && document.getElementById('graphView').classList.contains('show')) toggleGraph(false); });
+  });
 });
 </script>
 </body>
