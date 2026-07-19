@@ -30,3 +30,5 @@ venv/
 *.log
 *.tmp
 *.db
+test_data/
+*.db
