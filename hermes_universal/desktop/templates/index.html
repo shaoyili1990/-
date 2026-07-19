@@ -70,6 +70,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
 .badge{display:flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;background:var(--bg3)}
 .badge .bd{width:6px;height:6px;border-radius:50%}
 .badge.online .bd{background:var(--green);box-shadow:0 0 8px var(--green-glow)}
+.topbar-btn{background:none;border:none;color:var(--fg2);width:32px;height:32px;border-radius:8px;cursor:pointer;font-size:16px;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.topbar-btn:hover{background:var(--bg3);color:var(--fg)}
 .flow-indicator{display:flex;align-items:center;gap:3px;font-size:10px;color:var(--fg3);padding:3px 8px;background:var(--bg3);border-radius:20px}
 .flow-step{padding:1px 5px;border-radius:3px;transition:all .3s}
 .flow-step.pass{color:var(--green)}
@@ -172,6 +174,47 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
 /* ===== RESPONSIVE ===== */
 @media(max-width:1024px){.panel-right{display:none}}
 @media(max-width:768px){.panel-left{width:50px}.panel-left .brand .name,.panel-left .brand .ver,.stage .nm,.stage .sb,.pipeline-foot{display:none}.stage{padding:6px;display:flex;justify-content:center}.stage .hd{justify-content:center}}
+/* ===== CONFIG MODAL ===== */
+.modal-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.7);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-overlay.show{display:flex}
+.modal{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);width:680px;max-width:95vw;max-height:85vh;overflow:hidden;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.6)}
+.modal-head{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.modal-head h3{font-size:15px;font-weight:600;flex:1}
+.modal-close{background:none;border:none;color:var(--fg2);font-size:20px;cursor:pointer;width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center}
+.modal-close:hover{background:var(--bg3);color:var(--fg)}
+.modal-body{padding:16px 20px;overflow-y:auto;flex:1}
+.modal-foot{padding:12px 20px;border-top:1px solid var(--border);display:flex;gap:8px;justify-content:flex-end}
+.modal-foot .btn{padding:7px 16px;border-radius:var(--radius-sm);border:none;font-size:13px;cursor:pointer;font-family:inherit;transition:all .15s}
+.modal-foot .btn-primary{background:var(--accent);color:#fff}
+.modal-foot .btn-primary:hover{background:var(--accent2)}
+.modal-foot .btn-secondary{background:var(--bg3);color:var(--fg)}
+.modal-foot .btn-secondary:hover{background:var(--bg4)}
+.role-cards{display:flex;flex-direction:column;gap:12px}
+.role-card{border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px 16px}
+.role-card.ok{border-color:rgba(74,222,128,.3);background:var(--green-dim)}
+.role-card.err{border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.08)}
+.role-card-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.role-card-head .r-icon{width:28px;height:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:14px}
+.role-card-head .r-name{font-weight:600;font-size:13px}
+.role-card-head .r-status{margin-left:auto;font-size:11px;padding:2px 8px;border-radius:10px}
+.role-card-head .r-status.ok{background:var(--green-dim);color:var(--green)}
+.role-card-head .r-status.err{background:rgba(248,113,113,.15);color:var(--red)}
+.role-card-head .r-status.wait{background:var(--bg3);color:var(--fg2)}
+.role-card .form-row{display:flex;gap:8px;margin-bottom:8px}
+.role-card .form-row:last-child{margin-bottom:0}
+.role-card select,.role-card input{flex:1;padding:7px 10px;border-radius:var(--radius-sm);border:1px solid var(--border);background:var(--bg);color:var(--fg);font-size:12px;font-family:inherit;outline:none}
+.role-card select:focus,.role-card input:focus{border-color:var(--accent)}
+.role-card .test-btn{padding:7px 14px;border-radius:var(--radius-sm);border:none;font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;background:var(--bg3);color:var(--fg)}
+.role-card .test-btn:hover{background:var(--bg4)}
+.role-card .test-btn:disabled{opacity:.5;cursor:not-allowed}
+.role-card .test-btn.ok{background:var(--green-dim);color:var(--green)}
+.role-card .test-btn.err{background:rgba(248,113,113,.15);color:var(--red)}
+.role-card .key-input{font-family:var(--mono);font-size:11px}
+.role-card .test-result{font-size:11px;padding:4px 0 0;display:none}
+.role-card .test-result.show{display:block}
+.role-card .test-result.ok{color:var(--green)}
+.role-card .test-result.err{color:var(--red)}
+.role-card .test-result.wait{color:var(--yellow)}
 </style>
 </head>
 <body>
@@ -220,6 +263,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
         <span class="flow-step wait" id="f-scribe">书童</span>
       </div>
       <div class="badge online"><span class="bd"></span>在线</div>
+      <button class="topbar-btn" id="btnConfig" title="配置">⚙️</button>
     </div>
     <div class="messages" id="messages"></div>
     <div class="input-area">
@@ -254,6 +298,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--fg);height:100vh;o
 
 <!-- ===== Drag overlay ===== -->
 <div class="drag-overlay" id="dragOverlay"><div class="do-text">📎 拖放文件到此处</div></div>
+
+<!-- ===== CONFIG MODAL ===== -->
+<div class="modal-overlay" id="configModal">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>⚙️ 模型配置</h3>
+      <span style="font-size:11px;color:var(--fg2)">选择厂商 → 填 Key → 测试 → 自动保存</span>
+      <button class="modal-close" id="configClose">&times;</button>
+    </div>
+    <div class="modal-body">
+      <div class="role-cards" id="roleCards">
+        <!-- 由JS动态渲染 -->
+      </div>
+      <div style="margin-top:16px;padding:12px;background:var(--bg3);border-radius:8px;font-size:12px;color:var(--fg2)">
+        <strong>🔌 本地模型</strong> · Ollama（<code>http://localhost:11434</code>）和 vLLM（<code>http://localhost:8000/v1</code>）无需API Key，填 base_url 和模型名即可测试。
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" id="configClose2">关闭</button>
+      <button class="btn btn-primary" id="btnAutoAssign">🔑 一键配置三个Key</button>
+    </div>
+  </div>
+</div>
 
 <!-- ===== Toast container ===== -->
 <div class="toast" id="toast"></div>
@@ -609,6 +676,304 @@ input.style.height='36px';
 addMsg('assistant', '你好！我是 **Hermes 多模态智能体**。\n\n我可以处理文本、理解图片、分析文件。\n\n- **📝 文本对话** — 直接输入消息\n- **🖼️ 图片理解** — 拖拽或上传图片\n- **📎 文件分析** — PDF/Word/Excel/代码文件\n- **🧠 多轮记忆** — 记住上下文\n\n左侧实时显示处理流水线，右侧展示推理过程。\n\n开始试试吧！');
 
 console.log('🪷 Hermes Agent UI loaded');
+
+// ============================================================
+// CONFIG PANEL
+// ============================================================
+const ROLE_CONFIG = [
+  { role: 'monkey',  icon: '🐵', title: '灵猴', desc: '路由与判断', color: '#7c6ff0' },
+  { role: 'horse',   icon: '🐴', title: '骏马', desc: '推理与执行', color: '#4ade80' },
+  { role: 'purchaser', icon: '🛒', title: '采购员', desc: '采买与巡检', color: '#fbbf24' },
+];
+
+let vendors = {};
+let credentials = {};
+let assignments = {};
+
+async function loadConfigData() {
+  try {
+    const [vResp, cResp, aResp] = await Promise.all([
+      fetch('/api/vendors'),
+      fetch('/api/credentials'),
+      fetch('/api/assignments'),
+    ]);
+    vendors = (await vResp.json()).vendors || {};
+    credentials = (await cResp.json()).credentials || [];
+    assignments = (await aResp.json()).assignments || {};
+  } catch(e) {
+    console.warn('Config load error:', e);
+  }
+}
+
+function renderRoleCards() {
+  const container = document.getElementById('roleCards');
+  if (!container) return;
+  
+  container.innerHTML = ROLE_CONFIG.map(cfg => {
+    const role = cfg.role;
+    const assign = assignments[role] || {};
+    const credId = assign.cred_id;
+    const currentVendor = assign.vendor || 'deepseek';
+    const currentModel = assign.model || 'deepseek-chat';
+    const currentBaseUrl = assign.base_url || '';
+    const status = assign.status || 'wait';
+    const statusText = { ok: '✅ 已就绪', err: '❌ 连接失败', wait: '⏳ 未配置' };
+
+    const vendorOptions = Object.entries(vendors).map(([k, v]) =>
+      `<option value="${k}" ${k === currentVendor ? 'selected' : ''}>${v.name}</option>`
+    ).join('');
+
+    // Find matching vendor for model list
+    const vendorObj = vendors[currentVendor] || {};
+    const modelList = vendorObj.models || [];
+    const modelOptions = modelList.length > 0
+      ? modelList.map(m => `<option value="${m}" ${m === currentModel ? 'selected' : ''}>${m}</option>`).join('')
+      : '<option value="">-- 手动输入 --</option>';
+
+    return `<div class="role-card ${status}" id="card-${role}">
+      <div class="role-card-head">
+        <div class="r-icon" style="background:${cfg.color}22;color:${cfg.color}">${cfg.icon}</div>
+        <div class="r-name">${cfg.title} <span style="font-weight:400;font-size:11px;color:var(--fg2)">${cfg.desc}</span></div>
+        <div class="r-status ${status}" id="status-${role}">${statusText[status]}</div>
+      </div>
+      <div class="form-row">
+        <select id="vendor-${role}" onchange="onVendorChange('${role}')">${vendorOptions}</select>
+        <select id="model-${role}">${modelOptions}</select>
+      </div>
+      <div class="form-row">
+        <input type="text" class="key-input" id="baseUrl-${role}" placeholder="base_url（可选，默认使用厂商预设）" value="${currentBaseUrl}">
+        <input type="password" class="key-input" id="key-${role}" placeholder="sk-… API Key" value="">
+      </div>
+      <div class="form-row">
+        <button class="test-btn" id="testBtn-${role}" onclick="testConnection('${role}')">🔍 测试连接</button>
+        <button class="test-btn" id="saveBtn-${role}" onclick="saveConfig('${role}')" style="background:var(--accent);color:#fff">💾 保存</button>
+        <div class="test-result" id="result-${role}"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function onVendorChange(role) {
+  const vendorEl = document.getElementById(`vendor-${role}`);
+  const modelEl = document.getElementById(`model-${role}`);
+  const baseUrlEl = document.getElementById(`baseUrl-${role}`);
+  const vendor = vendorEl.value;
+  const v = vendors[vendor] || {};
+  
+  // Update model list
+  const models = v.models || [];
+  if (models.length > 0) {
+    modelEl.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+  } else {
+    modelEl.innerHTML = '<option value="">-- 手动输入 --</option>';
+  }
+  
+  // Update base_url
+  if (!baseUrlEl.value || baseUrlEl.placeholder.includes('预设')) {
+    baseUrlEl.value = v.base_url || '';
+    baseUrlEl.placeholder = `base_url（默认: ${v.base_url || '自定义'}）`;
+  }
+  
+  // Toggle local note
+  if (v.local) {
+    baseUrlEl.placeholder = `本地地址（默认: ${v.base_url}）`;
+  }
+}
+
+async function testConnection(role) {
+  const vendor = document.getElementById(`vendor-${role}`).value;
+  const model = document.getElementById(`model-${role}`).value;
+  const base_url = document.getElementById(`baseUrl-${role}`).value;
+  const key_value = document.getElementById(`key-${role}`).value;
+  const btn = document.getElementById(`testBtn-${role}`);
+  const result = document.getElementById(`result-${role}`);
+  
+  // Try saved key if none provided
+  const assign = assignments[role] || {};
+  const actualKey = key_value || (credentials.find(c => c.id === assign.cred_id)?.key_prefix || '');
+  
+  btn.disabled = true;
+  btn.textContent = '⏳ 测试中…';
+  result.className = 'test-result show wait';
+  result.textContent = '正在连接…';
+  
+  try {
+    const resp = await fetch('/api/credentials/test', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ vendor, model, base_url, key_value: actualKey }),
+    });
+    const data = await resp.json();
+    
+    if (data.ok) {
+      result.className = 'test-result show ok';
+      result.textContent = `✅ ${data.model} · ${data.latency}ms · ${data.note || ''}`;
+      btn.className = 'test-btn ok';
+      btn.textContent = '✅ 已连接';
+      
+      // Update card status
+      const card = document.getElementById(`card-${role}`);
+      const statusEl = document.getElementById(`status-${role}`);
+      if (card) card.className = `role-card ok`;
+      if (statusEl) { statusEl.className = 'r-status ok'; statusEl.textContent = '✅ 已就绪'; }
+    } else {
+      result.className = 'test-result show err';
+      result.textContent = `❌ ${data.error || '连接失败'}`;
+      btn.className = 'test-btn err';
+      btn.textContent = '❌ 失败';
+    }
+  } catch(e) {
+    result.className = 'test-result show err';
+    result.textContent = `❌ 请求失败: ${e.message}`;
+    btn.className = 'test-btn err';
+    btn.textContent = '❌ 失败';
+  }
+  btn.disabled = false;
+}
+
+async function saveConfig(role) {
+  const vendor = document.getElementById(`vendor-${role}`).value;
+  const model = document.getElementById(`model-${role}`).value;
+  const base_url = document.getElementById(`baseUrl-${role}`).value;
+  const key_value = document.getElementById(`key-${role}`).value;
+  const result = document.getElementById(`result-${role}`);
+  
+  try {
+    const resp = await fetch('/api/credentials', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ service: role, vendor, model, base_url, key_value }),
+    });
+    const data = await resp.json();
+    
+    if (data.ok) {
+      result.className = 'test-result show ok';
+      result.textContent = `✅ ${data.message}`;
+      
+      // Assign to role
+      await fetch('/api/assignments', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role, cred_id: data.id }),
+      });
+      
+      toast(`✅ ${role} 配置已保存`, 'success');
+      await loadConfigData();
+    } else {
+      result.className = 'test-result show err';
+      result.textContent = `❌ ${data.error || '保存失败'}`;
+    }
+  } catch(e) {
+    result.className = 'test-result show err';
+    result.textContent = `❌ 保存失败: ${e.message}`;
+  }
+}
+
+async function autoAssignThreeKeys() {
+  // The three DeepSeek keys:
+  const keys = [
+    { role: 'monkey',    key: 'sk-d06fceea0dc6472d87f44dafc1078831' },
+    { role: 'horse',     key: 'sk-c459ee54ae9f414790efbeb137183af0' },
+    { role: 'purchaser', key: 'sk-46a312622f81465c919349ebc1108f6a' },
+  ];
+  
+  const btn = document.getElementById('btnAutoAssign');
+  btn.disabled = true;
+  btn.textContent = '⏳ 正在配置…';
+  
+  for (const { role, key } of keys) {
+    try {
+      // Save the credential
+      const resp = await fetch('/api/credentials', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          service: role,
+          vendor: 'deepseek',
+          model: 'deepseek-chat',
+          base_url: 'https://api.deepseek.com/v1',
+          key_value: key,
+        }),
+      });
+      const data = await resp.json();
+      
+      if (data.ok) {
+        // Assign to role
+        await fetch('/api/assignments', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ role, cred_id: data.id }),
+        });
+        
+        // Fill the form fields
+        const vendorEl = document.getElementById(`vendor-${role}`);
+        const modelEl = document.getElementById(`model-${role}`);
+        const baseUrlEl = document.getElementById(`baseUrl-${role}`);
+        const keyEl = document.getElementById(`key-${role}`);
+        if (vendorEl) vendorEl.value = 'deepseek';
+        if (modelEl) modelEl.value = 'deepseek-chat';
+        if (baseUrlEl) baseUrlEl.value = 'https://api.deepseek.com/v1';
+        if (keyEl) keyEl.value = key;
+        
+        // Update UI
+        const statusEl = document.getElementById(`status-${role}`);
+        const card = document.getElementById(`card-${role}`);
+        if (statusEl) { statusEl.className = 'r-status ok'; statusEl.textContent = '✅ 已就绪'; }
+        if (card) card.className = 'role-card ok';
+        
+        toast(`✅ ${role} Key 已配置`, 'success');
+      }
+    } catch(e) {
+      toast(`❌ ${role} 配置失败: ${e.message}`, 'error');
+    }
+  }
+  
+  btn.disabled = false;
+  btn.textContent = '🔑 一键配置三个Key';
+  await loadConfigData();
+  renderRoleCards();
+}
+
+// ============================================================
+// CONFIG EVENT BINDINGS
+// ============================================================
+document.addEventListener('DOMContentLoaded', async () => {
+  await loadConfigData();
+  renderRoleCards();
+  
+  // Open modal
+  const btnConfig = document.getElementById('btnConfig');
+  const modal = document.getElementById('configModal');
+  if (btnConfig && modal) {
+    btnConfig.addEventListener('click', async () => {
+      modal.classList.add('show');
+      await loadConfigData();
+      renderRoleCards();
+    });
+  }
+  
+  // Close modal
+  const closeBtns = ['configClose', 'configClose2'];
+  closeBtns.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && modal) {
+      el.addEventListener('click', () => modal.classList.remove('show'));
+    }
+  });
+  
+  // Close on overlay click
+  if (modal) {
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) modal.classList.remove('show');
+    });
+  }
+  
+  // Auto-assign button
+  const autoBtn = document.getElementById('btnAutoAssign');
+  if (autoBtn) {
+    autoBtn.addEventListener('click', autoAssignThreeKeys);
+  }
+});
 </script>
 </body>
 </html>

@@ -12,20 +12,28 @@ from typing import Optional, Dict, Any, List
 # 默认配置
 DEFAULT_CONFIG = {
     "monkey": {
-        "provider": "openai",
-        "model": "gpt-4o",
+        "provider": "deepseek",
+        "model": "deepseek-chat",
         "api_key": "",
-        "base_url": "",
+        "base_url": "https://api.deepseek.com/v1",
         "temperature": 0.7,
         "max_tokens": 4096,
     },
     "horse": {
-        "provider": "openai",
-        "model": "gpt-4o-mini",
+        "provider": "deepseek",
+        "model": "deepseek-chat",
         "api_key": "",
-        "base_url": "",
+        "base_url": "https://api.deepseek.com/v1",
         "temperature": 0.7,
         "max_tokens": 8192,
+    },
+    "purchaser": {
+        "provider": "deepseek",
+        "model": "deepseek-chat",
+        "api_key": "",
+        "base_url": "https://api.deepseek.com/v1",
+        "temperature": 0.5,
+        "max_tokens": 2048,
     },
     "keeper": {
         "db_path": "",
@@ -45,33 +53,35 @@ DEFAULT_CONFIG = {
     "providers": {
         "openai": {
             "base_url": "https://api.openai.com/v1",
-            "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo"],
+            "models": ["gpt-4o", "gpt-4o-mini", "gpt-4-turbo", "o3-mini", "o1"],
         },
         "anthropic": {
             "base_url": "https://api.anthropic.com/v1",
-            "models": ["claude-sonnet-4-20250514", "claude-3-5-sonnet-latest"],
+            "models": ["claude-sonnet-4-20250514", "claude-3-5-sonnet-latest", "claude-3-opus-latest"],
         },
         "deepseek": {
             "base_url": "https://api.deepseek.com/v1",
-            "models": ["deepseek-chat", "deepseek-reasoner"],
+            "models": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash"],
         },
         "google": {
             "base_url": "https://generativelanguage.googleapis.com/v1beta",
-            "models": ["gemini-1.5-pro", "gemini-1.5-flash"],
+            "models": ["gemini-2.0-flash", "gemini-2.0-pro", "gemini-1.5-pro", "gemini-1.5-flash"],
         },
         "ollama": {
             "base_url": "http://localhost:11434",
-            "models": ["llama3", "qwen2", "mistral", "qwen2.5"],
+            "models": ["llama3", "qwen2.5", "mistral", "deepseek-r1", "phi-4"],
             "local": True,
+            "note": "输入本地模型名称，需先 ollama pull",
         },
         "vllm": {
             "base_url": "http://localhost:8000/v1",
             "models": [],
             "local": True,
+            "note": "输入已部署的模型名称，需先启动 vllm serve",
         },
         "openrouter": {
             "base_url": "https://openrouter.ai/api/v1",
-            "models": [],
+            "models": ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "deepseek/deepseek-chat", "google/gemini-2.0-flash"],
         },
     }
 }
@@ -132,6 +142,10 @@ class Config:
             "HERMES_HORSE_MODEL": ("horse", "model"),
             "HERMES_HORSE_KEY": ("horse", "api_key"),
             "HERMES_HORSE_BASE_URL": ("horse", "base_url"),
+            "HERMES_PURCHASER_PROVIDER": ("purchaser", "provider"),
+            "HERMES_PURCHASER_MODEL": ("purchaser", "model"),
+            "HERMES_PURCHASER_KEY": ("purchaser", "api_key"),
+            "HERMES_PURCHASER_BASE_URL": ("purchaser", "base_url"),
             "HERMES_DB_PATH": ("keeper", "db_path"),
             "HERMES_STORE_DIR": ("system", "store_dir"),
             "HERMES_ENCODING": ("system", "encoding"),
