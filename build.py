@@ -1,93 +1,74 @@
-#!/usr/bin/env python3
-"""Hermes Agent — Windows 打包脚本
-用法:
-    python build.py                          # 默认版本
-    python build.py --version 0.2.0          # 指定版本
-    python build.py --onefile                # 单文件exe
 """
-
-import argparse
+Hermes Agent — Windows 安装包构建脚本
+用于通过 SignPath Foundation 签名
+"""
 import os
+import sys
 import shutil
 import subprocess
-import sys
+import tempfile
 from pathlib import Path
 
-ROOT = Path(__file__).parent
-DIST = ROOT / "dist"
-BUILD = ROOT / "build"
+PROJECT_ROOT = Path(__file__).parent
+DIST_DIR = PROJECT_ROOT / "dist"
 
 
 def clean():
-    """清理旧的构建产物"""
-    for d in [DIST, BUILD]:
-        if d.exists():
-            shutil.rmtree(d)
-    (ROOT / "hermes_agent.spec").unlink(missing_ok=True)
+    """清理旧的构建输出"""
+    if DIST_DIR.exists():
+        shutil.rmtree(DIST_DIR)
+    DIST_DIR.mkdir(parents=True)
 
 
-def build_exe(version: str, onefile: bool):
-    """用 PyInstaller 打包 Hermes Agent"""
-    print(f"🔨 构建 Windows 可执行文件 v{version} (onefile={onefile})")
+def build():
+    """使用 PyInstaller 打包为单文件 exe"""
+    clean()
+    print("📦 Hermes Agent Windows 构建中…")
 
-    # 构建入口
-    entry = str(ROOT / "hermes_universal/desktop/__main__.py")
+    # 确保依赖
+    subprocess.run(
+        [sys.executable, "-m", "pip", "install", "pyinstaller"],
+        check=True, capture_output=True
+    )
 
-    cmd = [
-        sys.executable, "-m", "PyInstaller",
-        "--name", f"hermes-agent-v{version}",
-        "--distpath", str(DIST),
-        "--workpath", str(BUILD),
-        "--add-data", f"{ROOT / 'hermes_universal/desktop/templates'}{os.pathsep}desktop/templates",
+    # 入口
+    entry = PROJECT_ROOT / "hermes_universal" / "__main__.py"
+
+    pyinstaller_args = [
+        "pyinstaller",
+        "--onefile",                    # 单文件 exe
+        "--name", "hermes-agent",
+        "--distpath", str(DIST_DIR),
+        "--workpath", str(PROJECT_ROOT / "build" / "pyi"),
+        "--specpath", str(PROJECT_ROOT / "build"),
+        "--console",                   # 控制台窗口（调试用，可改为 --windowed）
+        "--add-data", f"{PROJECT_ROOT / 'hermes_universal' / 'desktop' / 'templates'}{os.pathsep}templates",
+        "--add-data", f"{PROJECT_ROOT / 'hermes_universal' / 'desktop' / 'static'}{os.pathsep}static",
         "--hidden-import", "hermes_universal",
-        "--hidden-import", "hermes_universal.core",
+        "--hidden-import", "hermes_universal.engine",
         "--hidden-import", "hermes_universal.core.patrol",
-        "--hidden-import", "hermes_universal.core.scheduler",
-        "--hidden-import", "hermes_universal.core.purchaser",
-        "--hidden-import", "hermes_universal.core.monkey",
-        "--hidden-import", "hermes_universal.core.agent",
-        "--hidden-import", "flask",
-        "--hidden-import", "flask_cors",
-        "--collect-submodules", "hermes_universal",
-        "--collect-data", "hermes_universal",
-        "--noconfirm",
-        entry,
+        "--hidden-import", "hermes_universal.tools.agent_reach",
+        "--hidden-import", "agent_reach",
+        "--collect-all", "hermes_universal",
+        str(entry),
     ]
 
-    if onefile:
-        cmd.insert(cmd.index("--name"), "--onefile")
-    else:
-        cmd.insert(cmd.index("--name"), "--onedir")
-
-    result = subprocess.run(cmd, cwd=str(ROOT), capture_output=True, text=True)
+    result = subprocess.run(pyinstaller_args, capture_output=True, text=True)
     if result.returncode != 0:
-        print(f"❌ 构建失败:\n{result.stderr}")
+        print(f"❌ 构建失败: {result.stderr}")
         sys.exit(1)
 
-    print(f"✅ 构建完成: {DIST}")
+    # 输出
+    exe_path = DIST_DIR / "hermes-agent.exe"
+    if exe_path.exists():
+        size_mb = exe_path.stat().st_size / (1024 * 1024)
+        print(f"✅ 构建成功: {exe_path} ({size_mb:.1f} MB)")
+    else:
+        print("❌ 未找到输出文件")
+        sys.exit(1)
 
-
-def create_installer(version: str):
-    """（选）后续可用 NSIS/Inno Setup 创建安装包"""
-    pass
-
-
-def main():
-    parser = argparse.ArgumentParser(description="Hermes Agent 构建脚本")
-    parser.add_argument("--version", default="0.1.0", help="版本号")
-    parser.add_argument("--onefile", action="store_true", help="单文件模式")
-    args = parser.parse_args()
-
-    print(f"🚀 Hermes Agent Windows 打包 v{args.version}")
-    clean()
-    build_exe(args.version, args.onefile)
-
-    # 列出产物
-    for f in DIST.rglob("*"):
-        if f.is_file() and f.suffix in (".exe", ".pdb"):
-            mb = f.stat().st_size / (1024 * 1024)
-            print(f"   📦 {f.name} ({mb:.1f} MB)")
+    return exe_path
 
 
 if __name__ == "__main__":
-    main()
+    build()

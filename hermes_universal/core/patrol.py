@@ -263,18 +263,34 @@ class PatrolSystem:
 
         cid, name, keywords, desc, tier, sources = CATEGORIES[idx]
         kw = urllib.parse.quote(keywords[0] if keywords else name)
+        raw_kw = keywords[0] if keywords else name
 
-        # ── P0: Agent Reach 优先搜索 ──
-        ar_result = {}
+        results = []
+        ar_content = None  # AR 聚合文本
+
+        # ── P0: Agent Reach 优先搜索（多源并行） ──
         if _HAS_AGENT_REACH:
             try:
                 from ..tools.agent_reach import patrol_search as ar_search
                 ar_result = ar_search(name, keywords)
-                logger.info(f"[Patrol] AgentReach搜索 {name}: {ar_result.get('summary','?')}")
+                if ar_result.get("ok"):
+                    ar_content = ar_result.get("aggregated_text", "")
+                    ar_bytes = ar_result.get("total_bytes", 0)
+                    ar_sources = ar_result.get("source_count", 0)
+                    logger.info(f"[Patrol] AgentReach {name}: {ar_sources}源 {ar_bytes//1024}KB")
+                    # AR 内容直接加入 results
+                    if ar_bytes > 0:
+                        results.append({
+                            "source": f"AR_{ar_sources}源",
+                            "length": ar_bytes,
+                            "text": ar_content[:500],
+                        })
+                else:
+                    logger.info(f"[Patrol] AgentReach {name}: 无结果,走curl")
             except Exception as e:
-                logger.warning(f"[Patrol] AgentReach搜索 {name} 失败: {e}")
+                logger.warning(f"[Patrol] AgentReach {name} 异常: {e}")
 
-        results = []
+        # ── P1: curl 直连搜索（现有方式） ──
         for src_name, src_url, src_type in sources:
             url = src_url.replace("{kw}", kw)
             fetched = self._curl_fetch(url)
@@ -303,12 +319,12 @@ class PatrolSystem:
         info = f"{ok_count}/{len(sources)}源"
         if total_bytes > 0:
             info += f"·{total_bytes//1024}KB"
-        if ar_result.get("ok"):
+        if ar_content:
             info += "·AR✨"
 
         return {"action": "patrol", "category": name, "index": idx,
                 "total": len(CATEGORIES), "progress": f"{idx+1}/{len(CATEGORIES)}",
-                "search_result": info}
+                "search_result": info, "ar_content": (ar_content or "")[:200]}
 
     # ── 评分 ──
 

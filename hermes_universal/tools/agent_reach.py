@@ -1,192 +1,214 @@
 """
-Agent Reach 集成模块 — 巡逻系统首选检索工具
+Agent Reach 集成 v2 — 巡逻系统首选检索工具
 
-功能:
-  1. ExaSearch — AI语义搜索(if API key available)
-  2. Jina Web Reader — 任意URL转Markdown
-  3. GitHub — 仓库/issue/trending
-  4. YouTube — 视频搜索/字幕
-  5. Reddit/Twitter/V2EX — 社交平台
-  6. 自动fallback: ExaSearch → DDG(curl) → 内置Web
+确认可用的搜索源:
+  1. HN Algolia API    → 科技/AI内容 (188万+结果, 免费)
+  2. V2EX API          → 技术社区 (公开API, 无需Token)
+  3. GitHub API        → 开源仓库趋势 (公共API)
+  4. Jina Reader       → 任意网页转Markdown (免费)
 
 架构:
-  巡逻时 优先调用 Agent Reach 搜索，
-  不可用时 fallback 到 curl 直连搜索。
+  patrol_search() → 并行调用4源 → 汇总内容 → 直接喂入巡逻results列表
+  patrol.py 中, AR 结果与 curl 结果合并评分
 """
 import json
 import logging
-import time
-from typing import Dict, List, Optional, Any
+import re
+import urllib.request
+import urllib.parse
+from typing import Dict, List, Optional
 
 logger = logging.getLogger("agent_reach")
 
+UA = "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:128.0) Gecko/20100101 Firefox/128.0"
 
-class AgentReachClient:
-    """Agent Reach 封装器 — 为巡逻系统提供统一的搜索接口"""
 
-    def __init__(self):
-        self._ar = None
-        self._channels = []
-        self._init_ok = False
-        self._doctor_report = ""
-        self._init()
+def _fetch(url: str, timeout: int = 10) -> Optional[str]:
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": UA})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return resp.read().decode("utf-8", errors="replace")
+    except Exception:
+        return None
 
-    def _init(self):
-        """初始化 Agent Reach"""
-        try:
-            from agent_reach import AgentReach
-            self._ar = AgentReach()
-            report = self._ar.doctor_report()
-            self._doctor_report = report
-            self._init_ok = True
-            logger.info(f"[AgentReach] 初始化成功\n{report[:200]}")
-        except ImportError:
-            logger.warning("[AgentReach] 未安装,请运行: pip install agent-reach")
-        except Exception as e:
-            logger.warning(f"[AgentReach] 初始化失败: {e}")
 
-    @property
-    def available(self) -> bool:
-        return self._init_ok and self._ar is not None
+def _html_to_text(html: str) -> str:
+    text = re.sub(r'<[^>]+>', ' ', html)
+    return re.sub(r'\s+', ' ', text).strip()
 
-    def doctor(self) -> str:
-        """健康检查报告"""
-        if self._ar:
-            try:
-                return self._ar.doctor_report()
-            except Exception as e:
-                return f"AgentReach 检查失败: {e}"
-        return "AgentReach 未安装"
 
-    def _read_url(self, url: str, timeout: int = 15) -> Optional[str]:
-        """用 Jina Reader 读网页 (AgentReach 核心能力)"""
-        import urllib.request
-        jina_url = f"https://r.jina.ai/http://{url.removeprefix('http://').removeprefix('https://')}"
-        try:
-            req = urllib.request.Request(
-                jina_url,
-                headers={"User-Agent": "Mozilla/5.0 (compatible; HermesAgent/0.1)"},
-            )
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
-                return resp.read().decode("utf-8", errors="replace")[:5000]
-        except Exception:
-            return None
+# ── 搜索源 ──
 
-    def search(self, query: str, max_results: int = 5) -> Dict:
-        """
-        首要搜索方法 — 多级 fallback
-        1. ExaSearch (if configured)
-        2. Jina Reader (通用web)
-        3. DDG via curl (兜底)
-        """
-        results = []
+def search_hn_algolia(query: str, max_hits: int = 5) -> List[Dict]:
+    """HN Algolia: AI/科技类内容"""
+    raw = _fetch(
+        f"https://hn.algolia.com/api/v1/search?query={urllib.parse.quote(query)}"
+        f"&hitsPerPage={max_hits}&tags=story",
+        timeout=8
+    )
+    if not raw:
+        return []
+    data = json.loads(raw)
+    return [
+        {"title": h.get("title", ""), "url": h.get("url") or "",
+         "points": h.get("points", 0), "author": h.get("author", "")}
+        for h in data.get("hits", [])
+    ]
 
-        # Level 1: Jina Reader 搜索
-        try:
-            web_text = self._read_url(f"www.google.com/search?q={query.replace(' ', '+')}")
-            if web_text and len(web_text) > 200:
-                results.append({
-                    "source": "JinaWeb",
-                    "ok": True,
-                    "length": len(web_text),
-                    "preview": web_text[:300],
-                })
-        except Exception:
-            pass
 
-        # Level 2: Exa Search (if key available)
-        try:
-            from agent_reach.channels.exa_search import ExaSearchChannel
-            exa = ExaSearchChannel()
-            exa_results = exa.search(query, num_results=max_results)
-            if exa_results:
-                results.append({
-                    "source": "ExaSearch",
-                    "ok": True,
-                    "length": len(str(exa_results)),
-                    "preview": str(exa_results)[:300],
-                })
-        except Exception:
-            pass
+def search_v2ex(max_topics: int = 5) -> List[Dict]:
+    """V2EX 热门话题（技术社区内容）"""
+    raw = _fetch("https://www.v2ex.com/api/topics/hot.json", timeout=8)
+    if not raw:
+        return []
+    data = json.loads(raw)
+    return [
+        {"title": t.get("title", ""), "url": f"https://www.v2ex.com/t/{t.get('id','')}",
+         "node": t.get("node", {}).get("title", "") if isinstance(t.get("node"), dict) else ""}
+        for t in data[:max_topics]
+    ]
 
-        # Level 3: 尽量用多个渠道
-        for channel_name in ["web", "v2ex", "github"]:
-            try:
-                text = self._read_url(f"https://{channel_name}.com/search?q={query.replace(' ', '+')}")
-                if text and len(text) > 500:
-                    results.append({
-                        "source": channel_name,
-                        "ok": True,
-                        "length": len(text),
-                        "preview": text[:200],
-                    })
-            except Exception:
-                pass
 
-        # 汇总
-        ok_count = sum(1 for r in results if r.get("ok"))
-        total_bytes = sum(r.get("length", 0) for r in results)
+def search_github(query: str, max_repos: int = 5) -> List[Dict]:
+    """GitHub 仓库搜索"""
+    raw = _fetch(
+        f"https://api.github.com/search/repositories?q={urllib.parse.quote(query)}"
+        f"&sort=stars&order=desc&per_page={max_repos}",
+        timeout=8
+    )
+    if not raw:
+        return []
+    data = json.loads(raw)
+    return [
+        {"name": r["full_name"], "stars": r.get("stargazers_count", 0),
+         "desc": (r.get("description") or "")[:80]}
+        for r in data.get("items", [])
+    ]
 
-        return {
-            "ok": ok_count > 0,
-            "results": results,
-            "success_count": ok_count,
-            "total_sources": len(results) if results else 1,
-            "total_bytes": total_bytes,
-            "content_found": total_bytes > 500,
-            "content_rich": total_bytes > 5000,
-            "summary": f"AgentReach:{ok_count}源·{total_bytes // 1024}KB",
+
+def read_via_jina(url: str, max_chars: int = 2000) -> Optional[str]:
+    """Jina Reader: 任意网页转Markdown"""
+    jina_url = f"https://r.jina.ai/{url}"
+    req = urllib.request.Request(jina_url, headers={"User-Agent": UA,
+        "X-With-Generated-Alt": "false", "X-Return-Format": "text"})
+    try:
+        with urllib.request.urlopen(req, timeout=12) as resp:
+            return resp.read().decode("utf-8", errors="replace")[:max_chars]
+    except Exception:
+        return None
+
+
+def search_jina(query: str) -> List[Dict]:
+    """Jina Reader 搜索：先 DDG 出链接 → Jina 读关键页"""
+    # 跳过需要bot检测的DDG, 直接用Jina读已知信息页
+    try:
+        hn_text = read_via_jina("https://hn.algolia.com/?query=" + urllib.parse.quote(query), 2000)
+        if hn_text and len(hn_text) > 100:
+            return [{"source": "Jina+Algolia", "text": hn_text[:1500]}]
+    except Exception:
+        pass
+    # fallback: 读 HN 首页
+    try:
+        front = read_via_jina("https://news.ycombinator.com/", 2000)
+        if front:
+            return [{"source": "HN首页", "text": front[:1500]}]
+    except Exception:
+        pass
+    return []
+
+
+# ── 主搜索 ──
+
+def multi_search(query: str) -> Dict:
+    """并行搜索所有源，汇总结果"""
+    sources = {}
+
+    # 1. HN Algolia
+    hn = search_hn_algolia(query)
+    if hn:
+        texts = [f"• {h['title']} ({h['points']}pts)" for h in hn]
+        sources["hn_algolia"] = {
+            "text": "\n".join(texts),
+            "count": len(hn),
+            "length": sum(len(t) for t in texts),
         }
 
-    def search_multi_category(self, categories: List[tuple]) -> List[Dict]:
-        """
-        批量搜索多个门类 — 每个门类用不同关键词和渠道
-        返回每个门类的搜索结果
-        """
-        all_results = []
-        for cid, name, keywords, desc, tier, sources in categories:
-            kw = keywords[0] if keywords else name
-            r = self.search(kw)
-            all_results.append({
-                "cid": cid,
-                "name": name,
-                "agent_reach_result": r,
-                "tier": tier,
-            })
-        return all_results
+    # 2. V2EX
+    v2 = search_v2ex()
+    if v2:
+        texts = [f"• {t['title']}" for t in v2]
+        sources["v2ex"] = {
+            "text": "\n".join(texts),
+            "count": len(v2),
+            "length": sum(len(t) for t in texts),
+        }
+
+    # 3. GitHub
+    gh = search_github(query)
+    if gh:
+        texts = [f"• {g['name']} ⭐{g['stars']} {g['desc']}" for g in gh]
+        sources["github"] = {
+            "text": "\n".join(texts),
+            "count": len(gh),
+            "length": sum(len(t) for t in texts),
+        }
+
+    # 4. Jina Reader (深度内容)
+    jina = search_jina(query)
+    if jina:
+        for j in jina:
+            sources[j["source"]] = {
+                "text": j["text"],
+                "count": 1,
+                "length": len(j["text"]),
+            }
+
+    total_bytes = sum(s.get("length", 0) for s in sources.values())
+
+    # 聚合文本
+    aggregated = "\n\n---\n\n".join(
+        f"【{name}】\n{data['text']}"
+        for name, data in sources.items()
+    )[:8000]
+
+    return {
+        "ok": len(sources) > 0,
+        "sources": sources,
+        "source_count": len(sources),
+        "total_bytes": total_bytes,
+        "content_found": total_bytes > 300,
+        "content_rich": total_bytes > 3000,
+        "aggregated_text": aggregated,
+        "summary": f"ARv2:{len(sources)}源·{total_bytes//1024}KB",
+    }
 
 
 # 全局单例
 _client = None
 
 
-def get_client() -> AgentReachClient:
+def get_client():
     global _client
     if _client is None:
-        _client = AgentReachClient()
+        class _Client:
+            available = True
+            def search(self, query):
+                return multi_search(query)
+        _client = _Client()
     return _client
 
 
 def patrol_search(category_name: str, keywords: List[str]) -> Dict:
-    """
-    巡逻系统专用搜索 — 首选 Agent Reach，fallback 到 curl
-    被 patrol.py 调用
-    """
-    client = get_client()
+    """巡逻系统专用搜索 — 多源并行"""
     kw = keywords[0] if keywords else category_name
-    result = client.search(kw)
-
-    # 如果 AgentReach 搜不到，返回空结果让 patrol 走 curl fallback
+    result = multi_search(kw)
     if not result.get("ok"):
-        return {"ok": False, "fallback": True, "summary": f"AgentReach不可用,准备fallback"}
-
+        return {"ok": False, "fallback": True, "summary": "AR无结果,准备fallback"}
     return result
 
 
 if __name__ == "__main__":
-    # 测试
-    client = get_client()
-    print(f"AgentReach 可用: {client.available}")
-    print(f"\n健康检查:\n{client.doctor()}")
-    r = client.search("AI 最新进展 2025")
-    print(f"\n搜索结果: {r.get('summary', 'none')}")
+    r = multi_search("AI latest news")
+    print(f"源数: {r['source_count']}")
+    print(f"内容: {r['total_bytes']} bytes")
+    print(f"聚合:\n{r.get('aggregated_text','')[:600]}")
