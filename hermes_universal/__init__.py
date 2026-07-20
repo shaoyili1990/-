@@ -18,7 +18,7 @@ Monkey Harness Agent (弼马温 Agent)
 技术栈: Python + FastAPI + SQLite + d3.js + MCP
 许可证: MIT
 
-版本: 0.1.0
+版本: 0.3.0
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"

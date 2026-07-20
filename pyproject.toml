@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "monkey-harness-agent"
-version = "0.1.0"
+version = "0.3.0"
 description = "🐒 弼马温 Agent — 猴驭多源，AI自治巡逻，多模态智能体系统"
 authors = [
     {name = "Monkey Harness Team"},

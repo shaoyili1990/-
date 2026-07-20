@@ -188,7 +188,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
         except AttributeError:
             return json.dumps({
                 "info": "Monkey Harness Agent (弼马温 Agent)",
-                "version": "0.1.0",
+                "version": "0.3.0",
                 "architecture": "灵猴→质检→骏马→司库→书童→采购",
             }, ensure_ascii=False, indent=2)
 
