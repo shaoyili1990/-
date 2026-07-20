@@ -56,6 +56,13 @@ VALIDATION_CHAINS = [
         "description": "反AI式思维过程验证: 机械推理/空泛套壳",
         "target": "思维过程",
     },
+    {
+        "id": "no_numeric_only",
+        "short_name": "禁止数值解链",
+        "file": "05_禁止数值解验证链.md",
+        "description": "禁止数值评分/二元判断/模板化输出,要求解析解表述",
+        "target": "解析解合规",
+    },
 ]
 
 

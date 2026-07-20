@@ -85,6 +85,18 @@ class Horse:
     def _extract_validation_standards(route: Dict) -> str:
         """从route提取验证标准(正常执行+重试修复指引)"""
         retry = route.get("retry_context")
+        if retry and retry.get("fresh_start"):
+            # 路径B: 新鲜路径 — 从零推理但带上审核失败作为参考
+            parts = ["本次是新鲜路径重推理。之前的审核未通过,请从零开始重新思考。"]
+            failures = retry.get("failures", [])
+            for f in failures:
+                if isinstance(f, dict):
+                    item = f.get("item", "")
+                    reason = f.get("reason", "")
+                    parts.append(f"- 需避免: {item}")
+                    if reason:
+                        parts.append(f"  原因: {reason}")
+            return "\n".join(parts)
         if retry:
             # 重试: 带上验证失败详情
             parts = ["本次是修复重试。请确保修复以下问题:"]

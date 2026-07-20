@@ -111,8 +111,8 @@ class HermesAgent:
 
     def _sync_execute(self, route: Dict, user_input: str,
                       images: Optional[List[str]] = None) -> Dict:
-        """同步执行"""
-        # 骏马执行
+        """同步执行 — 含双路径收敛(多路径推理)"""
+        # ────────── 第一次执行 ──────────
         result = self.horse.execute(route, user_input, images)
 
         # 提取结果文本
@@ -123,36 +123,92 @@ class HermesAgent:
             result_text = str(result)
             final_output = result_text
 
-        # 灵猴审核
+        # ────────── 灵猴审核 ──────────
+        review = self.monkey.review(route["task_id"], final_output, "unit")
 
-        # 如果不通过，尝试一次修复
-        if not review["pass"]:
-            # 从验证结果提取修复指引
-            failures = review.get("failures", review.get("issues", []))
-            fix_msgs = []
-            for f in failures:
-                if isinstance(f, dict):
-                    item = f.get("item", f.get("reason", str(f)))
-                    fix = f.get("fix", "")
-                    fix_msgs.append(f"{item}" + (f" → {fix}" if fix else ""))
-                else:
-                    fix_msgs.append(str(f))
-            instruction = "修复以下问题后重新提交: " + "; ".join(fix_msgs) if fix_msgs else "修复后重新提交"
-
-            negotiate = self.monkey.negotiate(route["task_id"], review)
-            # 携带验证失败详情重新执行
-            retry_ctx = {
-                "previous_review": review.get("verdict", "fail"),
-                "fix_instruction": instruction,
-                "failures": failures,
+        # ────────── 通过→直接返回 ──────────
+        if review["pass"]:
+            self.keeper.transition(route["task_id"], "验证通过")
+            self.scribe.record_chat(route["task_id"], "user", user_input)
+            self.scribe.record_chat(route["task_id"], "assistant", final_output)
+            self.scheduler.task_done()
+            return {
+                "task_id": route["task_id"],
+                "route": route,
+                "result": result,
+                "final_output": final_output,
+                "review": review,
+                "status": "complete",
+                "path": "single",
             }
-            route["retry_context"] = retry_ctx
-            result = self.horse.execute(route, user_input, images)
-            if isinstance(result, dict):
-                final_output = result.get("04-结果", json.dumps(result, ensure_ascii=False))
+
+        # ────────── 不通过→双路径收敛 ──────────
+        failures = review.get("failures", review.get("issues", []))
+        fix_msgs = []
+        for f in failures:
+            if isinstance(f, dict):
+                item = f.get("item", f.get("reason", str(f)))
+                fix = f.get("fix", "")
+                fix_msgs.append(f"{item}" + (f" → {fix}" if fix else ""))
             else:
-                final_output = str(result)
-            review = self.monkey.review(route["task_id"], final_output, "whole")
+                fix_msgs.append(str(f))
+        instruction = "修复以下问题后重新提交: " + "; ".join(fix_msgs) if fix_msgs else "修复后重新提交"
+
+        negotiate = self.monkey.negotiate(route["task_id"], review)
+
+        # ── 路径A: 基于修复指令重试(当前行为) ──
+        route_a = dict(route)
+        retry_ctx_a = {
+            "previous_review": review.get("verdict", "fail"),
+            "fix_instruction": instruction,
+            "failures": failures,
+        }
+        route_a["retry_context"] = retry_ctx_a
+        result_a = self.horse.execute(route_a, user_input, images)
+        output_a = result_a.get("04-结果", json.dumps(result_a, ensure_ascii=False)) if isinstance(result_a, dict) else str(result_a)
+        review_a = self.monkey.review(route["task_id"], output_a, "whole")
+
+        # ── 路径B: 从零重新推理(新鲜路径) ──
+        route_b = dict(route)
+        # 不加 retry_context,让horse完全重新推理
+        # 但传审核失败作为附加上下文让推理方向更有针对性
+        route_b["retry_context"] = {
+            "previous_review": review.get("verdict", "fail"),
+            "fix_instruction": f"上一次审核未通过。请从零开始重新推理,避免上述问题:\n{instruction}",
+            "failures": failures,
+            "fresh_start": True,  # horse 识别这个标记走新鲜路径
+        }
+        result_b = self.horse.execute(route_b, user_input, images)
+        output_b = result_b.get("04-结果", json.dumps(result_b, ensure_ascii=False)) if isinstance(result_b, dict) else str(result_b)
+        review_b = self.monkey.review(route["task_id"], output_b, "whole")
+
+        # ── 双路径收敛: 选择更好的结果 ──
+        if review_a["pass"] and not review_b["pass"]:
+            chosen = "path_a"
+            final_output = output_a
+            review = review_a
+        elif review_b["pass"] and not review_a["pass"]:
+            chosen = "path_b"
+            final_output = output_b
+            review = review_b
+        elif review_a["pass"] and review_b["pass"]:
+            # 都通过 → 选验证更好的(失败项更少)
+            chosen = "path_a"
+            final_output = output_a
+            review = review_a
+            if len(review_b.get("failures", [])) < len(review_a.get("failures", [])):
+                chosen = "path_b"
+                final_output = output_b
+                review = review_b
+        else:
+            # 都未通过 → 选失败更少的
+            chosen = "path_a"
+            final_output = output_a
+            review = review_a
+            if len(review_b.get("failures", [])) < len(review_a.get("failures", [])):
+                chosen = "path_b"
+                final_output = output_b
+                review = review_b
 
         # 司库最终状态
         if review["pass"]:
@@ -164,7 +220,7 @@ class HermesAgent:
         self.scribe.record_chat(route["task_id"], "user", user_input)
         self.scribe.record_chat(route["task_id"], "assistant", final_output)
 
-        # 任务结束 → 重置调度器到待整理
+        # 任务结束
         self.scheduler.task_done()
 
         return {
@@ -174,6 +230,9 @@ class HermesAgent:
             "final_output": final_output,
             "review": review,
             "status": "complete",
+            "path": chosen,
+            "path_a_passed": review_a["pass"],
+            "path_b_passed": review_b["pass"],
         }
 
     def _stream_execute(self, route: Dict, user_input: str,

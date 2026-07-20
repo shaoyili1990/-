@@ -847,7 +847,9 @@ def seed_fingerprints(db: EngineDB, fingerprints_dir: str):
     if not os.path.isdir(fdir):
         return
 
-    conn = db.cognition_conn()
+    # fingerprints表在认知库(hermes.db), subchain_weights在引擎库(rnd_engine.db)
+    cog = db.cognition_conn()
+    eng = db.engine_conn()
     try:
         for fname in sorted(os.listdir(fdir)):
             if not fname.endswith(".json"):
@@ -869,13 +871,13 @@ def seed_fingerprints(db: EngineDB, fingerprints_dir: str):
             domain_id = data.get("domain_id") or base_name
             fp_name = data.get("name", fname)
 
-            # 写入fingerprints表
-            conn.execute(
+            # 写入fingerprints表(认知库)
+            cog.execute(
                 "INSERT OR REPLACE INTO fingerprints (name, domain_id, source, data) VALUES (?, ?, ?, ?)",
                 (fp_name, domain_id, data.get("source", ""), json.dumps(data, ensure_ascii=False))
             )
 
-            # 从usage_by_chain提取子链权重 → subchain_weights表
+            # 从usage_by_chain提取子链权重 → subchain_weights表(引擎库)
             usage = data.get("usage_by_chain", {})
             for chain_short_name, chain_data in usage.items():
                 weight = chain_data.get("weight", 0.0)
@@ -885,11 +887,13 @@ def seed_fingerprints(db: EngineDB, fingerprints_dir: str):
                     # 统一脑名称: "推导链" → "推导法"
                     brain_norm = brain.replace("推导链", "推导法")
                     chain_type = f"{domain_id}:{brain_norm}"
-                    conn.execute(
+                    eng.execute(
                         "INSERT OR REPLACE INTO subchain_weights (chain_type, subchain_name, weight, tier) VALUES (?, ?, ?, ?)",
                         (chain_type, chain_short_name, weight, tier)
                     )
 
-        conn.commit()
+        cog.commit()
+        eng.commit()
     finally:
-        conn.close()
+        cog.close()
+        eng.close()
