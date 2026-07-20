@@ -14,7 +14,7 @@ class TestCLI:
     def test_version(self):
         """版本号应正确"""
         from hermes_universal import __version__
-        assert __version__ == "0.1.0"
+        assert __version__ == "0.3.0"
         print(f"✅ 版本: {__version__}")
 
     def test_cli_help(self):
