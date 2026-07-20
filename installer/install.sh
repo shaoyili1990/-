@@ -5,7 +5,7 @@
 
 set -euo pipefail
 
-HERMES_VERSION="0.1.0"
+HERMES_VERSION="0.3.0"
 HERMES_PKG="hermes-agent-universal"
 
 echo "================================================"

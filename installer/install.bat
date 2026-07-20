@@ -2,7 +2,7 @@
 REM Hermes Agent Universal - Windows 安装脚本
 REM 用法: 以管理员身份运行 install.bat
 
-set HERMES_VERSION=0.1.0
+set HERMES_VERSION=0.3.0
 
 echo ================================================
 echo  Hermes Agent Universal v%HERMES_VERSION% 安装程序

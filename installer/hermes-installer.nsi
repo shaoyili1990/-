@@ -4,7 +4,7 @@
 
 !define APP_NAME "Hermes Agent"
 !define APP_EXE "hermes-agent.exe"
-!define APP_VERSION "0.1.0"
+!define APP_VERSION "0.3.0"
 !define APP_PUBLISHER "Hermes Agent Team"
 !define APP_URL "https://github.com/shaoyili1990/-"
 
