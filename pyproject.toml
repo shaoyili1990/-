@@ -23,7 +23,6 @@ dependencies = [
     "python-multipart>=0.0.5",
     "pillow>=10.0",
     "mcp>=1.0",
-    "agent-reach>=1.0",
 ]
 
 [project.optional-dependencies]
