@@ -1,6 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
 """
-Hermes Agent Universal - PyInstaller Spec
+Monkey Harness Agent - PyInstaller Spec
 单 spec 文件驱动 Linux/macOS/Windows 三平台
 """
 import os
@@ -23,7 +23,7 @@ ASSETS = {
 SYSTEM = platform.system()
 
 a = Analysis(
-    ['hermes_universal/__main__.py'],
+    ['harness_core/__main__.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -33,8 +33,8 @@ a = Analysis(
         (ASSETS["store"], "store"),
         (ASSETS["config.yaml"], "."),
         (ASSETS["SKILL.md"], "."),
-        (os.path.join(PROJECT_DIR, "hermes_universal", "desktop", "templates"),
-         "hermes_universal/desktop/templates"),
+        (os.path.join(PROJECT_DIR, "harness_core", "desktop", "templates"),
+         "harness_core/desktop/templates"),
     ],
     hiddenimports=[
         "uvicorn", "fastapi", "jinja2", "yaml",
@@ -62,7 +62,7 @@ pyz = PYZ(a.pure)
 # 通用 EXE（不嵌入图标，避免跨平台图标格式问题）
 exe = EXE(
     pyz, a.scripts, a.binaries, a.datas, [],
-    name='hermes-agent',
+    name='monkey-harness-agent',
     debug=False, bootloader_ignore_signals=False,
     strip=False, upx=True, upx_exclude=[],
     runtime_tmpdir=None, console=True,
@@ -75,6 +75,6 @@ exe = EXE(
 if SYSTEM == "Darwin":
     app = BUNDLE(
         exe, a.binaries, a.datas, [],
-        name='hermes-agent.app',
-        icon=None, bundle_identifier='io.hermes.agent',
+        name='monkey-harness-agent.app',
+        icon=None, bundle_identifier='io.monkey-harness.agent',
     )

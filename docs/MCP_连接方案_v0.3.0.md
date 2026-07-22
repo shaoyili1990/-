@@ -15,7 +15,7 @@
   "mcpServers": {
     "bimawen-agent": {
       "command": "python3",
-      "args": ["-m", "hermes_universal.mcp_server"]
+      "args": ["-m", "harness_core.mcp_server"]
     }
   }
 }
@@ -24,13 +24,13 @@
 ### 方式 2：Claude Code
 
 ```bash
-claude mcp add bimawen-agent -- python3 -m hermes_universal.mcp_server
+claude mcp add bimawen-agent -- python3 -m harness_core.mcp_server
 ```
 
 ### 方式 3：HTTP 模式 (OpenClaw/Cursor)
 
 ```bash
-python3 -m hermes_universal.mcp_server --transport http --port 8000
+python3 -m harness_core.mcp_server --transport http --port 8000
 ```
 
 ---
@@ -129,5 +129,5 @@ python3 -m hermes_universal.mcp_server --transport http --port 8000
 | `ModuleNotFoundError: No module named 'mcp'` | 缺 FastMCP SDK | `pip install mcp` |
 | 巡逻返回空 | 无卡服务器未提供联网 | 检查 autodl 实例 |
 | `workspace_init` 失败 | 输出目录权限 | 手动 `mkdir -p ~/workspace/output` |
-| 指纹未加载 | 数据库未 seed | 手动 `python3 -c "from hermes_universal.engine import EngineDB, seed_fingerprints; seed_fingerprints(EngineDB(), 'fingerprints')"` |
+| 指纹未加载 | 数据库未 seed | 手动 `python3 -c "from harness_core.engine import EngineDB, seed_fingerprints; seed_fingerprints(EngineDB(), 'fingerprints')"` |
 | 工具调用超时 | MCP stdio 超时 | HTTP 模式: `--transport http --port 8000` |

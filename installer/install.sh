@@ -1,15 +1,15 @@
 #!/usr/bin/env bash
-# Hermes Agent Universal - Linux/macOS 安装脚本
-# 用法: curl -fsSL https://hermes-agent.dev/install.sh | bash
+# Monkey Harness Agent Universal - Linux/macOS 安装脚本
+# 用法: curl -fsSL https://monkey-harness-agent.dev/install.sh | bash
 #       或: chmod +x install.sh && ./install.sh
 
 set -euo pipefail
 
-HERMES_VERSION="0.3.0"
-HERMES_PKG="hermes-agent-universal"
+MONKEY_VERSION="0.3.0"
+MONKEY_PKG="monkey-harness-agent-universal"
 
 echo "================================================"
-echo " Hermes Agent Universal v${HERMES_VERSION} 安装程序"
+echo " Monkey Harness Agent Universal v${MONKEY_VERSION} 安装程序"
 echo " 支持: Linux / macOS / WSL"
 echo "================================================"
 echo ""
@@ -75,17 +75,17 @@ case "$OS" in
         ;;
 esac
 
-# 安装 Hermes Agent
+# 安装 Monkey Harness Agent
 echo ""
-echo "[2/3] 安装 Hermes Agent Universal..."
+echo "[2/3] 安装 Monkey Harness Agent Universal..."
 $PYTHON -m pip install --upgrade pip
-$PYTHON -m pip install $HERMES_PKG 2>/dev/null || {
+$PYTHON -m pip install $MONKEY_PKG 2>/dev/null || {
     echo "  pip安装失败，尝试从源码安装..."
     if [ -f "setup.py" ] || [ -f "pyproject.toml" ]; then
         $PYTHON -m pip install .
     else
         echo "  [错误] 请先下载源码或检查网络连接"
-        echo "  手动安装: pip install $HERMES_PKG"
+        echo "  手动安装: pip install $MONKEY_PKG"
         exit 1
     fi
 }
@@ -93,11 +93,11 @@ $PYTHON -m pip install $HERMES_PKG 2>/dev/null || {
 # 验证安装
 echo ""
 echo "[3/3] 验证安装..."
-if command -v hermes &>/dev/null; then
-    echo "  $(hermes --version 2>/dev/null || echo 'hermes CLI installed')"
+if command -v monkey-harness &>/dev/null || command -v hermes &>/dev/null; then
+    echo "  $(monkey-harness --version 2>/dev/null || echo 'monkey-harness CLI installed')"
 else
     echo "  请确保 ~/.local/bin 在 PATH 中"
-    echo "  或运行: $PYTHON -m hermes_universal"
+    echo "  或运行: $PYTHON -m harness_core"
 fi
 
 # 配置指引
@@ -107,9 +107,9 @@ echo " 安装完成!"
 echo "================================================"
 echo ""
 echo "快速开始:"
-echo "  hermes run \"你好\"                          # 简单对话"
-echo "  hermes chat                                 # 交互模式"
-echo "  hermes desktop                              # 桌面Web UI"
+echo "  monkey-harness run \"你好\"                          # 简单对话"
+echo "  monkey-harness chat                                 # 交互模式"
+echo "  monkey-harness desktop                              # 桌面Web UI"
 echo ""
 echo "配置API Key (任选一种):"
 echo "  export OPENAI_API_KEY=sk-xxx                # OpenAI"
@@ -117,9 +117,9 @@ echo "  export DEEPSEEK_API_KEY=sk-xxx              # DeepSeek"
 echo "  export ANTHROPIC_API_KEY=sk-ant-xxx         # Claude"
 echo ""
 echo "混搭模式示例:"
-echo "  export HERMES_MONKEY_PROVIDER=openai"
-echo "  export HERMES_HORSE_PROVIDER=deepseek"
-echo "  hermes chat"
+echo "  export MONKEY_MONKEY_PROVIDER=openai"
+echo "  export MONKEY_HORSE_PROVIDER=deepseek"
+echo "  monkey-harness chat"
 echo ""
-echo "详细文档: https://github.com/hermes-agent/universal"
+echo "详细文档: https://github.com/monkey-harness-agent/universal"
 echo "================================================"

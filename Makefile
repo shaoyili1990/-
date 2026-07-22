@@ -6,7 +6,7 @@
         pip-build pip-publish release
 
 APP_NAME     := monkey-harness-agent
-VERSION      := $(shell python3 -c "import hermes_universal; print(hermes_universal.__version__)" 2>/dev/null || echo "0.3.0")
+VERSION      := $(shell python3 -c "import harness_core; print(harness_core.__version__)" 2>/dev/null || echo "0.3.0")
 
 # ========== 构建入口 ==========
 
@@ -15,7 +15,7 @@ all: pip-build build-linux build-linux-deb
 # ========== Linux 构建 ==========
 
 build-linux:
-	pyinstaller --clean hermes-agent.spec
+	pyinstaller --clean monkey-harness-agent.spec
 	@echo "✅ Linux binary: dist/$(APP_NAME)"
 	@ls -lh dist/$(APP_NAME)
 
@@ -25,8 +25,8 @@ build-linux-appimage: build-linux
 		mkdir -p dist/AppDir/usr/share/applications && \
 		mkdir -p dist/AppDir/usr/share/icons/hicolor/scalable/apps && \
 		cp dist/$(APP_NAME) dist/AppDir/usr/bin/ && \
-		cp installer/hermes-agent.desktop dist/AppDir/usr/share/applications/ && \
-		cp installer/hermes.svg dist/AppDir/usr/share/icons/hicolor/scalable/apps/ && \
+		cp installer/monkey-harness-agent.desktop dist/AppDir/usr/share/applications/ && \
+		cp installer/monkey-harness.svg dist/AppDir/usr/share/icons/hicolor/scalable/apps/ && \
 		appimagetool dist/AppDir dist/$(APP_NAME)-$(VERSION)-x86_64.AppImage && \
 		echo "✅ AppImage: dist/$(APP_NAME)-$(VERSION)-x86_64.AppImage"; } || \
 		echo "⚠️ appimagetool 未安装，跳过 AppImage"
@@ -38,9 +38,9 @@ build-linux-deb: build-linux
 	mkdir -p dist/$(APP_NAME)_$(VERSION)_amd64/usr/share/metainfo
 	mkdir -p dist/$(APP_NAME)_$(VERSION)_amd64/DEBIAN
 	cp dist/$(APP_NAME) dist/$(APP_NAME)_$(VERSION)_amd64/usr/bin/
-	cp installer/hermes-agent.desktop dist/$(APP_NAME)_$(VERSION)_amd64/usr/share/applications/
-	cp installer/hermes.svg dist/$(APP_NAME)_$(VERSION)_amd64/usr/share/icons/hicolor/scalable/apps/hermes-agent.svg
-	cp installer/hermes-appstream.xml dist/$(APP_NAME)_$(VERSION)_amd64/usr/share/metainfo/io.hermes.agent.metainfo.xml
+	cp installer/monkey-harness-agent.desktop dist/$(APP_NAME)_$(VERSION)_amd64/usr/share/applications/
+	cp installer/monkey-harness.svg dist/$(APP_NAME)_$(VERSION)_amd64/usr/share/icons/hicolor/scalable/apps/monkey-harness-agent.svg
+	cp installer/monkey-harness-appstream.xml dist/$(APP_NAME)_$(VERSION)_amd64/usr/share/metainfo/io.monkey-harness.agent.metainfo.xml
 	printf "Package: %s\nVersion: %s\nSection: utils\nPriority: optional\nArchitecture: amd64\nMaintainer: Hermes Agent Team\nHomepage: https://github.com/shaoyili1990/-\nDescription: Hermes Agent Universal - Universal Portable AI Agent\n Monkey-Horse architecture with 4 roles and 136 reasoning chains\n" \
 		$(APP_NAME) $(VERSION) > dist/$(APP_NAME)_$(VERSION)_amd64/DEBIAN/control
 	dpkg-deb --build dist/$(APP_NAME)_$(VERSION)_amd64
@@ -54,12 +54,12 @@ build-linux-rpm:
 # ========== macOS 构建（需 macOS runner）==========
 
 build-macos:
-	pyinstaller --clean hermes-agent.spec
+	pyinstaller --clean monkey-harness-agent.spec
 	@echo "✅ macOS .app: dist/$(APP_NAME).app"
 
 build-macos-dmg: build-macos
 	@which create-dmg 2>/dev/null && { \
-		create-dmg --volname "Hermes Agent $(VERSION)" \
+		create-dmg --volname "Monkey Harness Agent $(VERSION)" \
 			--window-pos 200 120 --window-size 600 400 \
 			--icon-size 100 --app-drop-link 400 200 \
 			dist/$(APP_NAME)-$(VERSION)-macos-x86_64.dmg \
@@ -68,40 +68,40 @@ build-macos-dmg: build-macos
 		echo "⚠️ create-dmg 未安装，使用 hdiutil 替代"
 	@which hdiutil 2>/dev/null && { \
 		hdiutil create -srcfolder dist/$(APP_NAME).app \
-			-volname "Hermes Agent $(VERSION)" \
+			-volname "Monkey Harness Agent $(VERSION)" \
 			dist/$(APP_NAME)-$(VERSION)-macos-x86_64.dmg && \
 		echo "✅ DMG: dist/$(APP_NAME)-$(VERSION)-macos-x86_64.dmg"; } || true
 
 # ========== Windows 构建（需 Windows runner）==========
 
 build-windows:
-	pyinstaller --clean hermes-agent.spec
+	pyinstaller --clean monkey-harness-agent.spec
 	@echo "✅ Windows exe: dist/$(APP_NAME).exe"
 
 build-windows-installer: build-windows
 	@which makensis 2>/dev/null && { \
-		cd installer && makensis hermes-installer.nsi && \
+		cd installer && makensis monkey-harness-installer.nsi && \
 		echo "✅ Windows Installer: dist/$(APP_NAME)-Setup-$(VERSION).exe"; } || \
 		echo "⚠️ NSIS (makensis) 未安装，跳过安装包"
 
 # ========== Docker ==========
 
 docker-build:
-	docker build -t hermes-agent:$(VERSION) -t hermes-agent:latest .
+	docker build -t monkey-harness-agent:$(VERSION) -t monkey-harness-agent:latest .
 
 docker-push: docker-build
 	@echo "推送到 DockerHub:"
-	@docker tag hermes-agent:latest shaoyili/hermes-agent:latest
-	@docker tag hermes-agent:$(VERSION) shaoyili/hermes-agent:$(VERSION)
-	@docker push shaoyili/hermes-agent:latest
-	@docker push shaoyili/hermes-agent:$(VERSION)
-	@echo "✅ 已推送: shaoyili/hermes-agent"
+	@docker tag monkey-harness-agent:latest shaoyili/monkey-harness-agent:latest
+	@docker tag monkey-harness-agent:$(VERSION) shaoyili/monkey-harness-agent:$(VERSION)
+	@docker push shaoyili/monkey-harness-agent:latest
+	@docker push shaoyili/monkey-harness-agent:$(VERSION)
+	@echo "✅ 已推送: shaoyili/monkey-harness-agent"
 
 docker-run:
 	docker run --rm -p 8080:8080 \
 		-e OPENAI_API_KEY=$(OPENAI_API_KEY) \
-		-e HERMES_HORSE_KEY=$(DEEPSEEK_API_KEY) \
-		hermes-agent:latest
+		-e MONKEY_HORSE_KEY=$(DEEPSEEK_API_KEY) \
+		monkey-harness-agent:latest
 
 docker: docker-build
 
@@ -122,30 +122,30 @@ pip-publish: pip-build
 
 check:
 	@echo "=== 项目完整性检查 ==="
-	@test -d hermes_universal && echo "✅ hermes_universal/" || echo "❌ hermes_universal/"
+	@test -d harness_core && echo "✅ harness_core/" || echo "❌ hermes_universal/"
 	@test -d fingerprints && echo "✅ fingerprints/ ($$(ls fingerprints/*.json | wc -l) files)" || echo "❌ fingerprints/"
 	@test -d subchains && echo "✅ subchains/ ($$(ls subchains/*.md | wc -l) files)" || echo "❌ subchains/"
 	@test -d validations && echo "✅ validations/ ($$(ls validations/*.md | wc -l) files)" || echo "❌ validations/"
-	@test -f store/hermes.db && echo "✅ store/hermes.db" || echo "⚠️ store/hermes.db missing"
+	@test -f store/harness.db && echo "✅ store/harness.db" || echo "⚠️ store/harness.db missing"
 	@test -f store/rnd_engine.db && echo "✅ store/rnd_engine.db" || echo "⚠️ store/rnd_engine.db missing"
 	@test -f config.yaml && echo "✅ config.yaml" || echo "❌ config.yaml"
-	@test -f installer/hermes.ico && echo "✅ installer/hermes.ico (Windows icon)" || echo "⚠️ Windows icon"
-	@test -f installer/hermes.svg && echo "✅ installer/hermes.svg (Linux icon)" || echo "❌ Linux icon"
-	@test -f installer/hermes-installer.nsi && echo "✅ installer/hermes-installer.nsi (NSIS script)" || echo "⚠️ NSIS script"
-	@test -f installer/hermes-agent.desktop && echo "✅ installer/hermes-agent.desktop" || echo "❌ .desktop"
-	@test -f installer/hermes-appstream.xml && echo "✅ installer/hermes-appstream.xml" || echo "❌ AppStream"
+	@test -f installer/monkey-harness.ico && echo "✅ installer/monkey-harness.ico (Windows icon)" || echo "⚠️ Windows icon"
+	@test -f installer/monkey-harness.svg && echo "✅ installer/monkey-harness.svg (Linux icon)" || echo "❌ Linux icon"
+	@test -f installer/monkey-harness-installer.nsi && echo "✅ installer/monkey-harness-installer.nsi (NSIS script)" || echo "⚠️ NSIS script"
+	@test -f installer/monkey-harness-agent.desktop && echo "✅ installer/monkey-harness-agent.desktop" || echo "❌ .desktop"
+	@test -f installer/monkey-harness-appstream.xml && echo "✅ installer/monkey-harness-appstream.xml" || echo "❌ AppStream"
 	@test -f .github/workflows/release.yml && echo "✅ .github/workflows/release.yml (CI/CD)" || echo "❌ CI/CD"
-	@test -f hermes-agent.spec && echo "✅ hermes-agent.spec (PyInstaller)" || echo "❌ PyInstaller spec"
+	@test -f monkey-harness-agent.spec && echo "✅ monkey-harness-agent.spec (PyInstaller)" || echo "❌ PyInstaller spec"
 	@test -f Dockerfile && echo "✅ Dockerfile" || echo "❌ Dockerfile"
 	@test -f Makefile && echo "✅ Makefile" || echo "❌ Makefile"
 	@echo ""
 	@echo "=== Python 导入测试 ==="
-	@python3 -c "import hermes_universal; print(f'✅ hermes_universal v{hermes_universal.__version__}')" 2>&1 || echo "❌ import failed"
-	@python3 -c "from hermes_universal.config import load_config; print('✅ config')" 2>&1 || echo "❌ config"
-	@python3 -c "from hermes_universal.engine import EngineDB; print('✅ engine')" 2>&1 || echo "❌ engine"
-	@python3 -c "from hermes_universal.core.monkey import Monkey; print('✅ monkey')" 2>&1 || echo "❌ monkey"
-	@python3 -c "from hermes_universal.core.horse import Horse; print('✅ horse')" 2>&1 || echo "❌ horse"
-	@python3 -c "from hermes_universal.core.verifier import Verifier; print('✅ verifier')" 2>&1 || echo "❌ verifier"
+	@python3 -c "import harness_core; print(f'✅ harness_core v{harness_core.__version__}')" 2>&1 || echo "❌ import failed"
+	@python3 -c "from harness_core.config import load_config; print('✅ config')" 2>&1 || echo "❌ config"
+	@python3 -c "from harness_core.engine import EngineDB; print('✅ engine')" 2>&1 || echo "❌ engine"
+	@python3 -c "from harness_core.core.monkey import Monkey; print('✅ monkey')" 2>&1 || echo "❌ monkey"
+	@python3 -c "from harness_core.core.horse import Horse; print('✅ horse')" 2>&1 || echo "❌ horse"
+	@python3 -c "from harness_core.core.verifier import Verifier; print('✅ verifier')" 2>&1 || echo "❌ verifier"
 	@echo "=== Done ==="
 
 test: check

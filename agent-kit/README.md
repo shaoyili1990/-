@@ -9,7 +9,7 @@ agent-kit/
 ├── SKILL.md              # 核心系统提示词（纯文本，无需代码）
 ├── manifest.json         # Agent平台兼容性清单
 ├── config/
-│   ├── monkey-harness.json       # Hermes平台配置
+│   ├── monkey-harness.json       # Monkey Harness平台配置
 │   ├── openclaw.json     # OpenClaw平台配置
 │   └── universal.json    # 通用配置
 ├── fingerprints/         # 领域指纹（11个JSON）

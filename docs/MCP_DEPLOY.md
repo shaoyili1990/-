@@ -179,8 +179,8 @@ connections:
 pip install monkey-harness-agent
 
 # 2. 配置 API Key（可选）
-export HERMES_MONKEY_KEY=sk-xxx
-export HERMES_HORSE_KEY=sk-xxx
+export MONKEY_KEY=sk-xxx
+export MONKEY_HORSE_KEY=sk-xxx
 
 # 3. 启动 HTTP 服务
 monkey-harness-mcp --transport http --host 0.0.0.0 --port 8000
@@ -200,8 +200,8 @@ Type=simple
 User=monkey-harness
 ExecStart=/usr/local/bin/monkey-harness-mcp --transport http --host 0.0.0.0 --port 8000
 Restart=always
-Environment=HERMES_MONKEY_KEY=sk-xxx
-Environment=HERMES_HORSE_KEY=sk-xxx
+Environment=MONKEY_KEY=sk-xxx
+Environment=MONKEY_HORSE_KEY=sk-xxx
 
 [Install]
 WantedBy=multi-user.target
@@ -214,7 +214,7 @@ WantedBy=multi-user.target
 如果之前安装了旧版，迁移方式：
 
 ```bash
-pip uninstall hermes-agent-universal
+pip uninstall monkey-harness-agent-universal
 pip install monkey-harness-agent
 
 # CLI 兼容：旧命令仍可用（通过别名）

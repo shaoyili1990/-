@@ -13,13 +13,13 @@ class TestCLI:
 
     def test_version(self):
         """版本号应正确"""
-        from hermes_universal import __version__
+        from harness_core import __version__
         assert __version__ == "0.3.0"
         print(f"✅ 版本: {__version__}")
 
     def test_cli_help(self):
         """CLI 应提供帮助"""
-        from hermes_universal.cli import main
+        from harness_core.cli import main
         # 直接测试命令行参数解析
         import argparse
         parser = argparse.ArgumentParser()
@@ -34,7 +34,7 @@ class TestCLI:
 
     def test_config_load(self):
         """配置应能加载"""
-        from hermes_universal.config import load_config
+        from harness_core.config import load_config
         config = load_config()
         assert config is not None
         config_dict = config.to_dict()
@@ -49,7 +49,7 @@ class TestMCP:
     def test_mcp_server_module_imports(self):
         """MCP 服务器模块应能导入"""
         try:
-            from hermes_universal.mcp_server import create_mcp
+            from harness_core.mcp_server import create_mcp
             assert callable(create_mcp)
             print(f"✅ MCP 模块导入成功")
         except ImportError as e:
@@ -70,7 +70,7 @@ class TestAileran:
 
     def test_aileran_default_is_bool(self):
         """冷监督状态应为布尔值"""
-        from hermes_universal.engine import EngineDB
+        from harness_core.engine import EngineDB
         db = EngineDB()
         val = db.get_aileran_mode()
         assert isinstance(val, bool)
@@ -78,7 +78,7 @@ class TestAileran:
 
     def test_aileran_toggle_on(self):
         """开启后应允许自治循环"""
-        from hermes_universal.engine import EngineDB
+        from harness_core.engine import EngineDB
         db = EngineDB()
         db.set_aileran_mode(True)
         assert db.get_aileran_mode() is True
@@ -86,7 +86,7 @@ class TestAileran:
 
     def test_aileran_toggle_off(self):
         """关闭后冻结自治循环"""
-        from hermes_universal.engine import EngineDB
+        from harness_core.engine import EngineDB
         db = EngineDB()
         db.set_aileran_mode(False)
         assert db.get_aileran_mode() is False
@@ -94,8 +94,8 @@ class TestAileran:
 
     def test_aileran_freeze_scheduler(self):
         """关闭冷监督时, scheduler.tick() 不应推进自治状态"""
-        from hermes_universal.engine import EngineDB
-        from hermes_universal.core.scheduler import IdleScheduler
+        from harness_core.engine import EngineDB
+        from harness_core.core.scheduler import IdleScheduler
         db = EngineDB()
         db.set_aileran_mode(False)
         scheduler = IdleScheduler(db=db)
@@ -107,7 +107,7 @@ class TestAileran:
 
     def test_aileran_isolation(self):
         """多次开关不影响其他preferences"""
-        from hermes_universal.engine import EngineDB
+        from harness_core.engine import EngineDB
         db = EngineDB()
         db.set_aileran_mode(True)
         mode1 = db.get_aileran_mode()
@@ -120,8 +120,8 @@ class TestAileran:
 
     def test_aileran_agent_checks(self):
         """Agent 应能读取冷监督状态"""
-        from hermes_universal.agent import HermesAgent
-        agent = HermesAgent()
+        from harness_core.agent import HarnessAgent
+        agent = HarnessAgent()
         aileran = agent._is_aileran_mode()
         assert aileran is True or aileran is False
         print(f"✅ Agent 冷监督读取: {aileran}")

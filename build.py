@@ -32,7 +32,7 @@ def build(version: str = "0.0.0"):
     )
 
     # 入口
-    entry = PROJECT_ROOT / "hermes_universal" / "__main__.py"
+    entry = PROJECT_ROOT / "harness_core" / "__main__.py"
 
     pyinstaller_args = [
         "pyinstaller",
@@ -42,14 +42,14 @@ def build(version: str = "0.0.0"):
         "--workpath", str(PROJECT_ROOT / "build" / "pyi"),
         "--specpath", str(PROJECT_ROOT / "build"),
         "--console",                   # 控制台窗口（调试用，可改为 --windowed）
-        "--add-data", f"{PROJECT_ROOT / 'hermes_universal' / 'desktop' / 'templates'}{os.pathsep}templates",
-        "--add-data", f"{PROJECT_ROOT / 'hermes_universal' / 'desktop' / 'static'}{os.pathsep}static",
-        "--hidden-import", "hermes_universal",
-        "--hidden-import", "hermes_universal.engine",
-        "--hidden-import", "hermes_universal.core.patrol",
-        "--hidden-import", "hermes_universal.tools.agent_reach",
+        "--add-data", f"{PROJECT_ROOT / 'harness_core' / 'desktop' / 'templates'}{os.pathsep}templates",
+        "--add-data", f"{PROJECT_ROOT / 'harness_core' / 'desktop' / 'static'}{os.pathsep}static",
+        "--hidden-import", "harness_core",
+        "--hidden-import", "harness_core.engine",
+        "--hidden-import", "harness_core.core.patrol",
+        "--hidden-import", "harness_core.tools.agent_reach",
         "--hidden-import", "agent_reach",
-        "--collect-all", "hermes_universal",
+        "--collect-all", "harness_core",
         str(entry),
     ]
 

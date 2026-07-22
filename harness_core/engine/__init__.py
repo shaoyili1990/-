@@ -117,7 +117,7 @@ CREATE TABLE IF NOT EXISTS rnd_dependencies (
     deploy_cmd TEXT DEFAULT ''
 );
 
--- ========== 认知数据库 (hermes.db) ==========
+-- ========== 认知数据库 (harness.db) ==========
 
 -- 环境配置
 CREATE TABLE IF NOT EXISTS env_config (
@@ -353,7 +353,7 @@ class EngineDB:
             if not self.engine_path:
                 self.engine_path = str(Path(__file__).parent.parent.parent / "store" / "rnd_engine.db")
             if not self.cognition_path:
-                self.cognition_path = str(Path(__file__).parent.parent.parent / "store" / "hermes.db")
+                self.cognition_path = str(Path(__file__).parent.parent.parent / "store" / "harness.db")
         self._ensure_store()
         self._init_engine()
         self._init_cognition()
@@ -847,7 +847,7 @@ def seed_fingerprints(db: EngineDB, fingerprints_dir: str):
     if not os.path.isdir(fdir):
         return
 
-    # fingerprints表在认知库(hermes.db), subchain_weights在引擎库(rnd_engine.db)
+    # fingerprints表在认知库(harness.db), subchain_weights在引擎库(rnd_engine.db)
     cog = db.cognition_conn()
     eng = db.engine_conn()
     try:

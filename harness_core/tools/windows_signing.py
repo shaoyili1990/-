@@ -5,7 +5,7 @@ Windows 数字签名配置 — MCP 工具模块
 记录当前最优方案（SignPath Foundation 免费开源签名）的完整信息。
 
 使用方式:
-    from hermes_universal.tools import windows_signing
+    from harness_core.tools import windows_signing
     info = windows_signing.get_config()
 """
 

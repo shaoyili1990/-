@@ -43,7 +43,7 @@ def build_windows():
         sys.executable, "-m", "PyInstaller",
         "--name", "monkey-harness-agent",
         "--onefile",
-        "--add-data", f"{PROJECT_DIR / 'hermes_universal'}{os.pathsep}hermes_universal",
+        "--add-data", f"{PROJECT_DIR / 'harness_core'}{os.pathsep}harness_core",
         "--add-data", f"{PROJECT_DIR / 'fingerprints'}{os.pathsep}fingerprints",
         "--add-data", f"{PROJECT_DIR / 'subchains'}{os.pathsep}subchains",
         "--add-data", f"{PROJECT_DIR / 'config.yaml'}{os.pathsep}.",
@@ -53,7 +53,7 @@ def build_windows():
         "--hidden-import", "yaml",
         "--distpath", str(DIST_DIR),
         "--workpath", str(BUILD_DIR),
-        str(PROJECT_DIR / "hermes_universal" / "__main__.py"),
+        str(PROJECT_DIR / "harness_core" / "__main__.py"),
     ]
     if icon_path:
         cmd.extend(["--icon", icon_path])
@@ -71,7 +71,7 @@ def build_linux():
         sys.executable, "-m", "PyInstaller",
         "--name", "monkey-harness-agent",
         "--onefile",
-        "--add-data", f"{PROJECT_DIR / 'hermes_universal'}{os.pathsep}hermes_universal",
+        "--add-data", f"{PROJECT_DIR / 'harness_core'}{os.pathsep}harness_core",
         "--add-data", f"{PROJECT_DIR / 'fingerprints'}{os.pathsep}fingerprints",
         "--add-data", f"{PROJECT_DIR / 'subchains'}{os.pathsep}subchains",
         "--add-data", f"{PROJECT_DIR / 'config.yaml'}{os.pathsep}.",
@@ -81,13 +81,13 @@ def build_linux():
         "--hidden-import", "yaml",
         "--distpath", str(DIST_DIR),
         "--workpath", str(BUILD_DIR),
-        str(PROJECT_DIR / "hermes_universal" / "__main__.py"),
+        str(PROJECT_DIR / "harness_core" / "__main__.py"),
     ]
 
     subprocess.check_call(cmd)
 
     # Optional: Create AppImage
-    binary_path = DIST_DIR / "hermes-agent"
+    binary_path = DIST_DIR / "monkey-harness-agent"
     if binary_path.exists():
         print(f"Linux build complete: {binary_path}")
         print("Tip: Use `appimagetool` to create an AppImage for distribution")
@@ -117,7 +117,7 @@ RequestExecutionLevel admin
 
 Section "Install"
   SetOutPath "$INSTDIR"
-  File /r "{DIST_DIR}\\hermes-agent\\*.*"
+  File /r "{DIST_DIR}\\monkey-harness-agent\\*.*"
   File "{PROJECT_DIR}\\SKILL.md"
   File "{PROJECT_DIR}\\config.yaml"
 
@@ -176,7 +176,7 @@ Categories=Utility;Development;
 """
     (appdir / "monkey-harness-agent.desktop").write_text(desktop_entry, encoding="utf-8")
     (appdir / "usr" / "share" / "applications").mkdir(parents=True, exist_ok=True)
-    shutil.copy2(appdir / "monkey-harness-agent.desktop", appdir / "usr" / "share" / "applications" / "hermes-agent.desktop")
+    shutil.copy2(appdir / "monkey-harness-agent.desktop", appdir / "usr" / "share" / "applications" / "monkey-harness-agent.desktop")
 
     print(f"AppImage structure created at: {appdir}")
     print("Run `appimagetool` to create the final AppImage:")
@@ -217,14 +217,14 @@ monkey-harness --version
 echo ""
 echo "=== 安装完成! ==="
 echo "使用方法:"
-echo "  hermes run \"你的问题\"    # 单次对话"
+echo "  monkey-harness run \"你的问题\"    # 单次对话"
 echo "  monkey-harness chat               # 交互模式"
 echo "  monkey-harness desktop             # 桌面Web UI (需要安装Termux:X11)"
 echo ""
 echo "配置API Key:"
 echo "  export OPENAI_API_KEY=sk-xxx"
 echo "  export DEEPSEEK_API_KEY=sk-xxx"
-echo "  hermes run \"Hello\""
+echo "  monkey-harness run \"Hello\""
 """
     termux_script.write_text(termux_content, encoding="utf-8")
     os.chmod(termux_script, 0o755)

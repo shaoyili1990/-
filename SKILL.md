@@ -2,7 +2,7 @@
 
 > 版本: 0.1.0 | 协议: MIT
 > 此技能可在任何AI平台(Claude/ChatGPT/DeepSeek等)独立使用
-> 安装版: `pip install hermes-agent-universal` | 桌面版: `hermes desktop`
+> 安装版: `pip install monkey-harness-agent` | 桌面版: `monkey-harness desktop`
 
 ---
 
@@ -173,26 +173,26 @@
 
 ### 模式2：CLI模式
 ```bash
-pip install hermes-agent-universal
-hermes run "问题"                    # 单次对话
-hermes chat                          # 交互模式
-hermes desktop                       # 桌面版Web UI
+pip install monkey-harness-agent
+monkey-harness run "问题"                    # 单次对话
+monkey-harness chat                          # 交互模式
+monkey-harness desktop                       # 桌面版Web UI
 ```
 
 ### 模式3：Docker模式
 ```bash
-docker build -t hermes-agent .
-docker run -p 8080:8080 hermes-agent
+docker build -t monkey-harness-agent .
+docker run -p 8080:8080 monkey-harness-agent
 ```
 
 ### 模式4：混搭配置
 Monkey和Horse可使用不同AI厂商，通过环境变量配置:
 ```bash
-export HERMES_MONKEY_PROVIDER=openai
-export HERMES_MONKEY_KEY=sk-xxx
-export HERMES_HORSE_PROVIDER=deepseek
-export HERMES_HORSE_KEY=sk-yyy
-hermes desktop
+export MONKEY_MONKEY_PROVIDER=openai
+export MONKEY_KEY=sk-xxx
+export MONKEY_HORSE_PROVIDER=deepseek
+export MONKEY_HORSE_KEY=sk-yyy
+monkey-harness desktop
 ```
 
 支持组合:

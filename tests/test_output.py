@@ -18,7 +18,7 @@ def _unique_task_id() -> str:
 
 def _temp_db() -> tuple:
     """创建临时数据库引擎"""
-    from hermes_universal.engine import EngineDB, seed_engine_db
+    from harness_core.engine import EngineDB, seed_engine_db
     tmpdir = Path(tempfile.mkdtemp())
     engine_db = tmpdir / "engine.db"
     cog_db = tmpdir / "cog.db"
@@ -40,7 +40,7 @@ class TestOutputEngine:
     """workspace/output 文件系统引擎测试"""
 
     def test_init_workspace(self):
-        from hermes_universal.tools.output_engine import init_workspace
+        from harness_core.tools.output_engine import init_workspace
         path = init_workspace(str(_TMP))
         assert Path(path).exists()
         readme = Path(path) / "_README.md"
@@ -48,7 +48,7 @@ class TestOutputEngine:
         assert "弼马温" in readme.read_text(encoding="utf-8")
 
     def test_save_and_read_files(self):
-        from hermes_universal.tools.output_engine import save_output_to_files, read_version_files
+        from harness_core.tools.output_engine import save_output_to_files, read_version_files
         output_root = str(_TMP / "output")
         tid = _unique_task_id()
         files = {"01_问题": "如何融合三作世界观", "02_推理过程": "第1步 识别核心矛盾", "03_输出结果": "## 小说设定"}
@@ -58,7 +58,7 @@ class TestOutputEngine:
         assert loaded["01_问题"] == "如何融合三作世界观"
 
     def test_version_dirs(self):
-        from hermes_universal.tools.output_engine import save_output_to_files, read_version_files, list_task_versions
+        from harness_core.tools.output_engine import save_output_to_files, read_version_files, list_task_versions
         output_root = str(_TMP / "output")
         tid = _unique_task_id()
         save_output_to_files(output_root, tid, "v1", {"01_问题": "Q1原始"})
@@ -70,7 +70,7 @@ class TestOutputEngine:
         assert list_task_versions(output_root, tid) == ["v1", "v2"]
 
     def test_iteration_input_build(self):
-        from hermes_universal.tools.output_engine import build_iteration_input
+        from harness_core.tools.output_engine import build_iteration_input
         prev = {"01_问题": "原始三条铁律", "02_推理过程": "推理:无惨死→鬼血失活", "03_输出结果": "小说大纲"}
         new_input = build_iteration_input(prev, "铁律1不成立,鬼在1918年全灭")
         assert "原始三条铁律" in new_input["01_问题"]
@@ -78,7 +78,7 @@ class TestOutputEngine:
         assert "推理:无惨死→鬼血失活" in new_input["01_问题"]
 
     def test_list_tasks(self):
-        from hermes_universal.tools.output_engine import list_all_tasks
+        from harness_core.tools.output_engine import list_all_tasks
         output_root = str(_TMP / "output")
         tasks = list_all_tasks(output_root)
         assert len(tasks) >= 1

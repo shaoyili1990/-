@@ -260,7 +260,7 @@ action("born", {{
 ## 二、文件结构
 ```
 monkey-harness-agent/
-├── hermes_universal/          # Python源码
+├── harness_core/          # Python源码
 │   ├── core/                  # 五角色实现
 │   ├── engine/                # 引擎+状态机+子链调度
 │   ├── providers/             # AI厂商适配器
@@ -285,7 +285,7 @@ monkey-harness-agent/
 pip install monkey-harness-agent
 
 # 或直接运行
-python -m hermes_universal
+python -m harness_core
 
 # CLI模式
 monkey-harness run "你的问题"

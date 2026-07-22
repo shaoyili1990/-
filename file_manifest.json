@@ -64,111 +64,111 @@
     "size": 31393
   },
   {
-    "path": "hermes_universal\\__init__.py",
+    "path": "harness_core\\__init__.py",
     "size": 482
   },
   {
-    "path": "hermes_universal\\__main__.py",
+    "path": "harness_core\\__main__.py",
     "size": 224
   },
   {
-    "path": "hermes_universal\\agent.py",
+    "path": "harness_core\\agent.py",
     "size": 7261
   },
   {
-    "path": "hermes_universal\\cli.py",
+    "path": "harness_core\\cli.py",
     "size": 7664
   },
   {
-    "path": "hermes_universal\\config.py",
+    "path": "harness_core\\config.py",
     "size": 7812
   },
   {
-    "path": "hermes_universal\\core\\__init__.py",
+    "path": "harness_core\\core\\__init__.py",
     "size": 358
   },
   {
-    "path": "hermes_universal\\core\\horse.py",
+    "path": "harness_core\\core\\horse.py",
     "size": 15775
   },
   {
-    "path": "hermes_universal\\core\\keeper.py",
+    "path": "harness_core\\core\\keeper.py",
     "size": 4955
   },
   {
-    "path": "hermes_universal\\core\\monkey.py",
+    "path": "harness_core\\core\\monkey.py",
     "size": 12448
   },
   {
-    "path": "hermes_universal\\core\\scribe.py",
+    "path": "harness_core\\core\\scribe.py",
     "size": 8701
   },
   {
-    "path": "hermes_universal\\core\\verifier.py",
+    "path": "harness_core\\core\\verifier.py",
     "size": 14227
   },
   {
-    "path": "hermes_universal\\desktop\\__init__.py",
+    "path": "harness_core\\desktop\\__init__.py",
     "size": 48
   },
   {
-    "path": "hermes_universal\\desktop\\app.py",
+    "path": "harness_core\\desktop\\app.py",
     "size": 6624
   },
   {
-    "path": "hermes_universal\\desktop\\templates\\index.html",
+    "path": "harness_core\\desktop\\templates\\index.html",
     "size": 21196
   },
   {
-    "path": "hermes_universal\\engine\\__init__.py",
+    "path": "harness_core\\engine\\__init__.py",
     "size": 22466
   },
   {
-    "path": "hermes_universal\\engine\\state_machine.py",
+    "path": "harness_core\\engine\\state_machine.py",
     "size": 5201
   },
   {
-    "path": "hermes_universal\\engine\\subchain.py",
+    "path": "harness_core\\engine\\subchain.py",
     "size": 8247
   },
   {
-    "path": "hermes_universal\\messages\\__init__.py",
+    "path": "harness_core\\messages\\__init__.py",
     "size": 125
   },
   {
-    "path": "hermes_universal\\messages\\content.py",
+    "path": "harness_core\\messages\\content.py",
     "size": 5108
   },
   {
-    "path": "hermes_universal\\providers\\__init__.py",
+    "path": "harness_core\\providers\\__init__.py",
     "size": 777
   },
   {
-    "path": "hermes_universal\\providers\\anthropic.py",
+    "path": "harness_core\\providers\\anthropic.py",
     "size": 6656
   },
   {
-    "path": "hermes_universal\\providers\\base.py",
+    "path": "harness_core\\providers\\base.py",
     "size": 2497
   },
   {
-    "path": "hermes_universal\\providers\\local.py",
+    "path": "harness_core\\providers\\local.py",
     "size": 7963
   },
   {
-    "path": "hermes_universal\\providers\\openai.py",
+    "path": "harness_core\\providers\\openai.py",
     "size": 5343
   },
   {
-    "path": "hermes_universal\\providers\\registry.py",
+    "path": "harness_core\\providers\\registry.py",
     "size": 3130
   },
   {
-    "path": "hermes_universal\\utils\\__init__.py",
+    "path": "harness_core\\utils\\__init__.py",
     "size": 88
   },
   {
-    "path": "hermes_universal\\utils\\encoding.py",
+    "path": "harness_core\\utils\\encoding.py",
     "size": 1701
   },
   {

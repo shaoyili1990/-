@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <component type="console-application">
   <id>io.hermes.agent</id>
-  <name>Hermes Agent Universal</name>
+  <name>Monkey Harness Agent Universal</name>
   <summary>Universal Portable AI Agent System</summary>
-  <developer_name>Hermes Agent Team</developer_name>
+  <developer_name>Monkey Harness Agent Team</developer_name>
   <metadata_license>MIT</metadata_license>
   <project_license>MIT</project_license>
   <description>
-    <p>Hermes Agent Universal is a portable AI agent system based on the Monkey-Horse (猴驭马) four-role architecture.</p>
+    <p>Monkey Harness Agent Universal is a portable AI agent system based on the Monkey-Horse (猴驭马) four-role architecture.</p>
     <p>Features:</p>
     <ul>
       <li>Four roles: Monkey (router), Horse (reasoner), Keeper (state machine), Scribe (memory)</li>
@@ -21,11 +21,11 @@
     <category>Utility</category>
     <category>Development</category>
   </categories>
-  <url type="homepage">https://github.com/hermes-agent/universal</url>
+  <url type="homepage">https://github.com/monkey-harness-agent/universal</url>
   <releases>
     <release version="0.3.0" date="2026-07-20"/>
   </releases>
   <provides>
-    <binary>hermes-agent</binary>
+    <binary>monkey-harness-agent</binary>
   </provides>
 </component>

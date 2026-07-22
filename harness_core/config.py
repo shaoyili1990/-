@@ -134,21 +134,21 @@ class Config:
     def _apply_env(self, config: Dict):
         """环境变量覆盖"""
         env_map = {
-            "HERMES_MONKEY_PROVIDER": ("monkey", "provider"),
-            "HERMES_MONKEY_MODEL": ("monkey", "model"),
-            "HERMES_MONKEY_KEY": ("monkey", "api_key"),
+            "MONKEY_PROVIDER": ("monkey", "provider"),
+            "MONKEY_MODEL": ("monkey", "model"),
+            "MONKEY_KEY": ("monkey", "api_key"),
             "HERMES_MONKEY_BASE_URL": ("monkey", "base_url"),
-            "HERMES_HORSE_PROVIDER": ("horse", "provider"),
-            "HERMES_HORSE_MODEL": ("horse", "model"),
-            "HERMES_HORSE_KEY": ("horse", "api_key"),
+            "HORSE_PROVIDER": ("horse", "provider"),
+            "HORSE_MODEL": ("horse", "model"),
+            "MONKEY_HORSE_KEY": ("horse", "api_key"),
             "HERMES_HORSE_BASE_URL": ("horse", "base_url"),
             "HERMES_PURCHASER_PROVIDER": ("purchaser", "provider"),
             "HERMES_PURCHASER_MODEL": ("purchaser", "model"),
             "HERMES_PURCHASER_KEY": ("purchaser", "api_key"),
             "HERMES_PURCHASER_BASE_URL": ("purchaser", "base_url"),
             "HERMES_DB_PATH": ("keeper", "db_path"),
-            "HERMES_STORE_DIR": ("system", "store_dir"),
-            "HERMES_ENCODING": ("system", "encoding"),
+            "MONKEY_STORE_DIR": ("system", "store_dir"),
+            "MONKEY_ENCODING": ("system", "encoding"),
         }
         # 通用API Key环境变量
         provider_keys = {
@@ -187,7 +187,7 @@ class Config:
         if not config["keeper"]["db_path"]:
             config["keeper"]["db_path"] = str(user_data_dir / "store" / "rnd_engine.db")
         if not config["scribe"]["db_path"]:
-            config["scribe"]["db_path"] = str(user_data_dir / "store" / "hermes.db")
+            config["scribe"]["db_path"] = str(user_data_dir / "store" / "harness.db")
 
     def _get_user_data_dir(self) -> Path:
         """获取用户数据目录（跨平台）"""
@@ -202,7 +202,7 @@ class Config:
     def _ensure_db_init(self, base: Path, user_data_dir: Path):
         """首次运行时将打包的 DB 复制到用户数据目录"""
         store_target = user_data_dir / "store"
-        for db_name in ['rnd_engine.db', 'hermes.db']:
+        for db_name in ['rnd_engine.db', 'harness.db']:
             src = base / "store" / db_name
             dst = store_target / db_name
             if src.exists() and not dst.exists():

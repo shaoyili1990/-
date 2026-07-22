@@ -30,7 +30,7 @@
   },
 
   "compatibility": {
-    "platforms": ["hermes", "openclaw", "claude", "chatgpt", "deepseek",
+    "platforms": ["monkey-harness", "openclaw", "claude", "chatgpt", "deepseek",
                   "openai", "any-llm"],
     "formats": ["SKILL.md", "system-prompt", "python-package"],
     "modes": ["prompt-only", "cli", "docker", "desktop-ui"]

@@ -688,7 +688,7 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
             # ── 4. Skill节点（从认知DB读取） ──
             skill_count = 0
             try:
-                from hermes_universal.engine import EngineDB as _EDB
+                from harness_core.engine import EngineDB as _EDB
                 _cconn = _EDB().cognition_conn()
                 if _cconn:
                     srows = _cconn.execute(
@@ -711,8 +711,8 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
 
             # ── 5. 巡逻门类节点（11个） ──
             try:
-                from hermes_universal.core.patrol import PatrolSystem, CATEGORIES
-                from hermes_universal.engine import EngineDB as _EDBp
+                from harness_core.core.patrol import PatrolSystem, CATEGORIES
+                from harness_core.engine import EngineDB as _EDBp
                 ps = PatrolSystem(_EDBp())
                 patrol_status = ps.get_status() if ps else {}
                 for cat in patrol_status.get("categories", []):
@@ -808,7 +808,7 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
 
                 # 7e. 认知记忆→任务（cognition DB memories）
                 try:
-                    from hermes_universal.engine import EngineDB as _EDB2
+                    from harness_core.engine import EngineDB as _EDB2
                     _cc2 = _EDB2()
                     mconn = _cc2.cognition_conn()
                     if mconn:
@@ -896,9 +896,9 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
     async def get_patrol_graph():
         """巡逻热度图 — 11门类关注度评分可视化"""
         try:
-            from hermes_universal.core.patrol import PatrolSystem
-            from hermes_universal.engine import EngineDB
-            from hermes_universal.config import load_config
+            from harness_core.core.patrol import PatrolSystem
+            from harness_core.engine import EngineDB
+            from harness_core.config import load_config
             cfg = load_config()
             patrol = PatrolSystem(EngineDB(
                 engine_path=cfg.get("keeper", "db_path", default=""),
@@ -921,7 +921,7 @@ def create_app(agent: Optional[HermesAgent] = None) -> FastAPI:
         """Skill 依赖关系图（从认知DB读取）"""
         conn = get_cognition_db()
         if conn is None:
-            from hermes_universal.engine import EngineDB
+            from harness_core.engine import EngineDB
             conn = EngineDB().cognition_conn()
         try:
             nodes = []

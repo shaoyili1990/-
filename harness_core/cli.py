@@ -25,12 +25,12 @@ def main():
   monkey-harness task list                  # 查看任务
 
 兼容命令:
-  hermes run "你好"                         # 旧名也支持
+  monkey-harness run "你好"                 # 执行推理
   bimawen run "你好"                        # 中文名也支持
 
 环境变量:
-  HERMES_MONKEY_KEY      灵猴API Key
-  HERMES_HORSE_KEY       骏马API Key
+  MONKEY_MONKEY_KEY     灵猴API Key
+  MONKEY_HORSE_KEY      骏马API Key
         """
     )
 
@@ -103,8 +103,8 @@ def main():
         return
 
     # run / chat 需要Agent
-    from .agent import HermesAgent
-    agent = HermesAgent()
+    from .agent import HarnessAgent
+    agent = HarnessAgent()
 
     if args.command == "run":
         run_once(agent, args)
@@ -234,7 +234,7 @@ def run_desktop(host: str, port: int):
         sys.exit(1)
 
     app = create_app()
-    print(f"\n Hermes Agent Desktop")
+    print(f"\n Monkey Harness Agent Desktop")
     print(f" 打开浏览器: http://{host}:{port}")
     print(f" 按 Ctrl+C 停止\n")
     uvicorn.run(app, host=host, port=port)
@@ -261,16 +261,16 @@ def run_config(args):
 
     elif args.action == "set":
         if not args.key or not args.value:
-            print("用法: hermes config set <key> <value>")
+            print("用法: monkey-harness config set <key> <value>")
             return
         # 设置环境变量（当前会话有效）
         env_key = {
-            "monkey_key": "HERMES_MONKEY_KEY",
-            "horse_key": "HERMES_HORSE_KEY",
-            "monkey_provider": "HERMES_MONKEY_PROVIDER",
-            "horse_provider": "HERMES_HORSE_PROVIDER",
-            "monkey_model": "HERMES_MONKEY_MODEL",
-            "horse_model": "HERMES_HORSE_MODEL",
+            "monkey_key": "MONKEY_MONKEY_KEY",
+            "horse_key": "MONKEY_HORSE_KEY",
+            "monkey_provider": "MONKEY_PROVIDER",
+            "horse_provider": "HORSE_PROVIDER",
+            "monkey_model": "MONKEY_MODEL",
+            "horse_model": "HORSE_MODEL",
         }.get(args.key)
         if env_key:
             os.environ[env_key] = args.value

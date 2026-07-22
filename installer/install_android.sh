@@ -1,12 +1,12 @@
 #!/data/data/com.termux/files/usr/bin/bash
-# Hermes Agent Universal - Android Termux Installer
+# Monkey Harness Agent Universal - Android Termux Installer
 # 在 Termux 中运行: bash install_android.sh
-# 或: curl -fsSL https://hermes-agent.dev/install_android.sh | bash
+# 或: curl -fsSL https://monkey-harness-agent.dev/install_android.sh | bash
 
 set -euo pipefail
 
 echo "================================================"
-echo " Hermes Agent Universal - Android 安装程序"
+echo " Monkey Harness Agent Universal - Android 安装程序"
 echo " 需要 Termux (F-Droid 版本)"
 echo "================================================"
 echo ""
@@ -33,15 +33,15 @@ echo "[3/6] 升级 pip..."
 pip install --upgrade pip
 
 echo ""
-echo "[4/6] 安装 Hermes Agent Universal..."
-pip install hermes-agent-universal 2>/dev/null || {
+echo "[4/6] 安装 Monkey Harness Agent Universal..."
+pip install monkey-harness-agent-universal 2>/dev/null || {
     echo "  pip安装失败,尝试从源码安装..."
     if [ -f "pyproject.toml" ]; then
         pip install .
     else
         echo "  下载源码..."
         pkg install -y wget
-        wget https://github.com/hermes-agent/universal/archive/main.zip
+        wget https://github.com/monkey-harness-agent/universal/archive/main.zip
         unzip main.zip
         cd universal-main
         pip install .
@@ -56,7 +56,7 @@ termux-setup-storage 2>/dev/null || true
 
 echo ""
 echo "[6/6] 验证安装..."
-python -c "from hermes_universal import __version__; print(f'Hermes Agent v{__version__}')"
+python -c "from harness_core import __version__; print(f'Monkey Harness Agent v{__version__}')"
 
 echo ""
 echo "================================================"
@@ -64,13 +64,13 @@ echo " 安装完成!"
 echo "================================================"
 echo ""
 echo "使用方法:"
-echo "  hermes run \"你的问题\"           # 单次对话"
-echo "  hermes chat                        # 交互模式"
+echo "  monkey-harness run \"你的问题\"           # 单次对话"
+echo "  monkey-harness chat                        # 交互模式"
 echo ""
 echo "  # 桌面Web UI 需要 Termux:X11:"
 echo "  #   pkg install x11-repo"
 echo "  #   pkg install termux-x11"
-echo "  #   hermes desktop"
+echo "  #   monkey-harness desktop"
 echo ""
 echo "配置API Key (编辑 ~/.bashrc 添加):"
 echo "  export OPENAI_API_KEY=sk-xxx"
@@ -78,6 +78,6 @@ echo "  export DEEPSEEK_API_KEY=sk-xxx"
 echo ""
 echo "或使用本地模型 (需要安装 Ollama):"
 echo "  pkg install ollama"
-echo "  export HERMES_HORSE_PROVIDER=ollama"
+echo "  export MONKEY_HORSE_PROVIDER=ollama"
 echo ""
 echo "================================================"

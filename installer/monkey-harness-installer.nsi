@@ -1,11 +1,11 @@
-; Hermes Agent Universal - Windows NSIS Installer
+; Monkey Harness Agent Universal - Windows NSIS Installer
 ; 编译: makensis hermes-installer.nsi
 ; 注意：File 路径相对于 .nsi 文件所在目录
 
-!define APP_NAME "Hermes Agent"
-!define APP_EXE "hermes-agent.exe"
+!define APP_NAME "Monkey Harness Agent"
+!define APP_EXE "monkey-harness-agent.exe"
 !define APP_VERSION "0.3.0"
-!define APP_PUBLISHER "Hermes Agent Team"
+!define APP_PUBLISHER "Monkey Harness Agent Team"
 !define APP_URL "https://github.com/shaoyili1990/-"
 
 Unicode True

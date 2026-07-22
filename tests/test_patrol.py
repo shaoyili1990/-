@@ -18,7 +18,7 @@ class TestPatrolAgentReach:
 
     def test_hn_algolia_search(self):
         """HN Algolia API 搜索应返回技术内容"""
-        from hermes_universal.tools.agent_reach import search_hn_algolia
+        from harness_core.tools.agent_reach import search_hn_algolia
         results = search_hn_algolia("AI", max_hits=3)
         assert len(results) > 0, "HN 应返回结果"
         assert all("title" in r for r in results), "结果应有 title"
@@ -27,7 +27,7 @@ class TestPatrolAgentReach:
 
     def test_github_search(self):
         """GitHub API 搜索应返回仓库"""
-        from hermes_universal.tools.agent_reach import search_github
+        from harness_core.tools.agent_reach import search_github
         results = search_github("python agent", max_repos=3)
         assert len(results) > 0, "GitHub 应返回结果"
         assert all("name" in r for r in results), "结果应有 name"
@@ -35,7 +35,7 @@ class TestPatrolAgentReach:
 
     def test_multi_search_aggregates(self):
         """multi_search 应汇总多源"""
-        from hermes_universal.tools.agent_reach import multi_search
+        from harness_core.tools.agent_reach import multi_search
         result = multi_search("AI agent")
         assert result.get("ok"), "搜索应成功"
         assert result.get("source_count", 0) > 0, "至少应有1个源"
@@ -48,7 +48,7 @@ class TestPatrolSystem:
 
     def test_patrol_categories_loaded(self):
         """11个巡逻门类应全部加载"""
-        from hermes_universal.core.patrol import CATEGORIES
+        from harness_core.core.patrol import CATEGORIES
         assert len(CATEGORIES) >= 11, f"应至少11个门类, 当前{len(CATEGORIES)}"
         names = [c[1] for c in CATEGORIES]
         assert "AI领域" in names
@@ -59,8 +59,8 @@ class TestPatrolSystem:
     def test_patrol_engine_init(self):
         """巡逻引擎应初始化"""
         try:
-            from hermes_universal.engine import EngineDB
-            from hermes_universal.core.patrol import PatrolSystem
+            from harness_core.engine import EngineDB
+            from harness_core.core.patrol import PatrolSystem
             db = EngineDB(engine_path=str(_TMP_DB), cognition_path=str(_TMP_COG))
             ps = PatrolSystem(db)
             status = ps.get_status()
@@ -72,7 +72,7 @@ class TestPatrolSystem:
 
     def test_patrol_score_ranges(self):
         """评分函数应返回合理值"""
-        from hermes_universal.core.patrol import PatrolSystem
+        from harness_core.core.patrol import PatrolSystem
         ps = PatrolSystem.__new__(PatrolSystem)
         # 测试内容量评分
         score_fn = lambda bytes: (

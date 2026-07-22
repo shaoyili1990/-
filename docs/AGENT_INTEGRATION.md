@@ -140,9 +140,9 @@ npx @modelcontextprotocol/inspector
 
 | 变量 | 用途 | 默认值 |
 |:-----|:-----|:-------|
-| `HERMES_MONKEY_KEY` | 灵猴 API Key | — |
-| `HERMES_HORSE_KEY` | 骏马 API Key | — |
-| `HERMES_MONKEY_PROVIDER` | 灵猴厂商 | openai |
-| `HERMES_HORSE_PROVIDER` | 骏马厂商 | deepseek |
+| `MONKEY_KEY` | 灵猴 API Key | — |
+| `MONKEY_HORSE_KEY` | 骏马 API Key | — |
+| `MONKEY_PROVIDER` | 灵猴厂商 | openai |
+| `HORSE_PROVIDER` | 骏马厂商 | deepseek |
 | `MCP_TRANSPORT` | MCP 传输协议 | stdio |
 | `MCP_PORT` | MCP HTTP 端口 | 8000 |

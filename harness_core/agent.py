@@ -1,5 +1,5 @@
 """
-Hermes Agent Universal - 主编排器
+Monkey Harness Agent - 主编排器
 整合四角色: 灵猴 + 骏马 + 司库 + 书童
 固定流程: 猴子管马，司库状态驱动，书童记忆存取
 """
@@ -18,8 +18,8 @@ from .core.patrol import PatrolSystem
 from .providers import get_provider, ProviderRegistry
 
 
-class HermesAgent:
-    """Hermes Agent Universal 主编排器"""
+class HarnessAgent:
+    """Monkey Harness Agent 主编排器"""
 
     def __init__(self, config_path: Optional[str] = None, **config_overrides):
         self.config = load_config(config_path, **config_overrides)

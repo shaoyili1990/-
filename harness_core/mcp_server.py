@@ -14,10 +14,10 @@ Streamable HTTP + stdio 双模式 MCP 服务端
 
 用法:
   # stdio 模式（Claude Desktop）
-  python -m hermes_universal.mcp_server
+  python -m harness_core.mcp_server
 
   # Streamable HTTP 模式（OpenClaw/Hermes/远程）
-  python -m hermes_universal.mcp_server --transport http --port 8000
+  python -m harness_core.mcp_server --transport http --port 8000
 """
 import argparse
 import json
@@ -37,7 +37,7 @@ _agent = None
 def _get_agent():
     global _agent
     if _agent is None:
-        from hermes_universal.agent import HermesAgent
+        from harness_core.agent import HermesAgent
         _agent = HermesAgent()
     return _agent
 
@@ -142,7 +142,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
             type: 节点类型过滤（task/skill/role/api/patrol/ticket），留空返回全部
             search: 节点名称搜索关键词
         """
-        from hermes_universal.desktop.app import create_app
+        from harness_core.desktop.app import create_app
         from starlette.testclient import TestClient
 
         app = create_app(_get_agent())
@@ -216,7 +216,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
         Args:
             output_root: 输出根目录（默认 ~/workspace）
         """
-        from hermes_universal.tools.output_engine import init_workspace
+        from harness_core.tools.output_engine import init_workspace
         path = init_workspace(output_root)
         return json.dumps({"ok": True, "path": path}, ensure_ascii=False)
 
@@ -267,7 +267,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
             return json.dumps({"ok": False, "error": "没有输出内容"}, ensure_ascii=False)
         
         # STEP 1: 写入文件系统(完整内容)
-        from hermes_universal.tools.output_engine import save_output_to_files
+        from harness_core.tools.output_engine import save_output_to_files
         created = save_output_to_files(
             output_root, task_id, version, files, iteration_note
         )
@@ -298,7 +298,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
             previous_version: 上一版版本号(默认最新版)
         """
         output_root = os.path.expanduser("~/workspace/output")
-        from hermes_universal.tools.output_engine import (
+        from harness_core.tools.output_engine import (
             read_version_files, list_task_versions, build_iteration_input
         )
         agent = _get_agent()
@@ -342,7 +342,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
         """
         agent = _get_agent()
         output_root = os.path.expanduser("~/workspace/output")
-        from hermes_universal.tools.output_engine import list_all_tasks, list_task_versions
+        from harness_core.tools.output_engine import list_all_tasks, list_task_versions
         
         if task_id:
             versions = list_task_versions(output_root, task_id)
@@ -365,7 +365,7 @@ def create_mcp(host: str = "127.0.0.1", port: int = 8000) -> FastMCP:
             version: 版本号（如 v1, v2）
         """
         output_root = os.path.expanduser("~/workspace/output")
-        from hermes_universal.tools.output_engine import read_version_files
+        from harness_core.tools.output_engine import read_version_files
         files = read_version_files(output_root, task_id, version)
         if not files:
             return json.dumps({"ok": False, "error": f"未找到 {task_id}/{version}"})

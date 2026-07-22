@@ -28,16 +28,16 @@ COPY --from=builder /build/store /store
 COPY --from=builder /build/config.yaml /config.yaml
 COPY --from=builder /build/SKILL.md /SKILL.md
 
-RUN useradd -m -s /bin/bash hermes && \
-    chown -R hermes:hermes /store /fingerprints /subchains /validations
-USER hermes
-WORKDIR /home/hermes
+RUN useradd -m -s /bin/bash monkey && \
+    chown -R monkey:monkey /store /fingerprints /subchains /validations
+USER monkey
+WORKDIR /home/monkey
 
 # 环境变量
-ENV HERMES_MONKEY_PROVIDER=openai
-ENV HERMES_HORSE_PROVIDER=deepseek
-ENV HERMES_ENCODING=utf-8
-ENV HERMES_STORE_DIR=/store
+ENV MONKEY_MONKEY_PROVIDER=openai
+ENV MONKEY_HORSE_PROVIDER=deepseek
+ENV MONKEY_ENCODING=utf-8
+ENV MONKEY_STORE_DIR=/store
 
 EXPOSE 8080 8000
 

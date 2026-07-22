@@ -70,6 +70,56 @@
 
 ---
 
+## 赛博意识流 — 开发总纲
+
+> **赛博意识流（Cyber Consciousness Stream）** 是弼马温 Agent 的顶层设计理念，也是后续衍生产品（赛博猴 Cyber Monkey Agent）的核心架构纲领。
+
+### 核心理念
+
+```
+┌─────────────────────────────────────────────────────────┐
+│              赛博意识流 — 开发总纲                        │
+├─────────────────────────────────────────────────────────┤
+│                                                         │
+│  多维表格 = 永久存储基质（长期碎片化记忆库）              │
+│      ↓                                                  │
+│  任务触发 → 读取表格碎片 → 动态关联 → 形成单次思考流     │
+│      ↓                                                  │
+│  AI = 临时涌现的意识流（用完即销毁）                     │
+│      ↓                                                  │
+│  动态生成临时代码 → 执行 → 归档回表格 → 自生长闭环       │
+│      ↓                                                  │
+│  后续同类任务自动读取历史经验碎片，自主迭代优化            │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+### 产品线规划
+
+| 产品 | 性质 | 定位 | 差异化 |
+|:-----|:-----|:------|:--------|
+| **弼马温** | **开源**（MIT） | 开发者自部署版 | 中英文双语，核心推理引擎全开放 |
+| **赛博猴** | **闭源**（Steam 35元买断） | 开箱即用完整生态版 | 多语言UI（中/英/日/韩）、多模态、TTS语音、综合生态 |
+
+### 核心原则
+
+1. **内部统一中文推理**：136 子链基于中文理念体系，输入多语言→自动转中文推理→结果输出对应语言
+2. **自生长经验闭环**：历史任务归档→沉淀为记忆碎片→后续任务自动复用改良→无需人工预制模板
+3. **分层权限保护**：底层子链、验证链、指纹规则仅可读，AI不可篡改核心推理底座
+4. **解析解优先**：所有推理结果必须经过验证链合法性校验，拒绝无依据的数值拟合输出
+
+### 路线图
+
+| 阶段 | 目标 | 时间 |
+|:-----|:------|:------|
+| **P0** 状态机数据化 | 状态流转从代码迁入多维表格，改表格不改代码 | 当前 |
+| **P1** 子链/指纹数据化 | 推理权重迁入表格，在线调整实时生效 | 后续 |
+| **P2** 碎片化记忆归档 | 任务全链路记录存入表格，按需检索复用 | 后续 |
+| **P3** 动态临时代码 | AI 自主生成单次任务代码→归档→自生长 | 远期 |
+| **P4** 赛博猴发布 | 多语言TTS、多模态、Steam 上架 | 远期 |
+
+---
+
 ## 核心能力
 
 ### 1. 推理体系 — 136子链 + 10领域指纹
@@ -175,7 +225,7 @@ Tier分级：T1(≥100) / T2(≥75) / T3(≥50) / T4(≥25) / T5(<25)
   "mcpServers": {
     "bimawen-agent": {
       "command": "python3",
-      "args": ["-m", "hermes_universal.mcp_server"]
+      "args": ["-m", "harness_core.mcp_server"]
     }
   }
 }
@@ -183,12 +233,12 @@ Tier分级：T1(≥100) / T2(≥75) / T3(≥50) / T4(≥25) / T5(<25)
 
 **方式2：Claude Code**
 ```bash
-claude mcp add bimawen-agent -- python3 -m hermes_universal.mcp_server
+claude mcp add bimawen-agent -- python3 -m harness_core.mcp_server
 ```
 
 **方式3：HTTP 模式**
 ```bash
-python3 -m hermes_universal.mcp_server --transport http --port 8000
+python3 -m harness_core.mcp_server --transport http --port 8000
 ```
 
 ### MCP 工具一览（13个）
@@ -222,8 +272,8 @@ monkey-harness config                   # 查看配置
 ### 混搭模式
 
 ```bash
-export HERMES_MONKEY_PROVIDER=openai   # 灵猴用 OpenAI
-export HERMES_HORSE_PROVIDER=deepseek  # 骏马用 DeepSeek
+export MONKEY_MONKEY_PROVIDER=openai   # 灵猴用 OpenAI
+export MONKEY_HORSE_PROVIDER=deepseek  # 骏马用 DeepSeek
 monkey-harness mcp
 ```
 

@@ -1,10 +1,10 @@
 [Desktop Entry]
-Name=Hermes Agent Universal
-Name[zh]=Hermes Agent 通用AI代理
+Name=Monkey Harness Agent Universal
+Name[zh]=Monkey Harness Agent 通用AI代理
 Comment=Universal Portable AI Agent System - Monkey-Horse Architecture
 Comment[zh]=通用可移植AI代理系统 - 猴驭马四角色架构
-Exec=hermes-agent
-Icon=hermes-agent
+Exec=monkey-harness-agent
+Icon=monkey-harness-agent
 Terminal=true
 Type=Application
 Categories=Utility;Development;AI;

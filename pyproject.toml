@@ -41,23 +41,23 @@ desktop = [
 
 [project.scripts]
 # 旧名兼容
-hermes = "hermes_universal.cli:main"
+hermes = "harness_core.cli:main"
 # 新名
-monkey-harness = "hermes_universal.cli:main"
-monkey-harness-mcp = "hermes_universal.mcp_server:main"
-bimawen = "hermes_universal.cli:main"
-bimawen-mcp = "hermes_universal.mcp_server:main"
+monkey-harness = "harness_core.cli:main"
+monkey-harness-mcp = "harness_core.mcp_server:main"
+bimawen = "harness_core.cli:main"
+bimawen-mcp = "harness_core.mcp_server:main"
 
 [project.urls]
 Homepage = "https://github.com/shaoyili1990/-"
 Repository = "https://github.com/shaoyili1990/-"
 
 [tool.hatch.build.targets.wheel]
-packages = ["hermes_universal"]
+packages = ["harness_core"]
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "hermes_universal/**",
+    "harness_core/**",
     "installer/**",
     "fingerprints/**",
     "subchains/**",
