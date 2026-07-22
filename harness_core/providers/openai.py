@@ -122,7 +122,7 @@ class DeepSeekProvider(OpenAIProvider):
     """DeepSeek适配器 (OpenAI兼容)"""
     def __init__(self, config: Dict):
         config.setdefault("base_url", "https://api.deepseek.com/v1")
-        config.setdefault("model", "deepseek-chat")
+        config.setdefault("model", "deepseek-v4-flash")
         super().__init__(config)
         self.name = "deepseek"
 

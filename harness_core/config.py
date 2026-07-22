@@ -13,7 +13,7 @@ from typing import Optional, Dict, Any, List
 DEFAULT_CONFIG = {
     "monkey": {
         "provider": "deepseek",
-        "model": "deepseek-chat",
+        "model": "deepseek-v4-flash",
         "api_key": "",
         "base_url": "https://api.deepseek.com/v1",
         "temperature": 0.7,
@@ -21,7 +21,7 @@ DEFAULT_CONFIG = {
     },
     "horse": {
         "provider": "deepseek",
-        "model": "deepseek-chat",
+        "model": "deepseek-v4-flash",
         "api_key": "",
         "base_url": "https://api.deepseek.com/v1",
         "temperature": 0.7,
@@ -29,7 +29,7 @@ DEFAULT_CONFIG = {
     },
     "purchaser": {
         "provider": "deepseek",
-        "model": "deepseek-chat",
+        "model": "deepseek-v4-flash",
         "api_key": "",
         "base_url": "https://api.deepseek.com/v1",
         "temperature": 0.5,
