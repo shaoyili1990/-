@@ -32,3 +32,8 @@ venv/
 *.db
 test_data/
 *.db
+
+# Runtime databases
+store/*.db
+store/__pycache__/
+store/tasks/

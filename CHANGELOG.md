@@ -1,46 +1,20 @@
 # 更新日志
 
-## v0.3.1 — TTS 语音底座 & ComfyUI 多模态 & 48GB 自适应工作流 (2026-07-22)
+## v0.3.1 — 天道系统 (2026-07-23)
 
 ### ✨ 新功能
 
-#### TTS 语音合成（audio.cpp-webui）
-- 支持中/英/日/韩四国语种实时 TTS
-- 赛博猴：本地模型推理 → 直接生成语音输出
-- 弼马温：提供云端 API 替代方案（DeepSeek/Azure TTS）
-- TTS 配置文档：`docs/TTS_DEPLOY.md`
+#### 天道系统（叙事逻辑与人物演化引擎）
+- 天道引擎：小说人物Y值驱动的情绪/欲望演化系统，完整公式01-10链
+- `tiandao_bridge.py` — 状态机↔天道联动接口：trigger_event / get_character_state / get_event_roles / update_after_god_intervention
+- `y_engine.py` — Y值计算引擎：基础设定→情绪波动→击穿阈值→补偿机制→回弹效应→欲望演化→多人物联动
+- `harness.py` — 马的双通道Harness：子链通道（逻辑/结构）+ 天道通道（情绪/心理）整合层，按任务生成专属临时脚本
+- `rnd_tiandao.db` — 天道专用库：5张P0表（tiandao_novels / tiandao_characters / tiandao_states / tiandao_events / tiandao_event_roles）
 
-#### ComfyUI 多模态底座
-- SDXL / FLUX fp8 文生图引擎
-- 与骏马推理引擎无缝集成（ToolImage 调用）
-- ComfyUI 蓝图为多模态场景预置
-- 部署文档：`docs/COMFYUI_DEPLOY.md`
-
-#### 48GB 自适应工作流
-- 两种模式智能切换：常规(骏马+巡检+TTS) ↔ 多模态(骏马+ComfyUI)
-- 巡检任务在切换时降级到 DeepSeek Flash API（共享赛博猴 Key）
-- OOM 安全机制：显存爆满时自动释放非核心组件
-- 状态保存/恢复：切换前保存巡检者状态，恢复后续接
-- 一键切换脚本：`installer/start-multimodal.sh` / `restore-normal.sh`
-- 完整原理文档：`docs/48G_ADAPTIVE.md`
-
-### ♻️ 改进
-
-- `docs/` 新增完整文档体系（TTS/ComfyUI/工作流/部署）
-- 赛博意识流路线图更新：P4 多模态基础完成
-- 安装脚本增加显存检查和自动适配逻辑
-
-### 📦 文件变更
-
-| 文件 | 说明 |
-|:-----|:------|
-| `docs/TTS_DEPLOY.md` | 🆕 TTS 部署指南（赛博猴完整 / 弼马温 API） |
-| `docs/COMFYUI_DEPLOY.md` | 🆕 ComfyUI 部署指南 |
-| `docs/48G_ADAPTIVE.md` | 🆕 48GB 自适应工作流原理与切换逻辑 |
-| `installer/start-multimodal.sh` | 🆕 一键切换多模态模式 |
-| `installer/restore-normal.sh` | 🆕 一键恢复常规模式 |
-| `README.md` | 📝 更新 v0.3.1 版本信息、产品线规划、路线图 |
-| `CHANGELOG.md` | 🆕 本文件 |
+#### 仓库结构迭代
+- 天道模块纳入 `harness_core/tiandao/` 包，imports 统一为相对路径
+- 测试文件迁入 `tests/` 统一管理
+- 移除所有 TTS 相关文档和配置（TTS 已废弃）
 
 ---
 
