@@ -1,51 +1,57 @@
-# Monkey Harness Agent / 弼马温 Agent 配置文件
-# 支持混搭模式:
-#   - 双API Key (Monkey用OpenAI, Horse用Claude)
-#   - 单Key+本地 (Monkey用DeepSeek, Horse用Ollama)
-#   - 双本地 (全用Ollama)
-#   - 云混搭 (不同云厂商)
+# Monkey Harness Agent / 弼马温 Agent 配置文件 (v0.3.1)
+# 弼马温 = 纯文本，中英双语，无TTS，无多模态
 
 monkey:
-  provider: openai           # openai / anthropic / deepseek / ollama / openrouter / vllm
-  model: gpt-4o
-  api_key: ""                # 可留空，用环境变量 OPENAI_API_KEY
-  base_url: ""               # 自定义端点（如企业代理）
-  temperature: 0.7
+  provider: openai
+  model: deepseek-v4-flash
+  api_key: sk-d06fceea0dc6472d87f44dafc1078831
+  base_url: https://api.deepseek.com/v1
+  temperature: 0.3
   max_tokens: 4096
 
 horse:
-  provider: deepseek         # openai / anthropic / deepseek / ollama / openrouter / vllm
-  model: deepseek-v4-flash
-  api_key: ""                # 可留空，用环境变量 DEEPSEEK_API_KEY
-  base_url: ""
+  provider: openai
+  model: Qwen3.6-27B-Fable-Fus-711-UnHeretic-NM-DAU-NEO-MAX-NEO-Q4_K_M.gguf
+  api_key: not-needed
+  base_url: http://localhost:6006/v1
   temperature: 0.7
   max_tokens: 8192
 
+purchaser:
+  provider: openai
+  model: deepseek-v4-flash
+  api_key: sk-d06fceea0dc6472d87f44dafc1078831
+  base_url: https://api.deepseek.com/v1
+  temperature: 0.5
+  max_tokens: 2048
+
 keeper:
-  db_path: ""                # 默认为 store/rnd_engine.db
+  db_path: /root/bimawen/store/rnd_engine.db
   auto_migrate: true
 
 scribe:
-  db_path: ""                # 默认为 store/bimawen.db
+  db_path: /root/bimawen/store/bimawen.db
   auto_init: true
 
 system:
-  subchains_dir: ""          # 默认为 ./subchains/
-  fingerprints_dir: ""       # 默认为 ./fingerprints/
-  store_dir: ""              # 默认为 ./store/
+  subchains_dir: /root/bimawen/subchains/
+  fingerprints_dir: /root/bimawen/fingerprints/
+  store_dir: /root/bimawen/store/
   encoding: utf-8
-  auto_encoding: true        # 自动检测终端编码
+  auto_encoding: true
 
-# 厂商默认配置
+patrol:
+  auto: false
+  on_demand: true
+  api_key: sk-c459ee54ae9f414790efbeb137183af0
+  model: deepseek-v4-flash
+  base_url: https://api.deepseek.com/v1
+
 providers:
   openai:
     base_url: https://api.openai.com/v1
-  anthropic:
-    base_url: https://api.anthropic.com/v1
   deepseek:
     base_url: https://api.deepseek.com/v1
-  ollama:
-    base_url: http://localhost:11434
+  local:
+    base_url: http://localhost:6006/v1
     local: true
-  openrouter:
-    base_url: https://openrouter.ai/api/v1

@@ -72,32 +72,54 @@ class StateMachine:
         finally:
             conn.close()
 
-    def validate_transition(self, task_id: str, new_state: str) -> Tuple[bool, str]:
-        """校验状态转换是否合法"""
+    def validate_transition(self, task_id: str, new_state: str) -> Tuple[dict, str]:
+        """校验状态转换(解析解): 从DB读取合法转换"""
         task = self.db.get_task(task_id)
         if not task:
-            return False, "任务不存在"
+            return {"verdict": "任务不存在"}, "任务不存在"
 
         old_state = task["status"]
-        allowed = TRANSITIONS.get(old_state, [])
+        allowed = self._get_allowed_transitions(old_state)
         if new_state not in allowed:
-            return False, f"非法转换: {old_state} -> {new_state} (允许: {allowed})"
-        return True, ""
+            reasons = []
+            if allowed:
+                reasons.append("当前状态[" + old_state + "]允许转向: " + ", ".join(allowed))
+                reasons.append("请求转向: " + new_state + "，不在允许列表中")
+            else:
+                reasons.append("当前状态[" + old_state + "]为终态，不允许转换")
+            return {"verdict": "倾向性不通过", "reasoning": "；".join(reasons), "current_state": old_state, "requested": new_state}, "；".join(reasons)
+        return {"verdict": "倾向性通过", "reasoning": "从[" + old_state + "]到[" + new_state + "]为合法转换", "current_state": old_state, "requested": new_state}, ""
 
-    def transition(self, task_id: str, new_state: str) -> Tuple[bool, str]:
-        """执行状态转换"""
-        valid, msg = self.validate_transition(task_id, new_state)
-        if not valid:
-            return False, msg
+    def _get_allowed_transitions(self, state_name: str) -> list:
+        """从DB rnd_state_def 表读取合法转换"""
+        import json
+        conn = self.db.engine_conn()
+        try:
+            row = conn.execute(
+                "SELECT allowed_transitions FROM rnd_state_def WHERE state_name=?", (state_name,)
+            ).fetchone()
+            if row:
+                return json.loads(row["allowed_transitions"])
+        except:
+            pass
+        finally:
+            conn.close()
+        return TRANSITIONS.get(state_name, [])
+
+    def transition(self, task_id: str, new_state: str) -> Tuple[dict, str]:
+        """执行状态转换(解析解)"""
+        verdict, msg = self.validate_transition(task_id, new_state)
+        if verdict.get("verdict") != "倾向性通过":
+            return verdict, msg
 
         task = self.db.get_task(task_id)
         old_state = task["status"]
         ok = self.db.transition_state(task_id, new_state)
         if ok:
-            self.db.add_review(task_id, "step", "pass",
-                               f"状态转换: {old_state} -> {new_state}")
-            return True, f"{old_state} -> {new_state}"
-        return False, "状态转换失败"
+            reason = "状态转换: {} -> {}".format(old_state, new_state)
+            self.db.add_review(task_id, "step", "pass", reason)
+            return {"verdict": "转换成功", "reasoning": reason}, reason
+        return {"verdict": "转换失败", "reasoning": "数据库更新异常"}, "状态转换失败"
 
     def get_task_status_summary(self, task_id: str) -> Optional[Dict]:
         """获取任务完整状态摘要"""

@@ -129,16 +129,14 @@ class IdleScheduler:
 
         # ── 冷监督关闭: 冻结所有后台自治循环 ──
         if not self.db.get_aileran_mode():
-            # 有任务完成也可能需要重置,但其他自动推进全部冻结
             if task_done:
                 self._s(K_STATE, S_WAIT_MAINT)
                 self._s(K_TS, str(now))
                 r["state"] = S_WAIT_MAINT
                 r["action"] = "task_done"
-                r["action_detail"] = f"任务结束→待整理(冷监督关闭,冻结)"
+                r["action_detail"] = "任务结束→待整理(冷监督冻结)"
             else:
-                r["action_detail"] = "冷监督关闭,自治循环冻结"
-            # 无论是否冻结,都不主动调用 patrol.tick()
+                r["action_detail"] = "冷监督冻结: 自治循环已冻结，无token消耗"
             return r
         if task_done:
             self._s(K_STATE, S_WAIT_MAINT)
@@ -168,9 +166,12 @@ class IdleScheduler:
             return self._inspect_done(now)
 
         # ── 每次tick驱动巡逻系统(检查是否到1:00、执行巡逻) ──
-        if self.patrol:
+        if self.patrol and self.db.get_aileran_mode():
             try:
-                self.patrol.tick()
+                from harness_core.config import load_config
+                cfg = load_config()
+                if cfg.get("patrol", {}).get("auto", True):
+                    self.patrol.tick()
             except Exception as e:
                 logger.warning(f"[Scheduler] 巡逻异常: {e}")
 

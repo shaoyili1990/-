@@ -57,19 +57,28 @@ class Keeper:
             conn.close()
 
     def enforce_constitution(self, action: str, context: Dict) -> Dict:
-        """宪法执行检查"""
-        violations = []
-        for article in CONSTITUTION:
-            if "解析解" in article and action in ("judge_binary", "numeric_score"):
-                violations.append(f"违反宪法: {article}")
-            if "版本不覆盖" in article and context.get("delete_old_version"):
-                violations.append(f"违反宪法: {article}")
-            if "孤证不立" in article and context.get("single_evidence"):
-                violations.append(f"违反宪法: {article}")
+        """宪法执行检查(解析解): 从DB读取宪法"""
+        articles = self.get_constitution()
+        checks = []
+        for a in articles:
+            content = a.get("content", "")
+            check = {"article": content, "verdict": "未触发", "reasoning": ""}
+            if "解析解" in content and action in ("judge_binary", "numeric_score"):
+                check["verdict"] = "倾向性违规"
+                check["reasoning"] = "执行[{}]使用了二元/数值判断，违反解析解原则".format(action)
+            if "版本不覆盖" in content and context.get("delete_old_version"):
+                check["verdict"] = "倾向性违规"
+                check["reasoning"] = "尝试删除旧版本，违反版本不覆盖原则"
+            if "孤证不立" in content and context.get("single_evidence"):
+                check["verdict"] = "倾向性提醒"
+                check["reasoning"] = "仅提供单一证据作为结论依据，建议交叉验证"
+            checks.append(check)
 
+        violations = [c for c in checks if "违规" in c.get("verdict", "")]
         return {
-            "pass": len(violations) == 0,
-            "violations": violations,
+            "verdict": "倾向性通过" if not violations else "存在违规风险",
+            "reasoning": "检查{}条宪法：{}条触发违规".format(len(checks), len(violations)) if violations else "检查{}条宪法，均符合要求".format(len(checks)),
+            "checks": checks,
             "action": action,
         }
 

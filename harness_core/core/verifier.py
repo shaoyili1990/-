@@ -404,3 +404,31 @@ class Verifier:
             }
             for t in templates
         ]
+
+
+    def format_verdict(self, verdicts: list) -> dict:
+        """将多条验证链结果聚合成解析解结论"""
+        if not verdicts:
+            return {"verdict": "无法验证", "reasoning": "无可用验证链执行判断"}
+        
+        passed = [v for v in verdicts if v.get("conclusion", v.get("result", "")) in ("倾向性通过", "通过")]
+        failed = [v for v in verdicts if str(v.get("conclusion", v.get("result", ""))).startswith("倾向性不")]
+        uncertain = [v for v in verdicts if v not in passed and v not in failed]
+        
+        parts = []
+        if passed:
+            names = [v.get("chain_name", v.get("short_name", "?")) for v in passed]
+            parts.append("通过{}条: {}".format(len(passed), "; ".join(names)))
+        if failed:
+            for v in failed:
+                msg = v.get("reasoning") or v.get("conclusion", "")
+                parts.append("{}存疑: {}".format(v.get("chain_name", v.get("short_name", "?")), msg[:80]))
+        if uncertain:
+            parts.append("{}条无法判定".format(len(uncertain)))
+        
+        return {
+            "verdict": "倾向性通过" if not failed else "倾向性存疑",
+            "reasoning": "；".join(parts) if parts else "无验证结论",
+            "detail": {"passed": len(passed), "failed": len(failed), "uncertain": len(uncertain)},
+            "conditions": "需要人工复审" if failed else "可进入下一步",
+        }
