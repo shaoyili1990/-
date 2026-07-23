@@ -229,15 +229,55 @@ class Config:
                 return default
         return val if val is not None else default
 
+    def _get_key_from_db(self, role: str) -> str:
+        """从状态机多维表格(api_credentials)读取API Key"""
+        db_path = self._data.get("keeper", {}).get("db_path", "")
+        if not db_path:
+            return ""
+        try:
+            import sqlite3
+            conn = sqlite3.connect(db_path)
+            cur = conn.cursor()
+            # Step 1: get cred_id from env_config via role_key_{role}
+            cur.execute("SELECT value FROM env_config WHERE key = ?", (f"role_key_{role}",))
+            row = cur.fetchone()
+            if not row:
+                return ""
+            import json
+            env_val = json.loads(row[0])
+            cred_id = env_val.get("cred_id")
+            if not cred_id:
+                return ""
+            # Step 2: get key_value from api_credentials
+            cur.execute("SELECT key_value FROM api_credentials WHERE id = ?", (cred_id,))
+            row = cur.fetchone()
+            if not row:
+                return ""
+            return row[0]
+        except Exception:
+            return ""
+        finally:
+            try:
+                conn.close()
+            except Exception:
+                pass
+
     def get_provider_config(self, role: str) -> Dict:
         """获取指定角色(monkey/horse)的提供者配置"""
         role_config = self._data.get(role, {})
         provider_name = role_config.get("provider", "openai")
         provider_defaults = self._data.get("providers", {}).get(provider_name, {})
 
+        # Resolve API key: 环境变量 > DB多维表格 > YAML占位符
+        api_key = role_config.get("api_key") or provider_defaults.get("api_key", "")
+        if not api_key or api_key.startswith("YOUR_"):
+            db_key = self._get_key_from_db(role)
+            if db_key:
+                api_key = db_key
+
         return {
             "name": provider_name,
-            "api_key": role_config.get("api_key") or provider_defaults.get("api_key", ""),
+            "api_key": api_key,
             "base_url": role_config.get("base_url") or provider_defaults.get("base_url", ""),
             "model": role_config.get("model", ""),
             "temperature": role_config.get("temperature", 0.7),

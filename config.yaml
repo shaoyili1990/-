@@ -4,7 +4,7 @@
 monkey:
   provider: openai
   model: deepseek-v4-flash
-  api_key: sk-d06fceea0dc6472d87f44dafc1078831
+  api_key: YOUR_DEEPSEEK_API_KEY
   base_url: https://api.deepseek.com/v1
   temperature: 0.3
   max_tokens: 4096
@@ -20,7 +20,7 @@ horse:
 purchaser:
   provider: openai
   model: deepseek-v4-flash
-  api_key: sk-d06fceea0dc6472d87f44dafc1078831
+  api_key: YOUR_DEEPSEEK_API_KEY
   base_url: https://api.deepseek.com/v1
   temperature: 0.5
   max_tokens: 2048
@@ -46,7 +46,7 @@ system:
 patrol:
   auto: false
   on_demand: true
-  api_key: sk-c459ee54ae9f414790efbeb137183af0
+  api_key: YOUR_DEEPSEEK_API_KEY
   model: deepseek-v4-flash
   base_url: https://api.deepseek.com/v1
 
