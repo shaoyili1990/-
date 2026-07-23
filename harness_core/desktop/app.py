@@ -67,7 +67,7 @@ VENDOR_PRESETS = {
     "deepseek": {
         "name": "DeepSeek",
         "base_url": "https://api.deepseek.com/v1",
-        "models": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash"],
+        "models": ["deepseek-v4-flash", "deepseek-v4-flash", "deepseek-v4-flash"],
         "docs": "https://platform.deepseek.com/api_keys",
     },
     "openai": {

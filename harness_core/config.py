@@ -61,7 +61,7 @@ DEFAULT_CONFIG = {
         },
         "deepseek": {
             "base_url": "https://api.deepseek.com/v1",
-            "models": ["deepseek-chat", "deepseek-reasoner", "deepseek-v4-flash"],
+            "models": ["deepseek-v4-flash", "deepseek-v4-flash", "deepseek-v4-flash"],
         },
         "google": {
             "base_url": "https://generativelanguage.googleapis.com/v1beta",
@@ -81,7 +81,7 @@ DEFAULT_CONFIG = {
         },
         "openrouter": {
             "base_url": "https://openrouter.ai/api/v1",
-            "models": ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "deepseek/deepseek-chat", "google/gemini-2.0-flash"],
+            "models": ["openai/gpt-4o", "anthropic/claude-3.5-sonnet", "deepseek/deepseek-v4-flash", "google/gemini-2.0-flash"],
         },
     }
 }
