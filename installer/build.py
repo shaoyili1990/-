@@ -37,7 +37,7 @@ def build_windows():
     print("=== Building Windows executable ===")
     check_dependencies()
 
-    icon_path = str(INSTALLER_DIR / "monkey-harness.ico") if (INSTALLER_DIR / "hermes.ico").exists() else None
+    icon_path = str(INSTALLER_DIR / "monkey-harness.ico") if (INSTALLER_DIR / "monkey-harness.ico").exists() else None
 
     cmd = [
         sys.executable, "-m", "PyInstaller",

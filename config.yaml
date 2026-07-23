@@ -1,5 +1,5 @@
 # Monkey Harness Agent / 弼马温 Agent 配置文件 (v0.3.1)
-# 弼马温 = 纯文本，中英双语，天道系统
+# 弼马温 = 纯文本，中英双语
 
 monkey:
   provider: openai
@@ -30,11 +30,8 @@ keeper:
   auto_migrate: true
 
 scribe:
-  db_path: /root/bimawen/store/bimawen.db
+  db_path: /root/bimawen/store/monkey-harness.db
   auto_init: true
-
-tiandao:
-  db_path: /root/bimawen/store/rnd_tiandao.db
 
 system:
   subchains_dir: /root/bimawen/subchains/

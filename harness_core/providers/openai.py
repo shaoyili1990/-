@@ -113,7 +113,7 @@ class OpenAIProvider(LLMProvider):
                 headers["Authorization"] = f"Bearer {self.api_key}"
         # OpenRouter额外头
         if self.name == "openrouter":
-            headers["HTTP-Referer"] = "https://hermes-agent.local"
+            headers["HTTP-Referer"] = "https://monkey-harness.local"
             headers["X-Title"] = "Hermes Agent Universal"
         return headers
 

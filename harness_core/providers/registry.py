@@ -85,7 +85,7 @@ class MockProvider(LLMProvider):
                     f"您可以通过以下方式之一设置:\n"
                     f"1. 环境变量: export {self.name.upper()}_API_KEY=sk-xxx\n"
                     f"2. 桌面版配置面板\n"
-                    f"3. CLI: hermes config set {self.name}_key sk-xxx\n\n"
+                    f"3. CLI: monkey-harness config set {self.name}_key sk-xxx\n\n"
                     f"收到消息: {last_msg[:200]}",
             model="mock",
             provider=self.name,

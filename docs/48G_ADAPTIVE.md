@@ -34,7 +34,6 @@
 
 - 骏马常驻提供 Qwen 推理
 - 巡检者后台巡逻 11 个门类
-- TTS 常驻支持语音交互
 - **不加载 ComfyUI**
 
 ### 模式 B：多模态模式（生图/视频）
@@ -50,14 +49,12 @@
 
 动作：
 1. **暂停巡检者**（kill 6008 进程）
-2. **暂停 TTS**（kill 7899 进程）
 3. **记录恢复点**（保存巡检者/任务状态）
 4. **巡检任务临时挂载到 DeepSeek Flash API**（共享赛博猴 Key）
 5. **启动 ComfyUI**（加载 SDXL 或 FLUX 模型）
 6. 执行多模态任务
 7. 完成后 ComfyUI 卸载模型
 8. **恢复巡检者**（启动 6008）
-9. **恢复 TTS**（启动 7899）
 
 ---
 
@@ -82,11 +79,6 @@ if [ -n "$PIDS" ]; then
   echo "  巡检者已暂停"
 fi
 
-# 3. 暂停 TTS
-PIDS_TTS=$(pgrep -f "audio-cpp.*7899" 2>/dev/null)
-if [ -n "$PIDS_TTS" ]; then
-  kill $PIDS_TTS
-  echo "  TTS 已暂停"
 fi
 
 # 4. 设置巡检降级模式
@@ -127,10 +119,8 @@ cd /root/work/cyber-monkey
 python -m harness_core agent horse --port 6006 &
 echo "  巡检者启动中 (端口 6008)"
 
-# 5. 恢复 TTS
 cd /root/audio-cpp/webui
 python webui.py --listen 0.0.0.0 --port 7899 &
-echo "  TTS 启动中 (端口 7899)"
 
 sleep 3
 echo "=== 常规模式已恢复 ==="
@@ -147,7 +137,6 @@ safety:
   oom_detection: true
   oom_action: "emergency_release"   # 释放非关键组件
   emergency_keep: ["horse"]         # 只保留骏马
-  emergency_release: ["patrol", "comfyui", "tts"]
   auto_recover: true                # 3分钟后尝试恢复
 ```
 
@@ -165,7 +154,6 @@ safety:
                     ┌─────────────┐
                     │  切换中... │
                     │ 暂停 Patrol │
-                    │ 暂停 TTS    │
                     │ 保存快照    │
                     └──────┬──────┘
                            │
@@ -180,7 +168,6 @@ safety:
                     │  恢复中... │
                     │ Comfy 卸载  │
                     │ 恢复 Patrol │
-                    │ 恢复 TTS    │
                     └──────┬──────┘
                            │
                            ▼
@@ -200,14 +187,12 @@ safety:
 - **骏马必须常驻** → 它是核心推理引擎，重启模型加载耗时 ~30 秒
 - **巡检者可重启** → 非实时任务，启动快（~5 秒）
 - **ComfyUI 按需加载** → 生图任务结束后立即释放
-- **TTS 轻量可共存** → 常驻，多模态时暂停
 
 ### 原则
 
 1. **优先保骏马** — 核心推理不可中断
 2. **巡检者可用 API 替代** — DeepSeek Flash 作为降级链路
 3. **ComfyUI 用完即释放** — 不常驻模型
-4. **TTS 轻量可共存** — 占显存极少，非常驻问题
 5. **状态持久化** — 切换前保存，切换后恢复，不丢上下文
 
 ---

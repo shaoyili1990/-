@@ -169,7 +169,7 @@ class Config:
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
             base = Path(sys._MEIPASS)
         else:
-            base = Path(__file__).parent.parent  # hermes-agent-universal/
+            base = Path(__file__).parent.parent  # monkey-harness-agent/
 
         # 用户数据目录（可写，持久化）
         user_data_dir = self._get_user_data_dir()
