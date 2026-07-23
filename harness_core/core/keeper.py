@@ -20,6 +20,7 @@ CONSTITUTION = [
     "迭代传上下文: 每次迭代传递完整上下文，不丢失信息",
     "对齐甲方: 以甲方需求为最终标准，不全员对齐",
     "孤证不立: 单一证据不能作为结论依据，需要交叉验证",
+    "采购闸门: 外部资源采购仅限任务执行期或用户显式请求时开启,非任务期Keeper直接拒绝",
 ]
 
 
@@ -135,3 +136,43 @@ class Keeper:
                             f"v{version_info['iteration']}",
                             json.dumps(version_data, ensure_ascii=False))
         return version_info
+
+    # ════════════════════════════════════════════════════════════
+    # 采购闸门
+    # ════════════════════════════════════════════════════════════
+
+    ACTIVE_TASK_STATUSES = (
+        "待构思", "构思中", "待规划", "规划中", "待分解", "分解中",
+        "待审核", "审核中", "待执行", "执行中", "待验证",
+    )
+
+    def check_procurement_gate(self, is_user_request: bool = False) -> Dict:
+        """
+        采购闸门检查:
+        - 任务执行期: 允许采购
+        - 用户显式搜索请求: 允许采购
+        - 其他情况: Keeper直接拒绝
+        """
+        # 如果是用户显式请求,直接放行
+        if is_user_request:
+            return {"ok": True, "reason": "用户显式请求", "task_id": ""}
+
+        # 检查是否有活跃任务
+        tasks = self.list_tasks(status=None, limit=100)
+        for t in tasks:
+            status = t.get("status", "")
+            if status in self.ACTIVE_TASK_STATUSES:
+                return {
+                    "ok": True,
+                    "reason": f"任务执行期: {t.get('name', '未知')}",
+                    "task_id": t.get("task_id", ""),
+                }
+
+        # 无活跃任务且非用户请求 → 拒绝
+        return {
+            "ok": False,
+            "reason": ("采购功能默认关闭。"
+                       "仅任务执行期或用户显式搜索请求时可开启。"
+                       "如需采购,请先创建任务或让用户发起搜索。"),
+            "task_id": "",
+        }
